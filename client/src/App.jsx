@@ -306,6 +306,49 @@ export default function App() {
     }
   };
 
+  const handleUploadKnowledge = async (e) => {
+    e.preventDefault();
+    if (!knowledgeText.trim() || !knowledgeSource.trim()) return;
+
+    let botId = selectedBot?.id;
+    if (!botId) {
+      if (bots.length > 0) {
+        botId = bots[0].id;
+      } else {
+        alert("Por favor, crie um Agente AI na aba 'Agentes AI' antes de indexar documentos.");
+        return;
+      }
+    }
+
+    setUploadingKnowledge(true);
+    try {
+      const res = await fetch(`/channels/bots/${botId}/knowledge`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          sourceName: knowledgeSource,
+          content: knowledgeText
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert("Documento indexado com sucesso na Base de Conhecimento RAG!");
+        setKnowledgeText('');
+        setKnowledgeSource('');
+      } else {
+        alert(`Erro ao indexar documento: ${data.error || 'Erro desconhecido'}`);
+      }
+    } catch (err) {
+      console.error("Error uploading knowledge:", err);
+      alert("Falha de conexão ao indexar documento.");
+    } finally {
+      setUploadingKnowledge(false);
+    }
+  };
+
   const handleSaveSettings = async (e) => {
     e.preventDefault();
     try {
