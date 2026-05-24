@@ -1,0 +1,9 @@
+{
+  "rewrites": [
+    { "source": "/inbox/:path*", "destination": "https://chatflow-production-262f.up.railway.app/inbox/:path*" },
+    { "source": "/channels/:path*", "destination": "https://chatflow-production-262f.up.railway.app/channels/:path*" },
+    { "source": "/ecommerce/:path*", "destination": "https://chatflow-production-262f.up.railway.app/ecommerce/:path*" },
+    { "source": "/webhooks/:path*", "destination": "https://chatflow-production-262f.up.railway.app/webhooks/:path*" },
+    { "source": "/((?!assets/|favicon.ico|index.html|vite.svg).*)", "destination": "/index.html" }
+  ]
+}
