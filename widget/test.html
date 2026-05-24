@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChatVolt Widget E2E Local Test</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #09090e;
+      color: #ffffff;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(138, 43, 226, 0.15) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(0, 206, 209, 0.1) 0%, transparent 45%);
+    }
+
+    .container {
+      text-align: center;
+      max-width: 500px;
+      padding: 30px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.02);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 800;
+      margin-bottom: 10px;
+      background: linear-gradient(135deg, #8a2be2, #00ced1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    p {
+      color: #a0a0ba;
+      font-size: 14px;
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(37, 211, 102, 0.1);
+      border: 1px solid rgba(37, 211, 102, 0.2);
+      color: #25d366;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>ChatVolt Widget Test Page</h1>
+    <p>Esta página simula a injeção local do widget no seu site para testar a comunicação E2E com o servidor local e banco de dados SQLite sem barreiras de segurança SSL.</p>
+    <div class="status-badge">
+      <span style="width: 8px; height: 8px; border-radius: 50%; background: #25d366; box-shadow: 0 0 8px #25d366"></span>
+      Servidor Local Conectado
+    </div>
+  </div>
+
+  <!-- Injeção do Script do ChatVolt -->
+  <script 
+    src="http://localhost:5000/widget/chatvolt-widget.js" 
+    data-bot-id="1299a3c1-710e-42f3-a155-47d2bf5bf1a6" 
+    data-theme-color="#8a2be2" 
+    data-server-url="http://localhost:5000"
+  ></script>
+
+</body>
+</html>

@@ -1,0 +1,184 @@
+datasource db {
+  provider = "sqlite" // Change to "postgresql" in production
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Organization {
+  id                  String              @id @default(uuid())
+  name                String
+  slug                String              @unique
+  plan                String              @default("FREE")
+  maxBots             Int                 @default(2)
+  maxMessagesPerMonth Int                 @default(1000)
+  apiUsageThisMonth   Int                 @default(0)
+  geminiKey           String?             // Encrypted per-Organization Gemini key
+  openaiKey           String?             // Encrypted per-Organization OpenAI key
+  website             String?
+  dashboardUrl        String?
+  description         String?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  users               User[]
+  bots                Bot[]
+  channels            Channel[]
+  conversations       InboxConversation[]
+  contacts            Contact[]
+  orders              Order[]
+}
+
+model User {
+  id             String              @id @default(uuid())
+  email          String              @unique
+  password       String
+  firstName      String
+  lastName       String
+  role           String              @default("AGENT") // OWNER, ADMIN, AGENT
+  organizationId String
+  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  conversations  InboxConversation[]
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+}
+
+model Bot {
+  id              String              @id @default(uuid())
+  organizationId  String
+  organization    Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name            String
+  model           String              @default("gemini-1.5-flash")
+  systemPrompt    String
+  temperature     Float               @default(0.7)
+  greetingMessage String
+  accentColor     String              @default("#8a2be2")
+  avatarUrl       String?
+  isAiActive      Boolean             @default(true)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  knowledge       KnowledgeChunk[]
+  actions         BotAction[]
+  channels        Channel[]
+  conversations   InboxConversation[]
+}
+
+model BotAction {
+  id            String   @id @default(uuid())
+  botId         String
+  bot           Bot      @relation(fields: [botId], references: [id], onDelete: Cascade)
+  name          String   // e.g. search_products, get_product_details
+  description   String
+  url           String
+  method        String   @default("POST")
+  headers       String   @default("{}")
+  payloadSchema String   @default("{}")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Channel {
+  id             String              @id @default(uuid())
+  organizationId String
+  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  botId          String
+  bot            Bot                 @relation(fields: [botId], references: [id], onDelete: Cascade)
+  type           String              // WHATSAPP, INSTAGRAM, MESSENGER, WIDGET
+  provider       String              @default("META")
+  credentials    String              @default("{}") // Encrypted
+  isActive       Boolean             @default(true)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  conversations  InboxConversation[]
+}
+
+model Contact {
+  id             String              @id @default(uuid())
+  organizationId String
+  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  phone          String?
+  email          String?
+  platformId     String              // Phone number or Username
+  platformType   String              // WHATSAPP, INSTAGRAM, MESSENGER, WIDGET
+  metadata       String              @default("{}")
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  conversations  InboxConversation[]
+  orders         Order[]
+}
+
+model InboxConversation {
+  id                    String        @id @default(uuid())
+  organizationId        String
+  organization          Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  channelId             String
+  channel               Channel       @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  contactId             String
+  contact               Contact       @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  botId                 String
+  bot                   Bot           @relation(fields: [botId], references: [id], onDelete: Cascade)
+  status                String        @default("OPEN") // OPEN, PENDING, CLOSED
+  assignedUserId        String?
+  assignedUser          User?         @relation(fields: [assignedUserId], references: [id])
+  isHumanHandoverActive Boolean       @default(false)
+  label                 String?       // Lead, Support, Billing
+  notes                 String?
+  aiSuggestions         String?
+  lastMessageAt         DateTime      @default(now())
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  messages              Message[]
+  orders                Order[]
+  cartItems             CartItem[]
+}
+
+model Message {
+  id             String            @id @default(uuid())
+  conversationId String
+  conversation   InboxConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderType     String            // USER, BOT, AGENT, SYSTEM
+  content        String
+  metadata       String            @default("{}")
+  isRead         Boolean           @default(false)
+  createdAt      DateTime          @default(now())
+}
+
+model CartItem {
+  id             String            @id @default(uuid())
+  conversationId String
+  conversation   InboxConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  productId      String
+  name           String
+  price          Float
+  quantity       Int
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+}
+
+model Order {
+  id              String            @id @default(uuid())
+  organizationId  String
+  organization    Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  conversationId  String
+  conversation    InboxConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  contactId       String
+  contact         Contact           @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  totalAmount     Float
+  status          String            @default("PENDING") // PENDING, PAID, SHIPPED, CANCELLED
+  paymentLink     String?
+  shippingAddress String
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+}
+
+model KnowledgeChunk {
+  id         String   @id @default(uuid())
+  botId      String
+  bot        Bot      @relation(fields: [botId], references: [id], onDelete: Cascade)
+  sourceName String
+  content    String
+  embedding  String   // serialized JSON list of vector floats
+  createdAt  DateTime @default(now())
+}
