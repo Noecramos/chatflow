@@ -485,8 +485,8 @@ export default function App() {
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px', background: 'linear-gradient(90deg, hsl(var(--primary)), hsl(var(--secondary)))', borderTopLeftRadius: 'var(--radius)', borderTopRightRadius: 'var(--radius)' }}></div>
           
           <div style={{ textAlign: 'center' }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', color: 'hsl(var(--primary))', marginBottom: '8px' }}>
-              <Sparkles size={32} className="pulse-glowing" style={{ filter: 'drop-shadow(0 0 10px hsl(var(--primary)))' }} />
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', color: 'hsl(var(--primary))', marginBottom: '8px' }}>
+              <img src="/icon.png" alt="ChatFlow Icon" className="pulse-glowing" style={{ height: '32px', width: 'auto', borderRadius: '6px' }} />
               <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: '28px', letterSpacing: '-0.03em', color: '#fff' }}>ChatFlow</h2>
             </div>
             <p style={{ color: 'hsl(var(--text-muted))', fontSize: '13px', marginTop: '4px' }}>
@@ -592,9 +592,9 @@ export default function App() {
       <div className="sidebar" style={{ width: '250px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
           
-          <div className="sidebar-logo" style={{ paddingBottom: '16px' }}>
-            <Sparkles size={22} style={{ color: 'hsl(var(--primary))' }} />
-            <span style={{ fontSize: '22px', letterSpacing: '-0.04em' }}>chatflow</span>
+          <div className="sidebar-logo" style={{ paddingBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <img src="/icon.png" alt="ChatFlow Logo" style={{ height: '24px', width: 'auto', borderRadius: '4px' }} />
+            <span style={{ fontSize: '22px', letterSpacing: '-0.04em', fontWeight: 800, textTransform: 'lowercase', color: '#fff' }}>chatflow</span>
           </div>
 
           <div className="sidebar-nav" style={{ marginTop: '10px', gap: '4px' }}>
@@ -697,6 +697,10 @@ export default function App() {
             <LogOut size={13} />
             <span>Sair da Conta</span>
           </button>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', marginTop: '10px', borderTop: '1px solid rgba(255,255,255,0.03)', paddingTop: '10px' }}>
+            <img src="/logo1.png" alt="NoviApp Logo" style={{ height: '14px', width: 'auto', opacity: 0.5, transition: 'opacity 0.2s' }} onMouseOver={(e) => e.target.style.opacity = 0.8} onMouseOut={(e) => e.target.style.opacity = 0.5} />
+            <span style={{ fontSize: '9px', color: 'hsl(var(--text-muted))', opacity: 0.5 }}>© 2026 NoviApp AI Systems</span>
+          </div>
         </div>
       </div>
 
