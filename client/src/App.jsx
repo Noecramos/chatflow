@@ -28,7 +28,7 @@ export default function App() {
 
   // Settings & RAG States
   const [geminiKey, setGeminiKey] = useState('');
-  const [verifyToken] = useState('chatvolt_verify_token_123');
+  const [verifyToken] = useState('chatflow_verify_token_123');
   const [knowledgeText, setKnowledgeText] = useState('');
   const [knowledgeSource, setKnowledgeSource] = useState('');
   const [uploadingKnowledge, setUploadingKnowledge] = useState(false);
@@ -72,7 +72,7 @@ export default function App() {
 
   // Persistent Quick Replies templates (Artefatos)
   const [quickReplies, setQuickReplies] = useState(() => {
-    const saved = localStorage.getItem('chatvolt_quick_replies');
+    const saved = localStorage.getItem('chatflow_quick_replies');
     return saved ? JSON.parse(saved) : [
       { id: '1', title: 'Saudação de Boas-Vindas', content: 'Olá! Seja muito bem-vindo à nossa empresa. Como posso te ajudar hoje?' },
       { id: '2', title: 'Instruções de Pix', content: 'Para efetuar o pagamento, basta copiar o código Pix Pix-Copiar-e-Colar enviado acima e colar no aplicativo do seu banco.' },
@@ -205,7 +205,7 @@ export default function App() {
 
   // Sync Quick Replies with localStorage
   useEffect(() => {
-    localStorage.setItem('chatvolt_quick_replies', JSON.stringify(quickReplies));
+    localStorage.setItem('chatflow_quick_replies', JSON.stringify(quickReplies));
   }, [quickReplies]);
 
   const handleSelectBot = (bot) => {
@@ -1437,7 +1437,7 @@ export default function App() {
               <div>
                 <h3 style={{ fontSize: '20px', fontWeight: '800' }}>VoltAPI Connectors</h3>
                 <p style={{ color: 'hsl(var(--text-muted))', fontSize: '12px', marginTop: '2px' }}>
-                  Integre o ChatVolt com seus ERPs (Bling, Tiny, Odoo) e envie mensagens programáticas através do protocolo HTTP REST.
+                  Integre o ChatFlow com seus ERPs (Bling, Tiny, Odoo) e envie mensagens programáticas através do protocolo HTTP REST.
                 </p>
               </div>
 

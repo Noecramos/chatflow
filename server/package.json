@@ -1,5 +1,5 @@
 {
-  "name": "chatvolt-server",
+  "name": "chatflow-server",
   "version": "1.0.0",
   "description": "Enterprise Omnichannel AI Chatbot & Conversational Commerce Backend",
   "main": "src/server.js",
