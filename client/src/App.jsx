@@ -962,6 +962,17 @@ export default function App() {
                           />
                         </div>
 
+                        <div>
+                          <label style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px', fontWeight: '600' }}>Mensagem de Saudação</label>
+                          <textarea 
+                            rows={3}
+                            value={agentGreeting}
+                            onChange={(e) => setAgentGreeting(e.target.value)}
+                            placeholder="Ex: Olá! Como posso te ajudar hoje?"
+                            style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '10px', borderRadius: '6px', fontSize: '13px', resize: 'vertical' }}
+                          />
+                        </div>
+
                         <div style={{ marginTop: '10px' }}>
                           <span style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px', fontWeight: '600' }}>ID do Agente</span>
                           <code style={{ background: 'rgba(255,255,255,0.03)', padding: '6px 12px', borderRadius: '4px', border: '1px solid hsl(var(--border))', fontSize: '11px', display: 'inline-block' }}>{selectedBot.id}</code>
