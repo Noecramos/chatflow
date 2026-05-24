@@ -590,81 +590,79 @@ export default function App() {
       
       {/* SIDEBAR NAVIGATION: PORTUGUESE */}
       <div className="sidebar" style={{ width: '250px' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-          
-          <div className="sidebar-logo" style={{ paddingBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <img src="/icon.png" alt="ChatFlow Logo" style={{ height: '24px', width: 'auto', borderRadius: '4px' }} />
-            <span style={{ fontSize: '22px', letterSpacing: '-0.04em', fontWeight: 800, textTransform: 'lowercase', color: '#fff' }}>chatflow</span>
+        
+        <div className="sidebar-logo" style={{ paddingBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <img src="/icon.png" alt="ChatFlow Logo" style={{ height: '24px', width: 'auto', borderRadius: '4px' }} />
+          <span style={{ fontSize: '22px', letterSpacing: '-0.04em', fontWeight: 800, textTransform: 'lowercase', color: '#fff' }}>chatflow</span>
+        </div>
+
+        <div className="sidebar-nav" style={{ marginTop: '10px', gap: '4px' }}>
+          <div onClick={() => { setActiveTab('CONVERSAS'); fetchConversations(); }} className={`nav-item ${activeTab === 'CONVERSAS' ? 'active' : ''}`}>
+            <MessageSquare size={17} />
+            <span>Conversas</span>
+            {conversations.filter(c => c.status === 'OPEN').length > 0 && (
+              <span className="badge badge-whatsapp" style={{ marginLeft: 'auto', fontSize: '9px', padding: '2px 6px', borderRadius: '8px' }}>
+                {conversations.filter(c => c.status === 'OPEN').length}
+              </span>
+            )}
           </div>
 
-          <div className="sidebar-nav" style={{ marginTop: '10px', gap: '4px' }}>
-            <div onClick={() => { setActiveTab('CONVERSAS'); fetchConversations(); }} className={`nav-item ${activeTab === 'CONVERSAS' ? 'active' : ''}`}>
-              <MessageSquare size={17} />
-              <span>Conversas</span>
-              {conversations.filter(c => c.status === 'OPEN').length > 0 && (
-                <span className="badge badge-whatsapp" style={{ marginLeft: 'auto', fontSize: '9px', padding: '2px 6px', borderRadius: '8px' }}>
-                  {conversations.filter(c => c.status === 'OPEN').length}
-                </span>
-              )}
-            </div>
+          <div onClick={() => { setActiveTab('CRM'); fetchConversations(); }} className={`nav-item ${activeTab === 'CRM' ? 'active' : ''}`}>
+            <Layers size={17} />
+            <span>Fluxo CRM</span>
+          </div>
 
-            <div onClick={() => { setActiveTab('CRM'); fetchConversations(); }} className={`nav-item ${activeTab === 'CRM' ? 'active' : ''}`}>
-              <Layers size={17} />
-              <span>Fluxo CRM</span>
-            </div>
+          <div onClick={() => { setActiveTab('CONTATOS'); fetchConversations(); }} className={`nav-item ${activeTab === 'CONTATOS' ? 'active' : ''}`}>
+            <User size={17} />
+            <span>Contatos</span>
+          </div>
 
-            <div onClick={() => { setActiveTab('CONTATOS'); fetchConversations(); }} className={`nav-item ${activeTab === 'CONTATOS' ? 'active' : ''}`}>
-              <User size={17} />
-              <span>Contatos</span>
-            </div>
+          <div onClick={() => { setActiveTab('AGENTES'); fetchBotsList(); }} className={`nav-item ${activeTab === 'AGENTES' ? 'active' : ''}`}>
+            <Cpu size={17} />
+            <span>Agentes AI</span>
+          </div>
 
-            <div onClick={() => { setActiveTab('AGENTES'); fetchBotsList(); }} className={`nav-item ${activeTab === 'AGENTES' ? 'active' : ''}`}>
-              <Cpu size={17} />
-              <span>Agentes AI</span>
-            </div>
+          <div onClick={() => { setActiveTab('OPERADORES'); fetchAgentsList(); }} className={`nav-item ${activeTab === 'OPERADORES' ? 'active' : ''}`}>
+            <UserCheck size={17} />
+            <span>Operadores</span>
+          </div>
 
-            <div onClick={() => { setActiveTab('OPERADORES'); fetchAgentsList(); }} className={`nav-item ${activeTab === 'OPERADORES' ? 'active' : ''}`}>
-              <UserCheck size={17} />
-              <span>Operadores</span>
-            </div>
+          <div onClick={() => setActiveTab('CONHECIMENTO')} className={`nav-item ${activeTab === 'CONHECIMENTO' ? 'active' : ''}`}>
+            <Database size={17} />
+            <span>Bases de conhecimento</span>
+          </div>
 
-            <div onClick={() => setActiveTab('CONHECIMENTO')} className={`nav-item ${activeTab === 'CONHECIMENTO' ? 'active' : ''}`}>
-              <Database size={17} />
-              <span>Bases de conhecimento</span>
-            </div>
+          <div onClick={() => setActiveTab('ARTEFATOS')} className={`nav-item ${activeTab === 'ARTEFATOS' ? 'active' : ''}`} style={{ position: 'relative' }}>
+            <FileText size={17} />
+            <span>Artefatos</span>
+            <span className="badge" style={{ marginLeft: 'auto', background: 'linear-gradient(135deg, hsl(var(--primary)), #8a2be2)', color: '#fff', fontSize: '8px', padding: '2px 5px' }}>NEW</span>
+          </div>
 
-            <div onClick={() => setActiveTab('ARTEFATOS')} className={`nav-item ${activeTab === 'ARTEFATOS' ? 'active' : ''}`} style={{ position: 'relative' }}>
-              <FileText size={17} />
-              <span>Artefatos</span>
-              <span className="badge" style={{ marginLeft: 'auto', background: 'linear-gradient(135deg, hsl(var(--primary)), #8a2be2)', color: '#fff', fontSize: '8px', padding: '2px 5px' }}>NEW</span>
-            </div>
+          <div onClick={() => { setActiveTab('DISPAROS'); fetchConversations(); }} className={`nav-item ${activeTab === 'DISPAROS' ? 'active' : ''}`}>
+            <Megaphone size={17} />
+            <span>Disparos</span>
+          </div>
 
-            <div onClick={() => { setActiveTab('DISPAROS'); fetchConversations(); }} className={`nav-item ${activeTab === 'DISPAROS' ? 'active' : ''}`}>
-              <Megaphone size={17} />
-              <span>Disparos</span>
-            </div>
+          <div onClick={() => setActiveTab('NOVIAPI')} className={`nav-item ${activeTab === 'NOVIAPI' ? 'active' : ''}`}>
+            <FileCode size={17} />
+            <span>NoviAPI</span>
+            <span className="badge" style={{ marginLeft: 'auto', background: 'linear-gradient(135deg, #006aff, hsl(var(--secondary)))', color: '#fff', fontSize: '8px', padding: '2px 5px' }}>BETA</span>
+          </div>
 
-            <div onClick={() => setActiveTab('VOLTAPI')} className={`nav-item ${activeTab === 'VOLTAPI' ? 'active' : ''}`}>
-              <FileCode size={17} />
-              <span>VoltAPI</span>
-              <span className="badge" style={{ marginLeft: 'auto', background: 'linear-gradient(135deg, #006aff, hsl(var(--secondary)))', color: '#fff', fontSize: '8px', padding: '2px 5px' }}>BETA</span>
-            </div>
+          <div onClick={() => setActiveTab('METRICAS')} className={`nav-item ${activeTab === 'METRICAS' ? 'active' : ''}`}>
+            <BarChart3 size={17} />
+            <span>Métricas</span>
+          </div>
 
-            <div onClick={() => setActiveTab('METRICAS')} className={`nav-item ${activeTab === 'METRICAS' ? 'active' : ''}`}>
-              <BarChart3 size={17} />
-              <span>Métricas</span>
-            </div>
+          <div onClick={() => setActiveTab('HUB')} className={`nav-item ${activeTab === 'HUB' ? 'active' : ''}`}>
+            <Globe size={17} />
+            <span>Hub</span>
+            <span className="badge" style={{ marginLeft: 'auto', background: 'linear-gradient(135deg, hsl(var(--primary)), #8a2be2)', color: '#fff', fontSize: '8px', padding: '2px 5px' }}>NEW</span>
+          </div>
 
-            <div onClick={() => setActiveTab('HUB')} className={`nav-item ${activeTab === 'HUB' ? 'active' : ''}`}>
-              <Globe size={17} />
-              <span>Hub</span>
-              <span className="badge" style={{ marginLeft: 'auto', background: 'linear-gradient(135deg, hsl(var(--primary)), #8a2be2)', color: '#fff', fontSize: '8px', padding: '2px 5px' }}>NEW</span>
-            </div>
-
-            <div onClick={() => setActiveTab('CONFIGURACOES')} className={`nav-item ${activeTab === 'CONFIGURACOES' ? 'active' : ''}`}>
-              <Settings size={17} />
-              <span>Configurações</span>
-            </div>
+          <div onClick={() => setActiveTab('CONFIGURACOES')} className={`nav-item ${activeTab === 'CONFIGURACOES' ? 'active' : ''}`}>
+            <Settings size={17} />
+            <span>Configurações</span>
           </div>
         </div>
 
@@ -722,7 +720,7 @@ export default function App() {
               {activeTab === 'CONHECIMENTO' && "Bases de conhecimento"}
               {activeTab === 'ARTEFATOS' && "Artefatos"}
               {activeTab === 'DISPAROS' && "Disparos"}
-              {activeTab === 'VOLTAPI' && "VoltAPI"}
+              {activeTab === 'NOVIAPI' && "NoviAPI"}
               {activeTab === 'METRICAS' && "Métricas"}
               {activeTab === 'HUB' && "Hub"}
               {activeTab === 'CONFIGURACOES' && "Configurações"}
@@ -1435,11 +1433,11 @@ export default function App() {
             </div>
           )}
 
-          {/* TAB 8: VOLTAPI */}
-          {activeTab === 'VOLTAPI' && (
+          {/* TAB 8: NOVIAPI */}
+          {activeTab === 'NOVIAPI' && (
             <div style={{ padding: '25px', display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '850px', margin: '0 auto' }}>
               <div>
-                <h3 style={{ fontSize: '20px', fontWeight: '800' }}>VoltAPI Connectors</h3>
+                <h3 style={{ fontSize: '20px', fontWeight: '800' }}>NoviAPI Connectors</h3>
                 <p style={{ color: 'hsl(var(--text-muted))', fontSize: '12px', marginTop: '2px' }}>
                   Integre o ChatFlow com seus ERPs (Bling, Tiny, Odoo) e envie mensagens programáticas através do protocolo HTTP REST.
                 </p>
