@@ -696,7 +696,9 @@ export default function App() {
             <span>Sair da Conta</span>
           </button>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', marginTop: '14px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '12px' }}>
-            <img src="/logo1.png" alt="NoviApp Logo" style={{ height: '24px', width: 'auto', opacity: 0.6, transition: 'opacity 0.2s' }} onMouseOver={(e) => e.target.style.opacity = 0.9} onMouseOut={(e) => e.target.style.opacity = 0.6} />
+            <a href="https://noviapp.ai/" target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', transition: 'transform 0.2s' }} onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'} onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}>
+              <img src="/logo1.png" alt="NoviApp Logo" style={{ height: '29px', width: 'auto', opacity: 0.7, transition: 'opacity 0.2s', cursor: 'pointer' }} onMouseOver={(e) => e.target.style.opacity = 1} onMouseOut={(e) => e.target.style.opacity = 0.7} />
+            </a>
             <span style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', opacity: 0.6 }}>© 2026 NoviApp AI Systems</span>
           </div>
         </div>
