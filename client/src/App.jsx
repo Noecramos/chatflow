@@ -6,7 +6,7 @@ import {
   FileCode, Globe, Bell, CheckCircle2, ChevronRight, 
   Plus, Search, HelpCircle, ShieldAlert, Clock, ArrowRight,
   TrendingUp, BarChart3, AlertCircle, Copy, ToggleLeft, ToggleRight, Trash2, Edit, Sliders,
-  Phone, Upload, Instagram, Facebook, Play, Save, FlaskConical, Terminal
+  Phone, Upload, Instagram, Facebook, Play, Save, FlaskConical, Terminal, Heart, Zap
 } from 'lucide-react';
 import OmnichannelInbox from './components/OmnichannelInbox';
 import EcommerceDashboard from './components/EcommerceDashboard';
@@ -129,6 +129,58 @@ export default function App() {
   const [fbAccessToken, setFbAccessToken] = useState('');
   const [fbPageId, setFbPageId] = useState('');
   const [savingFb, setSavingFb] = useState(false);
+
+  // ChatFlow Hub (Community Portal Feed) states
+  const [activeHubCategory, setActiveHubCategory] = useState('inicio');
+  const [hubSearchQuery, setHubSearchQuery] = useState('');
+  const [activeFaq, setActiveFaq] = useState(null);
+  const [newPostTitle, setNewPostTitle] = useState('');
+  const [newPostContent, setNewPostContent] = useState('');
+  const [newPostCategory, setNewPostCategory] = useState('Geral');
+  const [hubPosts, setHubPosts] = useState([
+    {
+      id: 1,
+      author: "Gabriel Oliveira",
+      authorRole: "Founder",
+      authorAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
+      time: "3 dias atrás",
+      badge: "Geral",
+      title: "Notas de Atualização - v4.5.0",
+      content: "Times e Permissões! Agora é possível criar sub-equipes dentro da sua organização de varejo e definir níveis de permissões de acesso específicos para cada atendente. Além disso, chegou o NPS integrado aos disparos do WhatsApp. Configure pesquisas de satisfação e receba relatórios automáticos de pós-venda direto no dashboard!",
+      likes: 12,
+      liked: false,
+      comments: 2,
+      imageUrl: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=500&q=80"
+    },
+    {
+      id: 2,
+      author: "Ana Laura Fachini",
+      authorRole: "Marketing Specialist",
+      authorAvatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80",
+      time: "5 dias atrás",
+      badge: "Comunicados",
+      title: "Como Otimizar Disparos no Varejo 🚀",
+      content: "Separamos 5 templates oficiais de WhatsApp validados para recuperação de carrinho abandonado em e-commerce. Lembre-se: mensagens curtas que oferecem frete grátis ou cupom de 10% têm taxas de conversão de carrinho abandonado acima de 28% no varejo. Configure-os agora mesmo!",
+      likes: 24,
+      liked: false,
+      comments: 5,
+      imageUrl: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=500&q=80"
+    },
+    {
+      id: 3,
+      author: "Suporte Técnico",
+      authorRole: "Dev Relations",
+      authorAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80",
+      time: "1 semana atrás",
+      badge: "Prompts Share",
+      title: "Melhorias no NoviAPI Sandbox 🧪",
+      content: "Nosso ambiente de sandbox JavaScript (Node VM) agora conta com autossalvamento automático antes da execução. Você pode rodar consultas dinâmicas de frete diretamente nos Correios ou integrar com o Bling ERP de forma totalmente isolada e performática.",
+      likes: 8,
+      liked: false,
+      comments: 1,
+      imageUrl: null
+    }
+  ]);
 
   // NoviAPI (VoltAPI Style) states
   const [customScripts, setCustomScripts] = useState([]);
@@ -895,6 +947,45 @@ export default function App() {
       reader.readAsDataURL(file);
     };
     input.click();
+  };
+
+  const handleLikePost = (postId) => {
+    setHubPosts(prev => prev.map(post => {
+      if (post.id === postId) {
+        return {
+          ...post,
+          likes: post.liked ? post.likes - 1 : post.likes + 1,
+          liked: !post.liked
+        };
+      }
+      return post;
+    }));
+  };
+
+  const handleCreatePost = (e) => {
+    e.preventDefault();
+    if (!newPostTitle.trim() || !newPostContent.trim()) {
+      alert("Preencha o título e o conteúdo da publicação!");
+      return;
+    }
+    const newPost = {
+      id: Date.now(),
+      author: `${user?.firstName || 'Operador'} ${user?.lastName || 'ChatFlow'}`,
+      authorRole: "Merchant Admin",
+      authorAvatar: orgLogo || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150&q=80",
+      time: "Agora mesmo",
+      badge: newPostCategory,
+      title: newPostTitle,
+      content: newPostContent,
+      likes: 0,
+      liked: false,
+      comments: 0,
+      imageUrl: null
+    };
+    setHubPosts([newPost, ...hubPosts]);
+    setNewPostTitle('');
+    setNewPostContent('');
+    alert("Publicação enviada com sucesso!");
   };
 
   const handleSaveWabaCredentials = async () => {
@@ -2139,7 +2230,7 @@ export default function App() {
                           <div>
                             <h4 style={{ fontSize: '18px', fontWeight: '800', color: '#ffffff' }}>{c.name}</h4>
                             <span style={{ fontSize: '13px', color: 'hsl(var(--text-muted))', marginTop: '6px', display: 'block' }}>
-                              Segmentação: {c.contactList ? `Lista "${c.contactList.name}"` : `Rótulo "${c.label === 'Lead' ? 'Novos Leads / Interessados' : c.label === 'Billing' ? 'Carrinho Abandonado / Pagamento Pendente' : c.label === 'Support' ? 'Pós-Venda / Suporte ao Cliente' : 'Todos'}"`}
+                              Segmentação: {c.contactList ? `Lista "${c.contactList.name}"` : `Rótulo "${c.label === 'Lead' ? 'Novos Leads / Vendas Varejo' : c.label === 'Billing' ? 'Carrinho Abandonado / Faturamento' : c.label === 'Support' ? 'Suporte Técnico / Pós-Venda' : 'Todos'}"`}
                             </span>
                           </div>
                           <span className="badge" style={{
@@ -2281,7 +2372,7 @@ export default function App() {
                       </p>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ fontSize: '12px', color: 'hsl(var(--text-muted))' }}>
-                          Público Alvo: {c.contactList ? `Lista "${c.contactList.name}"` : `Rótulo "${c.label === 'Lead' ? 'Novos Leads / Interessados' : c.label === 'Billing' ? 'Carrinho Abandonado / Pagamento Pendente' : c.label === 'Support' ? 'Pós-Venda / Suporte ao Cliente' : 'Todos'}"`} ({c.totalCount} contatos)
+                          Público Alvo: {c.contactList ? `Lista "${c.contactList.name}"` : `Rótulo "${c.label === 'Lead' ? 'Novos Leads / Vendas Varejo' : c.label === 'Billing' ? 'Carrinho Abandonado / Faturamento' : c.label === 'Support' ? 'Suporte Técnico / Pós-Venda' : 'Todos'}"`} ({c.totalCount} contatos)
                         </span>
                         <button onClick={() => handleStopCampaign(c.id)} className="btn-secondary" style={{ padding: '6px 14px', fontSize: '12px', color: '#ff1744', borderColor: '#ff1744', fontWeight: '700' }}>
                           Excluir Agendamento
@@ -2421,9 +2512,9 @@ export default function App() {
                                 onChange={(e) => setNewCampaignLabel(e.target.value)}
                                 style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '12px 14px', borderRadius: '6px', fontSize: '14px', color: '#fff' }}
                               >
-                                <option value="Lead">Novos Leads / Interessados</option>
-                                <option value="Billing">Carrinho Abandonado / Pagamento Pendente</option>
-                                <option value="Support">Pós-Venda / Suporte ao Cliente</option>
+                                <option value="Lead">Novos Leads / Vendas Varejo</option>
+                                <option value="Billing">Carrinho Abandonado / Faturamento</option>
+                                <option value="Support">Suporte Técnico / Pós-Venda</option>
                               </select>
                             </>
                           ) : (
@@ -3065,181 +3156,570 @@ export default function App() {
 
           {/* TAB 10: HUB */}
           {activeTab === 'HUB' && (
-            <div style={{ padding: '25px', display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '800px', margin: '0 auto' }}>
-              <div>
-                <h3 style={{ fontSize: '20px', fontWeight: '800' }}>Central de Canais Hub</h3>
-                <p style={{ color: 'hsl(var(--text-muted))', fontSize: '12px', marginTop: '2px' }}>
-                  Gerencie as credenciais e integre os webhook callbacks oficiais das contas empresariais da Meta.
-                </p>
-              </div>
+            <div style={{ display: 'flex', minHeight: 'calc(100vh - 70px)', background: 'hsl(var(--bg-main))' }}>
+              {/* Left sidebar */}
+              <div className="glass" style={{ width: '260px', padding: '24px 16px', display: 'flex', flexDirection: 'column', gap: '24px', borderRight: '1px solid hsl(var(--border))', borderRadius: '0', background: 'hsl(var(--bg-card) / 0.4)' }}>
+                <div>
+                  <h3 style={{ fontSize: '20px', fontWeight: '800', background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Globe size={22} style={{ color: 'hsl(var(--primary))' }} /> ChatFlow Hub
+                  </h3>
+                  <p style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', marginTop: '4px' }}>Comunidade & Conexões</p>
+                </div>
 
-              <div className="glass" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <h4 style={{ fontSize: '14px', fontWeight: '700', borderBottom: '1px solid hsl(var(--border))', paddingBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Globe size={18} style={{ color: 'hsl(var(--primary))' }} /> Meta Webhooks Configurações
-                </h4>
-
-                <div style={{ fontSize: '13px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '10px', alignItems: 'center' }}>
-                    <strong>Webhook Callback URL:</strong>
-                    <code style={{ background: 'rgba(255,255,255,0.03)', padding: '6px 12px', borderRadius: '4px', fontSize: '11px', border: '1px solid hsl(var(--border))', wordBreak: 'break-all' }}>
-                      https://chatflow-production-262f.up.railway.app/webhooks/meta
-                    </code>
+                {/* Categories */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  {/* Category Group 1 */}
+                  <div>
+                    <span style={{ fontSize: '10px', textTransform: 'uppercase', color: 'hsl(var(--text-muted))', fontWeight: '700', letterSpacing: '0.1em', paddingLeft: '8px' }}>Canais</span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '8px' }}>
+                      <div 
+                        onClick={() => setActiveHubCategory('inicio')}
+                        className={`nav-item ${activeHubCategory === 'inicio' ? 'active' : ''}`}
+                        style={{ padding: '10px 12px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px', fontWeight: '600' }}
+                      >
+                        <Zap size={16} />
+                        <span>⚡ Início</span>
+                      </div>
+                    </div>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '10px', alignItems: 'center' }}>
-                    <strong>Verify Token (Token de Verificação):</strong>
-                    <code style={{ background: 'rgba(255,255,255,0.03)', padding: '6px 12px', borderRadius: '4px', fontSize: '11px', border: '1px solid hsl(var(--border))' }}>
-                      {verifyToken}
-                    </code>
+                  {/* Category Group 2 */}
+                  <div>
+                    <span style={{ fontSize: '10px', textTransform: 'uppercase', color: 'hsl(var(--text-muted))', fontWeight: '700', letterSpacing: '0.1em', paddingLeft: '8px' }}>Público</span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '8px' }}>
+                      <div 
+                        onClick={() => setActiveHubCategory('geral')}
+                        className={`nav-item ${activeHubCategory === 'geral' ? 'active' : ''}`}
+                        style={{ padding: '10px 12px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px', fontWeight: '600' }}
+                      >
+                        <MessageSquare size={16} />
+                        <span>💬 Geral</span>
+                      </div>
+                      <div 
+                        onClick={() => setActiveHubCategory('comunicados')}
+                        className={`nav-item ${activeHubCategory === 'comunicados' ? 'active' : ''}`}
+                        style={{ padding: '10px 12px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px', fontWeight: '600' }}
+                      >
+                        <Megaphone size={16} />
+                        <span>📢 Comunicados</span>
+                      </div>
+                      <div 
+                        onClick={() => setActiveHubCategory('meta')}
+                        className={`nav-item ${activeHubCategory === 'meta' ? 'active' : ''}`}
+                        style={{ padding: '10px 12px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px', fontWeight: '600' }}
+                      >
+                        <Phone size={16} />
+                        <span>🔌 Integração Meta</span>
+                      </div>
+                      <div 
+                        onClick={() => setActiveHubCategory('prompts')}
+                        className={`nav-item ${activeHubCategory === 'prompts' ? 'active' : ''}`}
+                        style={{ padding: '10px 12px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px', fontWeight: '600' }}
+                      >
+                        <Sparkles size={16} />
+                        <span>💡 Prompts Share</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Category Group 3 */}
+                  <div>
+                    <span style={{ fontSize: '10px', textTransform: 'uppercase', color: 'hsl(var(--text-muted))', fontWeight: '700', letterSpacing: '0.1em', paddingLeft: '8px' }}>Ajuda</span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '8px' }}>
+                      <div 
+                        onClick={() => setActiveHubCategory('faq')}
+                        className={`nav-item ${activeHubCategory === 'faq' ? 'active' : ''}`}
+                        style={{ padding: '10px 12px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px', fontWeight: '600' }}
+                      >
+                        <HelpCircle size={16} />
+                        <span>❓ Suporte & FAQ</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right content area */}
+              <div style={{ flex: 1, padding: '30px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '30px' }}>
+                {/* Right Header Bar */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '20px' }}>
+                  <div style={{ position: 'relative', width: '360px' }}>
+                    <Search size={18} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'hsl(var(--text-muted))' }} />
+                    <input 
+                      type="text" 
+                      placeholder="Buscar na comunidade..."
+                      value={hubSearchQuery}
+                      onChange={(e) => setHubSearchQuery(e.target.value)}
+                      style={{ width: '100%', background: 'hsl(var(--border) / 0.4)', border: '1px solid hsl(var(--border))', padding: '12px 14px 12px 42px', borderRadius: '24px', fontSize: '14px', color: '#fff', outline: 'none', transition: 'all 0.2s' }}
+                    />
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span className="badge" style={{ background: 'hsl(var(--primary-glow))', color: 'hsl(var(--primary))', border: '1px solid hsl(var(--primary) / 0.3)', padding: '6px 12px', fontSize: '12px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Sparkles size={12} /> Dev Operator
+                    </span>
                   </div>
                 </div>
 
-                <div className="glass" style={{ padding: '16px', background: 'rgba(255,255,255,0.01)', border: '1px dashed hsl(var(--border))', marginTop: '10px' }}>
-                  <h5 style={{ fontWeight: '700', marginBottom: '8px', fontSize: '12px' }}>Passo a Passo de Integração WhatsApp:</h5>
-                  <ol style={{ margin: 0, paddingLeft: '20px', fontSize: '12px', display: 'flex', flexDirection: 'column', gap: '6px', color: 'hsl(var(--text-muted))' }}>
-                    <li>Acesse o portal <strong>Meta for Developers</strong> e crie um App Business.</li>
-                    <li>Ative o produto <strong>WhatsApp</strong> e clique em Webhooks.</li>
-                    <li>Insira a URL de Callback e o Verify Token fornecidos acima.</li>
-                    <li>Siga as instruções para assinar o campo de evento <strong>messages</strong>!</li>
-                    <li>Copie o <strong>Access Token permanente</strong> e o <strong>Phone Number ID</strong> e insira abaixo.</li>
-                  </ol>
-                </div>
-              </div>
+                {/* Sub-Views */}
+                {activeHubCategory === 'meta' ? (
+                  /* Meta Integration Setup and Forms */
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '850px' }}>
+                    <div>
+                      <h2 style={{ fontSize: '32px', fontWeight: '800', fontFamily: 'var(--font-display)', color: '#fff' }}>Central de Integração Meta</h2>
+                      <p style={{ color: 'hsl(var(--text-muted))', fontSize: '14px', marginTop: '6px' }}>
+                        Configure os webhooks oficiais e vincule suas contas do WhatsApp Business, Instagram e Facebook Messenger para um atendimento omnichannel.
+                      </p>
+                    </div>
 
-              {/* WABA Credentials Form */}
-              <div className="glass" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <h4 style={{ fontSize: '14px', fontWeight: '700', borderBottom: '1px solid hsl(var(--border))', paddingBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Phone size={18} style={{ color: '#25d366' }} /> Credenciais WhatsApp Business API (WABA)
-                </h4>
-                <p style={{ color: 'hsl(var(--text-muted))', fontSize: '12px', margin: 0 }}>
-                  Insira as credenciais da API oficial do WhatsApp Business para ativar a integração de mensagens.
-                </p>
+                    <div className="glass glowing-card" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '20px', borderRadius: '12px' }}>
+                      <h4 style={{ fontSize: '18px', fontWeight: '800', color: '#fff', borderBottom: '1px solid hsl(var(--border))', paddingBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Globe size={20} style={{ color: 'hsl(var(--primary))' }} /> Meta Webhooks Configurações
+                      </h4>
 
-                <div>
-                  <label style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '6px', fontWeight: '600' }}>
-                    Access Token (Permanente)
-                  </label>
-                  <input
-                    type="password"
-                    placeholder="EAAxxxxxxx..."
-                    value={wabaAccessToken}
-                    onChange={(e) => setWabaAccessToken(e.target.value)}
-                    style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '10px', borderRadius: '6px', fontSize: '13px', fontFamily: 'monospace' }}
-                  />
-                </div>
+                      <div style={{ fontSize: '14px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: '12px', alignItems: 'center' }}>
+                          <strong>Webhook Callback URL:</strong>
+                          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                            <code style={{ flex: 1, background: 'rgba(255,255,255,0.03)', padding: '10px 14px', borderRadius: '6px', fontSize: '12px', border: '1px solid hsl(var(--border))', wordBreak: 'break-all', fontFamily: 'monospace' }}>
+                              https://chatflow-production-262f.up.railway.app/webhooks/meta
+                            </code>
+                            <button 
+                              onClick={() => {
+                                navigator.clipboard.writeText("https://chatflow-production-262f.up.railway.app/webhooks/meta");
+                                alert("Webhook URL copiada com sucesso!");
+                              }}
+                              className="btn-secondary" 
+                              style={{ padding: '10px 16px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                            >
+                              <Copy size={14} /> Copiar
+                            </button>
+                          </div>
+                        </div>
 
-                <div>
-                  <label style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '6px', fontWeight: '600' }}>
-                    Phone Number ID
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Ex: 109876543210987"
-                    value={wabaPhoneNumberId}
-                    onChange={(e) => setWabaPhoneNumberId(e.target.value)}
-                    style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '10px', borderRadius: '6px', fontSize: '13px', fontFamily: 'monospace' }}
-                  />
-                </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: '12px', alignItems: 'center' }}>
+                          <strong>Verify Token (Token de Verificação):</strong>
+                          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                            <code style={{ flex: 1, background: 'rgba(255,255,255,0.03)', padding: '10px 14px', borderRadius: '6px', fontSize: '12px', border: '1px solid hsl(var(--border))', fontFamily: 'monospace' }}>
+                              {verifyToken}
+                            </code>
+                            <button 
+                              onClick={() => {
+                                navigator.clipboard.writeText(verifyToken);
+                                alert("Verify Token copiado!");
+                              }}
+                              className="btn-secondary" 
+                              style={{ padding: '10px 16px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                            >
+                              <Copy size={14} /> Copiar
+                            </button>
+                          </div>
+                        </div>
+                      </div>
 
-                <div>
-                  <label style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '6px', fontWeight: '600' }}>
-                    Business Account ID (opcional)
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Ex: 102345678901234"
-                    value={wabaBusinessId}
-                    onChange={(e) => setWabaBusinessId(e.target.value)}
-                    style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '10px', borderRadius: '6px', fontSize: '13px', fontFamily: 'monospace' }}
-                  />
-                </div>
+                      <div className="glass" style={{ padding: '20px', background: 'rgba(255,255,255,0.01)', border: '1px dashed hsl(var(--border))', borderRadius: '8px' }}>
+                        <h5 style={{ fontWeight: '700', marginBottom: '10px', fontSize: '13px', color: 'hsl(var(--primary))' }}>Passo a Passo de Integração WhatsApp:</h5>
+                        <ol style={{ margin: 0, paddingLeft: '20px', fontSize: '13px', display: 'flex', flexDirection: 'column', gap: '8px', color: 'hsl(var(--text-muted))', lineHeight: '1.5' }}>
+                          <li>Acesse o portal <strong>Meta for Developers</strong> e crie um App Business.</li>
+                          <li>Ative o produto <strong>WhatsApp</strong> e clique em Webhooks.</li>
+                          <li>Insira a URL de Callback e o Verify Token fornecidos acima.</li>
+                          <li>Siga as instruções para assinar o campo de evento <strong>messages</strong>!</li>
+                          <li>Copie o <strong>Access Token permanente</strong> e o <strong>Phone Number ID</strong> e insira nos formulários abaixo.</li>
+                        </ol>
+                      </div>
+                    </div>
 
-                <div style={{ display: 'flex', gap: '10px', marginTop: '6px' }}>
-                  <button
-                    onClick={handleSaveWabaCredentials}
-                    disabled={savingWaba || !wabaAccessToken.trim() || !wabaPhoneNumberId.trim()}
-                    className="btn-primary"
-                    style={{ padding: '10px 20px', fontSize: '13px', fontWeight: '700' }}
-                  >
-                    {savingWaba ? 'Salvando...' : 'Salvar Credenciais WhatsApp'}
-                  </button>
-                </div>
-              </div>
+                    {/* WABA Credentials Form */}
+                    <div className="glass glowing-card" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '20px', borderRadius: '12px' }}>
+                      <h4 style={{ fontSize: '18px', fontWeight: '800', color: '#fff', borderBottom: '1px solid hsl(var(--border))', paddingBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Phone size={20} style={{ color: '#25d366' }} /> Credenciais WhatsApp Business API (WABA)
+                      </h4>
+                      <p style={{ color: 'hsl(var(--text-muted))', fontSize: '13px', margin: 0 }}>
+                        Insira as credenciais da API oficial do WhatsApp Business para ativar a integração de mensagens.
+                      </p>
 
-              {/* Instagram Credentials Form */}
-              <div className="glass" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <h4 style={{ fontSize: '14px', fontWeight: '700', borderBottom: '1px solid hsl(var(--border))', paddingBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Instagram size={18} style={{ color: '#E1306C' }} /> Credenciais Instagram Business
-                </h4>
-                <p style={{ color: 'hsl(var(--text-muted))', fontSize: '12px', margin: 0 }}>
-                  Insira o Page Access Token da página Facebook vinculada à conta Instagram Business.
-                </p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        <div>
+                          <label style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '6px', fontWeight: '600' }}>
+                            Access Token (Permanente)
+                          </label>
+                          <input
+                            type="password"
+                            placeholder="EAAxxxxxxx..."
+                            value={wabaAccessToken}
+                            onChange={(e) => setWabaAccessToken(e.target.value)}
+                            style={{ width: '100%', background: 'hsl(var(--border) / 0.3)', border: '1px solid hsl(var(--border))', padding: '12px 14px', borderRadius: '8px', fontSize: '14px', fontFamily: 'monospace', color: '#fff' }}
+                          />
+                        </div>
 
-                <div>
-                  <label style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '6px', fontWeight: '600' }}>
-                    Page Access Token
-                  </label>
-                  <input type="password" placeholder="EAAxxxxxxx..." value={igAccessToken}
-                    onChange={(e) => setIgAccessToken(e.target.value)}
-                    style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '10px', borderRadius: '6px', fontSize: '13px', fontFamily: 'monospace' }}
-                  />
-                </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                          <div>
+                            <label style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '6px', fontWeight: '600' }}>
+                              Phone Number ID
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="Ex: 109876543210987"
+                              value={wabaPhoneNumberId}
+                              onChange={(e) => setWabaPhoneNumberId(e.target.value)}
+                              style={{ width: '100%', background: 'hsl(var(--border) / 0.3)', border: '1px solid hsl(var(--border))', padding: '12px 14px', borderRadius: '8px', fontSize: '14px', fontFamily: 'monospace', color: '#fff' }}
+                            />
+                          </div>
+                          <div>
+                            <label style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '6px', fontWeight: '600' }}>
+                              Business Account ID (opcional)
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="Ex: 102345678901234"
+                              value={wabaBusinessId}
+                              onChange={(e) => setWabaBusinessId(e.target.value)}
+                              style={{ width: '100%', background: 'hsl(var(--border) / 0.3)', border: '1px solid hsl(var(--border))', padding: '12px 14px', borderRadius: '8px', fontSize: '14px', fontFamily: 'monospace', color: '#fff' }}
+                            />
+                          </div>
+                        </div>
 
-                <div>
-                  <label style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '6px', fontWeight: '600' }}>
-                    Instagram Page ID
-                  </label>
-                  <input type="text" placeholder="Ex: 17841400000000000" value={igPageId}
-                    onChange={(e) => setIgPageId(e.target.value)}
-                    style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '10px', borderRadius: '6px', fontSize: '13px', fontFamily: 'monospace' }}
-                  />
-                </div>
+                        <div style={{ display: 'flex', gap: '10px', marginTop: '6px' }}>
+                          <button
+                            onClick={handleSaveWabaCredentials}
+                            disabled={savingWaba || !wabaAccessToken.trim() || !wabaPhoneNumberId.trim()}
+                            className="btn-primary"
+                            style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '800', borderRadius: '8px' }}
+                          >
+                            {savingWaba ? 'Salvando...' : 'Salvar Credenciais WhatsApp'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
 
-                <div style={{ display: 'flex', gap: '10px', marginTop: '6px' }}>
-                  <button onClick={handleSaveIgCredentials}
-                    disabled={savingIg || !igAccessToken.trim() || !igPageId.trim()}
-                    className="btn-primary" style={{ padding: '10px 20px', fontSize: '13px', fontWeight: '700' }}>
-                    {savingIg ? 'Salvando...' : 'Salvar Credenciais Instagram'}
-                  </button>
-                </div>
-              </div>
+                    {/* Instagram Credentials Form */}
+                    <div className="glass glowing-card" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '20px', borderRadius: '12px' }}>
+                      <h4 style={{ fontSize: '18px', fontWeight: '800', color: '#fff', borderBottom: '1px solid hsl(var(--border))', paddingBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Instagram size={20} style={{ color: '#E1306C' }} /> Credenciais Instagram Business
+                      </h4>
+                      <p style={{ color: 'hsl(var(--text-muted))', fontSize: '13px', margin: 0 }}>
+                        Insira o Page Access Token da página Facebook vinculada à conta Instagram Business.
+                      </p>
 
-              {/* Facebook Messenger Credentials Form */}
-              <div className="glass" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <h4 style={{ fontSize: '14px', fontWeight: '700', borderBottom: '1px solid hsl(var(--border))', paddingBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Facebook size={18} style={{ color: '#1877F2' }} /> Credenciais Facebook Messenger
-                </h4>
-                <p style={{ color: 'hsl(var(--text-muted))', fontSize: '12px', margin: 0 }}>
-                  Insira o Page Access Token da página do Facebook para receber e responder mensagens do Messenger.
-                </p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        <div>
+                          <label style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '6px', fontWeight: '600' }}>
+                            Page Access Token
+                          </label>
+                          <input 
+                            type="password" 
+                            placeholder="EAAxxxxxxx..." 
+                            value={igAccessToken}
+                            onChange={(e) => setIgAccessToken(e.target.value)}
+                            style={{ width: '100%', background: 'hsl(var(--border) / 0.3)', border: '1px solid hsl(var(--border))', padding: '12px 14px', borderRadius: '8px', fontSize: '14px', fontFamily: 'monospace', color: '#fff' }}
+                          />
+                        </div>
 
-                <div>
-                  <label style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '6px', fontWeight: '600' }}>
-                    Page Access Token
-                  </label>
-                  <input type="password" placeholder="EAAxxxxxxx..." value={fbAccessToken}
-                    onChange={(e) => setFbAccessToken(e.target.value)}
-                    style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '10px', borderRadius: '6px', fontSize: '13px', fontFamily: 'monospace' }}
-                  />
-                </div>
+                        <div>
+                          <label style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '6px', fontWeight: '600' }}>
+                            Instagram Page ID
+                          </label>
+                          <input 
+                            type="text" 
+                            placeholder="Ex: 17841400000000000" 
+                            value={igPageId}
+                            onChange={(e) => setIgPageId(e.target.value)}
+                            style={{ width: '100%', background: 'hsl(var(--border) / 0.3)', border: '1px solid hsl(var(--border))', padding: '12px 14px', borderRadius: '8px', fontSize: '14px', fontFamily: 'monospace', color: '#fff' }}
+                          />
+                        </div>
 
-                <div>
-                  <label style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '6px', fontWeight: '600' }}>
-                    Facebook Page ID
-                  </label>
-                  <input type="text" placeholder="Ex: 102345678901234" value={fbPageId}
-                    onChange={(e) => setFbPageId(e.target.value)}
-                    style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '10px', borderRadius: '6px', fontSize: '13px', fontFamily: 'monospace' }}
-                  />
-                </div>
+                        <div style={{ display: 'flex', gap: '10px', marginTop: '6px' }}>
+                          <button 
+                            onClick={handleSaveIgCredentials}
+                            disabled={savingIg || !igAccessToken.trim() || !igPageId.trim()}
+                            className="btn-primary" 
+                            style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '800', borderRadius: '8px' }}
+                          >
+                            {savingIg ? 'Salvando...' : 'Salvar Credenciais Instagram'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
 
-                <div style={{ display: 'flex', gap: '10px', marginTop: '6px' }}>
-                  <button onClick={handleSaveFbCredentials}
-                    disabled={savingFb || !fbAccessToken.trim() || !fbPageId.trim()}
-                    className="btn-primary" style={{ padding: '10px 20px', fontSize: '13px', fontWeight: '700' }}>
-                    {savingFb ? 'Salvando...' : 'Salvar Credenciais Facebook'}
-                  </button>
-                </div>
+                    {/* Facebook Messenger Credentials Form */}
+                    <div className="glass glowing-card" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '20px', borderRadius: '12px' }}>
+                      <h4 style={{ fontSize: '18px', fontWeight: '800', color: '#fff', borderBottom: '1px solid hsl(var(--border))', paddingBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Facebook size={20} style={{ color: '#1877F2' }} /> Credenciais Facebook Messenger
+                      </h4>
+                      <p style={{ color: 'hsl(var(--text-muted))', fontSize: '13px', margin: 0 }}>
+                        Insira o Page Access Token da página do Facebook para receber e responder mensagens do Messenger.
+                      </p>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        <div>
+                          <label style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '6px', fontWeight: '600' }}>
+                            Page Access Token
+                          </label>
+                          <input 
+                            type="password" 
+                            placeholder="EAAxxxxxxx..." 
+                            value={fbAccessToken}
+                            onChange={(e) => setFbAccessToken(e.target.value)}
+                            style={{ width: '100%', background: 'hsl(var(--border) / 0.3)', border: '1px solid hsl(var(--border))', padding: '12px 14px', borderRadius: '8px', fontSize: '14px', fontFamily: 'monospace', color: '#fff' }}
+                          />
+                        </div>
+
+                        <div>
+                          <label style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '6px', fontWeight: '600' }}>
+                            Facebook Page ID
+                          </label>
+                          <input 
+                            type="text" 
+                            placeholder="Ex: 102345678901234" 
+                            value={fbPageId}
+                            onChange={(e) => setFbPageId(e.target.value)}
+                            style={{ width: '100%', background: 'hsl(var(--border) / 0.3)', border: '1px solid hsl(var(--border))', padding: '12px 14px', borderRadius: '8px', fontSize: '14px', fontFamily: 'monospace', color: '#fff' }}
+                          />
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '10px', marginTop: '6px' }}>
+                          <button 
+                            onClick={handleSaveFbCredentials}
+                            disabled={savingFb || !fbAccessToken.trim() || !fbPageId.trim()}
+                            className="btn-primary" 
+                            style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '800', borderRadius: '8px' }}
+                          >
+                            {savingFb ? 'Salvando...' : 'Salvar Credenciais Facebook'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : activeHubCategory === 'faq' ? (
+                  /* Styled Accordions Panel for Support & FAQ */
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '850px' }}>
+                    <div>
+                      <h2 style={{ fontSize: '32px', fontWeight: '800', fontFamily: 'var(--font-display)', color: '#fff' }}>Suporte & Perguntas Frequentes (FAQ)</h2>
+                      <p style={{ color: 'hsl(var(--text-muted))', fontSize: '14px', marginTop: '6px' }}>
+                        Dúvidas sobre o funcionamento do ChatFlow SaaS para varejo, canais de integração e automação.
+                      </p>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                      {[
+                        {
+                          q: "Como configurar o disparo para carrinhos abandonados?",
+                          a: "No menu \"Disparos\", crie uma campanha segmentando pelo Rótulo CRM \"Carrinho Abandonado / Pagamento Pendente\". Certifique-se de que sua API de e-commerce (como Shopify ou WooCommerce) está enviando os eventos de checkout para o ChatFlow."
+                        },
+                        {
+                          q: "Posso usar o mesmo número de WhatsApp oficial em múltiplos atendentes?",
+                          a: "Sim! Com a integração oficial da API do WhatsApp Business (WABA), múltiplos operadores/atendentes da sua loja de varejo podem responder de forma colaborativa no menu \"Conversas\", dividindo a carga de suporte e faturamento de forma inteligente."
+                        },
+                        {
+                          q: "Qual a diferença entre a API Oficial e conexões baseadas em QR Code?",
+                          a: "A API Oficial da Meta (WABA) garante estabilidade de 100%, sem quedas de conexão ou riscos de banimento, permitindo disparos ativos em lote para toda a sua base de clientes, além de habilitar o selo de verificação verde oficial para a sua marca de varejo."
+                        },
+                        {
+                          q: "Como criar fluxos de resposta automática para dúvidas de frete e rastreamento?",
+                          a: "Vá em \"Bases de Conhecimento\", insira o resumo da sua política de frete e utilize o NoviAPI (se necessário) para buscar o rastreamento em tempo real nos Correios ou na Jadlog através de requisições HTTPS e códigos JavaScript isolados."
+                        }
+                      ].map((item, index) => {
+                        const isOpen = activeFaq === index;
+                        return (
+                          <div 
+                            key={index}
+                            className="glass"
+                            style={{ 
+                              borderRadius: '8px', 
+                              overflow: 'hidden', 
+                              border: isOpen ? '1px solid hsl(var(--primary))' : '1px solid hsl(var(--border))',
+                              boxShadow: isOpen ? '0 0 15px hsl(var(--primary-glow))' : 'none',
+                              transition: 'all 0.3s ease'
+                            }}
+                          >
+                            <div 
+                              onClick={() => setActiveFaq(isOpen ? null : index)}
+                              style={{ 
+                                padding: '18px 24px', 
+                                display: 'flex', 
+                                justifyContent: 'space-between', 
+                                alignItems: 'center', 
+                                cursor: 'pointer', 
+                                background: isOpen ? 'hsl(var(--bg-card-hover) / 0.5)' : 'transparent',
+                                transition: 'all 0.2s'
+                              }}
+                            >
+                              <span style={{ fontSize: '15px', fontWeight: '700', color: '#fff' }}>{item.q}</span>
+                              <ChevronRight size={18} style={{ transform: isOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s', color: 'hsl(var(--primary))' }} />
+                            </div>
+                            <div 
+                              style={{ 
+                                maxHeight: isOpen ? '200px' : '0', 
+                                overflow: 'hidden', 
+                                transition: 'all 0.3s cubic-bezier(0,1,0.5,1)',
+                                padding: isOpen ? '18px 24px' : '0 24px',
+                                borderTop: isOpen ? '1px solid hsl(var(--border))' : 'none',
+                                background: 'hsl(var(--bg-card) / 0.2)'
+                              }}
+                            >
+                              <p style={{ fontSize: '13.5px', color: 'hsl(var(--text-muted))', lineHeight: '1.6', margin: 0 }}>
+                                {item.a}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : (
+                  /* Hub Announcement and Community Feed */
+                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '30px', alignItems: 'start', maxWidth: '1200px' }}>
+                    {/* Left Column: Feed */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                      {/* Create Post Panel */}
+                      <div className="glass glowing-card" style={{ padding: '24px', borderRadius: '12px' }}>
+                        <h4 style={{ fontSize: '16px', fontWeight: '800', color: '#fff', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <Plus size={18} style={{ color: 'hsl(var(--primary))' }} /> Criar Publicação
+                        </h4>
+                        <form onSubmit={handleCreatePost} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: '2.5fr 1fr', gap: '12px' }}>
+                            <input 
+                              type="text" 
+                              placeholder="Título do anúncio ou prompt..." 
+                              value={newPostTitle}
+                              onChange={(e) => setNewPostTitle(e.target.value)}
+                              style={{ background: 'hsl(var(--border) / 0.3)', border: '1px solid hsl(var(--border))', padding: '10px 14px', borderRadius: '6px', fontSize: '13px', color: '#fff' }}
+                            />
+                            <select 
+                              value={newPostCategory}
+                              onChange={(e) => setNewPostCategory(e.target.value)}
+                              style={{ background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '10px 14px', borderRadius: '6px', fontSize: '13px', color: '#fff', outline: 'none' }}
+                            >
+                              <option value="Geral">💬 Geral</option>
+                              <option value="Comunicados">📢 Comunicados</option>
+                              <option value="Prompts Share">💡 Prompts Share</option>
+                            </select>
+                          </div>
+                          <textarea 
+                            rows={3} 
+                            placeholder="Descreva as novidades, dicas ou compartilhe aquele prompt matador de vendas para retail..." 
+                            value={newPostContent}
+                            onChange={(e) => setNewPostContent(e.target.value)}
+                            style={{ background: 'hsl(var(--border) / 0.3)', border: '1px solid hsl(var(--border))', padding: '10px 12px', borderRadius: '6px', fontSize: '13px', color: '#fff', resize: 'none', lineHeight: '1.4' }}
+                          />
+                          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                            <button type="submit" className="btn-primary" style={{ padding: '8px 20px', fontSize: '12px', borderRadius: '6px' }}>
+                              Publicar no Hub
+                            </button>
+                          </div>
+                        </form>
+                      </div>
+
+                      {/* Post cards list */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                        {hubPosts
+                          .filter(post => {
+                            // Category filter
+                            if (activeHubCategory !== 'inicio') {
+                              const activeTagMap = {
+                                'geral': 'Geral',
+                                'comunicados': 'Comunicados',
+                                'prompts': 'Prompts Share'
+                              };
+                              if (post.badge !== activeTagMap[activeHubCategory]) {
+                                return false;
+                              }
+                            }
+                            // Search filter
+                            if (hubSearchQuery.trim()) {
+                              const q = hubSearchQuery.toLowerCase();
+                              return post.title.toLowerCase().includes(q) || post.content.toLowerCase().includes(q);
+                            }
+                            return true;
+                          })
+                          .map(post => (
+                            <div key={post.id} className="glass glowing-card" style={{ padding: '24px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                              
+                              {/* Optional Cover Image */}
+                              {post.imageUrl && (
+                                <div style={{ width: '100%', height: '220px', borderRadius: '8px', overflow: 'hidden', border: '1px solid hsl(var(--border))' }}>
+                                  <img src={post.imageUrl} alt={post.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                </div>
+                              )}
+
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                  <img src={post.authorAvatar} alt={post.author} style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', border: '1px solid hsl(var(--border))' }} />
+                                  <div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                      <span style={{ fontSize: '14px', fontWeight: '700', color: '#fff' }}>{post.author}</span>
+                                      <span style={{ fontSize: '10px', background: 'hsl(var(--border))', color: 'hsl(var(--text-muted))', padding: '2px 6px', borderRadius: '4px', fontWeight: '600' }}>
+                                        {post.authorRole}
+                                      </span>
+                                    </div>
+                                    <span style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', marginTop: '2px', display: 'block' }}>{post.time}</span>
+                                  </div>
+                                </div>
+                                <span className={`badge ${post.badge === 'Geral' ? 'badge-widget' : post.badge === 'Comunicados' ? 'badge-instagram' : 'badge-whatsapp'}`} style={{ padding: '5px 12px', fontSize: '11px', borderRadius: '20px' }}>
+                                  {post.badge}
+                                </span>
+                              </div>
+
+                              <div>
+                                <h3 style={{ fontSize: '20px', fontWeight: '800', color: '#fff', fontFamily: 'var(--font-display)', lineHeight: '1.3' }}>{post.title}</h3>
+                                <p style={{ fontSize: '13.5px', color: 'hsl(var(--text-muted))', marginTop: '10px', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
+                                  {post.content}
+                                </p>
+                              </div>
+
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', borderTop: '1px solid hsl(var(--border))', paddingTop: '14px', marginTop: '4px' }}>
+                                <button 
+                                  onClick={() => handleLikePost(post.id)}
+                                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', padding: '4px 8px', borderRadius: '6px', color: post.liked ? '#ff1744' : 'hsl(var(--text-muted))', transition: 'all 0.2s' }}
+                                >
+                                  <Heart size={16} fill={post.liked ? '#ff1744' : 'transparent'} style={{ transition: 'all 0.2s' }} />
+                                  <span style={{ fontSize: '13px', fontWeight: '600' }}>{post.likes}</span>
+                                </button>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'hsl(var(--text-muted))', fontSize: '13px', padding: '4px 8px' }}>
+                                  <MessageSquare size={16} />
+                                  <span style={{ fontWeight: '600' }}>{post.comments}</span>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+
+                        {hubPosts.filter(post => {
+                          if (activeHubCategory !== 'inicio') {
+                            const activeTagMap = {
+                              'geral': 'Geral',
+                              'comunicados': 'Comunicados',
+                              'prompts': 'Prompts Share'
+                            };
+                            if (post.badge !== activeTagMap[activeHubCategory]) return false;
+                          }
+                          if (hubSearchQuery.trim()) {
+                            const q = hubSearchQuery.toLowerCase();
+                            return post.title.toLowerCase().includes(q) || post.content.toLowerCase().includes(q);
+                          }
+                          return true;
+                        }).length === 0 && (
+                          <div className="glass" style={{ padding: '60px 20px', textAlign: 'center', color: 'hsl(var(--text-muted))', borderRadius: '12px' }}>
+                            <p style={{ fontSize: '14px' }}>Nenhuma publicação encontrada para esta categoria ou busca.</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Right Column: Community Widget Card */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                      <div className="glass" style={{ padding: '24px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        <h4 style={{ fontSize: '15px', fontWeight: '800', color: '#fff' }}>🎯 Dicas de Engajamento</h4>
+                        <p style={{ fontSize: '12.5px', color: 'hsl(var(--text-muted))', lineHeight: '1.5', margin: 0 }}>
+                          Compartilhe prompts que aumentam o engajamento da sua loja ou compartilhe feedbacks das suas campanhas de disparos em lote com outros merchants!
+                        </p>
+                        <hr style={{ border: 'none', borderTop: '1px solid hsl(var(--border))', margin: '4px 0' }} />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#00e5ff' }} />
+                          <span style={{ fontSize: '12px', color: 'hsl(var(--text-muted))' }}>Suporte oficial das 9h às 18h</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
