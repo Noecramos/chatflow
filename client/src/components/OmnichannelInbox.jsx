@@ -400,8 +400,11 @@ export default function OmnichannelInbox({ token, user }) {
                   </button>
                 </>) : (<>
                   <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Registre observações..." rows={10} style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', borderRadius: '6px', padding: '10px', fontSize: '12px', outline: 'none', resize: 'none', lineHeight: '1.5' }} />
-                  <select value={label} onChange={(e) => setLabel(e.target.value)} style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', borderRadius: '6px', padding: '6px', fontSize: '11px' }}>
-                    <option value="">Sem Label</option><option value="Lead">Lead</option><option value="Support">Suporte</option><option value="Billing">Faturamento</option>
+                  <select value={label} onChange={(e) => setLabel(e.target.value)} style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', borderRadius: '6px', padding: '6px', fontSize: '11px', color: '#fff' }}>
+                    <option value="">Sem Marcador</option>
+                    <option value="Lead">Novo Lead / Prospecto</option>
+                    <option value="Billing">Carrinho Abandonado / Pagamento Pendente</option>
+                    <option value="Support">Pós-Venda / Suporte ao Cliente</option>
                   </select>
                   <button onClick={handleSaveProperties} disabled={metaLoading} className="btn-primary" style={{ width: '100%', padding: '10px', fontSize: '12px' }}>
                     {metaLoading ? "Salvando..." : "Salvar Propriedades"}
