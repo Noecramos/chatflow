@@ -55,6 +55,17 @@ input, select, textarea, button {
   color: inherit;
 }
 
+/* Robust styling to prevent unreadable dropdown lists (white-on-white or low-contrast option elements) */
+select option {
+  background-color: #1b1b22 !important;
+  color: #ffffff !important;
+}
+
+select {
+  background-color: #13131a;
+  color: #ffffff;
+}
+
 /* Glassmorphism panel helper */
 .glass {
   background: hsl(var(--bg-glass));
