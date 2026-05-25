@@ -77,7 +77,7 @@ export default function CrmDashboard({ token }) {
         <KpiCard icon={DollarSign} label="Valor do Pipeline" value={`R$ ${metrics.pipelineValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} color="#00c853" />
         <KpiCard icon={TrendingUp} label="Taxa de Conversão" value={`${metrics.conversionRate}%`} color="#006aff" />
         <KpiCard icon={Clock} label="Tempo Médio (dias)" value={metrics.avgDaysToClose || '—'} color="#f9d423" />
-        <KpiCard icon={Target} label="Deals Ativos" value={metrics.activeDeals} color="#ff6b35" />
+        <KpiCard icon={Target} label="Negócios Ativos" value={metrics.activeDeals} color="#ff6b35" />
         <KpiCard icon={Zap} label="Ganhos (Won)" value={`${metrics.wonCount} — R$ ${metrics.wonValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} color="#00c853" subtitle />
 
       </div>
