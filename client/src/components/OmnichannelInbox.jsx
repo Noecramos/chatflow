@@ -410,7 +410,7 @@ export default function OmnichannelInbox({ token, user }) {
                 ))}
               </div>
               <div style={{ padding: '12px 16px' }}>
-                <button onClick={handleToggleHandover} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: 'none', fontSize: '13px', fontWeight: '700', cursor: 'pointer', background: activeConv.isHumanHandoverActive ? 'hsl(var(--secondary))' : '#c62828', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                <button onClick={handleToggleHandover} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: 'none', fontSize: '13px', fontWeight: '700', cursor: 'pointer', background: activeConv.isHumanHandoverActive ? 'hsl(var(--secondary))' : '#c62828', color: activeConv.isHumanHandoverActive ? '#000' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
                   🖐 {activeConv.isHumanHandoverActive ? 'Devolver ao IA' : 'Intervir'}
                 </button>
               </div>
