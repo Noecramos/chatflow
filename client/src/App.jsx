@@ -1689,16 +1689,18 @@ export default function App() {
                 
                 {/* Left logo card */}
                 <div className="glass" style={{ padding: '30px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
-                  <div style={{ width: '110px', height: '110px', borderRadius: '50%', border: '2px dashed hsl(var(--border))', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.01)', position: 'relative', overflow: 'hidden' }}>
-                    {orgLogo ? (
-                      <img src={orgLogo} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    ) : (
-                      <div style={{ margin: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', color: 'hsl(var(--text-muted))' }}>
-                        <Upload size={24} />
-                        <span style={{ fontSize: '10px' }}>Logo</span>
-                      </div>
-                    )}
-                    <button onClick={handleLogoUpload} style={{ position: 'absolute', bottom: '0', right: '0', background: 'hsl(var(--primary))', color: '#fff', border: 'none', width: '30px', height: '30px', borderRadius: '50%', display: 'flex', cursor: 'pointer', zIndex: 2 }}>
+                  <div style={{ position: 'relative', width: '110px', height: '110px' }}>
+                    <div style={{ width: '110px', height: '110px', borderRadius: '50%', border: '2px dashed hsl(var(--border))', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.01)', overflow: 'hidden' }}>
+                      {orgLogo ? (
+                        <img src={orgLogo} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', color: 'hsl(var(--text-muted))' }}>
+                          <Upload size={24} />
+                          <span style={{ fontSize: '10px' }}>Logo</span>
+                        </div>
+                      )}
+                    </div>
+                    <button onClick={handleLogoUpload} style={{ position: 'absolute', bottom: '2px', right: '2px', background: 'hsl(var(--primary))', color: '#fff', border: '2px solid hsl(var(--bg))', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', cursor: 'pointer', zIndex: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }}>
                       <Settings size={14} style={{ margin: 'auto' }} />
                     </button>
                   </div>
