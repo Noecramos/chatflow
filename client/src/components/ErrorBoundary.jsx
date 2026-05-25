@@ -49,14 +49,14 @@ export default class ErrorBoundary extends React.Component {
               background: 'linear-gradient(to right, #ff4e50, #f9d423)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent'
-            }}>Something Went Wrong</h2>
+            }}>Algo deu errado</h2>
             <p style={{
               color: '#7f7f9e',
               fontSize: '14px',
               lineHeight: '1.6',
               marginBottom: '24px'
             }}>
-              An unexpected error occurred in the dashboard. Try reloading the page or contact support if the issue persists.
+              Ocorreu um erro inesperado no painel. Tente recarregar a página ou entre em contato com o suporte se o problema persistir.
             </p>
             <button 
               onClick={() => window.location.reload()}
@@ -80,7 +80,7 @@ export default class ErrorBoundary extends React.Component {
                 e.currentTarget.style.boxShadow = '0 4px 15px rgba(138, 43, 226, 0.4)';
               }}
             >
-              Reload Dashboard
+              Recarregar Painel
             </button>
             {this.state.error && (
               <pre style={{

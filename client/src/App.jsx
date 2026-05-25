@@ -172,7 +172,7 @@ export default function App() {
       authorRole: "Dev Relations",
       authorAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80",
       time: "1 semana atrás",
-      badge: "Prompts Share",
+      badge: "Compartilhar Prompts",
       title: "Melhorias no NoviAPI Sandbox 🧪",
       content: "Nosso ambiente de sandbox JavaScript (Node VM) agora conta com autossalvamento automático antes da execução. Você pode rodar consultas dinâmicas de frete diretamente nos Correios ou integrar com o Bling ERP de forma totalmente isolada e performática.",
       likes: 8,
@@ -3217,7 +3217,7 @@ export default function App() {
                         style={{ padding: '10px 12px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px', fontWeight: '600' }}
                       >
                         <Sparkles size={16} />
-                        <span>💡 Prompts Share</span>
+                        <span>💡 Compartilhar Prompts</span>
                       </div>
                     </div>
                   </div>
@@ -3255,7 +3255,7 @@ export default function App() {
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <span className="badge" style={{ background: 'hsl(var(--primary-glow))', color: 'hsl(var(--primary))', border: '1px solid hsl(var(--primary) / 0.3)', padding: '6px 12px', fontSize: '12px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <Sparkles size={12} /> Dev Operator
+                      <Sparkles size={12} /> Operador Dev
                     </span>
                   </div>
                 </div>
@@ -3591,7 +3591,7 @@ export default function App() {
                             >
                               <option value="Geral">💬 Geral</option>
                               <option value="Comunicados">📢 Comunicados</option>
-                              <option value="Prompts Share">💡 Prompts Share</option>
+                              <option value="Compartilhar Prompts">💡 Compartilhar Prompts</option>
                             </select>
                           </div>
                           <textarea 
@@ -3618,7 +3618,7 @@ export default function App() {
                               const activeTagMap = {
                                 'geral': 'Geral',
                                 'comunicados': 'Comunicados',
-                                'prompts': 'Prompts Share'
+                                'prompts': 'Compartilhar Prompts'
                               };
                               if (post.badge !== activeTagMap[activeHubCategory]) {
                                 return false;
@@ -3687,7 +3687,7 @@ export default function App() {
                             const activeTagMap = {
                               'geral': 'Geral',
                               'comunicados': 'Comunicados',
-                              'prompts': 'Prompts Share'
+                              'prompts': 'Compartilhar Prompts'
                             };
                             if (post.badge !== activeTagMap[activeHubCategory]) return false;
                           }

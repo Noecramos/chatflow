@@ -268,7 +268,7 @@ export default function OmnichannelInbox({ token, user }) {
               <div style={{ padding: '12px 20px', borderBottom: '1px solid hsl(var(--border))', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'hsl(var(--bg-card) / 0.15)', flexShrink: 0 }}>
                 <div>
                   <h4 style={{ fontSize: '15px', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
-                    {activeConv.contact?.name || 'Customer'} {renderChannelBadge(activeConv.channel.type)}
+                    {activeConv.contact?.name || 'Cliente'} {renderChannelBadge(activeConv.channel.type)}
                   </h4>
                   <p style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', margin: '2px 0 0' }}>
                     ID: <code style={{ fontSize: '10px' }}>{activeConv.contact?.platformId}</code> · Bot: <strong>{activeConv.bot?.name || "Zimmy"}</strong>
@@ -277,11 +277,11 @@ export default function OmnichannelInbox({ token, user }) {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <button onClick={handleGenerateSuggestion} disabled={generatingSuggestion}
                     style={{ background: 'transparent', border: '1px solid hsl(var(--primary))', color: 'hsl(var(--primary))', padding: '6px 12px', borderRadius: '8px', fontSize: '11px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <Sparkles size={13} /> {generatingSuggestion ? "..." : "AI"}
+                    <Sparkles size={13} /> {generatingSuggestion ? "..." : "IA"}
                   </button>
                   <button onClick={handleToggleHandover}
                     style={{ background: activeConv.isHumanHandoverActive ? 'hsl(var(--secondary))' : 'hsl(var(--border))', border: 'none', color: activeConv.isHumanHandoverActive ? '#000' : '#fff', padding: '6px 14px', borderRadius: '8px', fontSize: '11px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <Bot size={13} /> {activeConv.isHumanHandoverActive ? "AI Muted" : "AI Auto"}
+                    <Bot size={13} /> {activeConv.isHumanHandoverActive ? "IA Silenciada" : "IA Auto"}
                   </button>
                 </div>
               </div>
@@ -290,7 +290,7 @@ export default function OmnichannelInbox({ token, user }) {
               {aiSuggestion && (
                 <div style={{ margin: '10px 20px 0', padding: '10px 14px', background: 'hsl(var(--primary-glow) / 0.2)', borderRadius: '8px', border: '1px solid hsl(var(--primary) / 0.3)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                    <span style={{ fontSize: '10px', fontWeight: '700', color: 'hsl(var(--primary))' }}>✨ AI SUGGESTION</span>
+                    <span style={{ fontSize: '10px', fontWeight: '700', color: 'hsl(var(--primary))' }}>✨ SUGESTÃO DA IA</span>
                     <button onClick={() => setAiSuggestion('')} style={{ background: 'none', border: 'none', color: 'hsl(var(--text-muted))', cursor: 'pointer', fontSize: '10px' }}>✕</button>
                   </div>
                   <p style={{ fontSize: '12px', fontStyle: 'italic', margin: '0 0 6px' }}>"{aiSuggestion}"</p>
@@ -308,7 +308,7 @@ export default function OmnichannelInbox({ token, user }) {
                   return (
                     <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isUser ? 'flex-start' : 'flex-end', maxWidth: '70%', alignSelf: isUser ? 'flex-start' : 'flex-end' }}>
                       <span style={{ fontSize: '9px', color: 'hsl(var(--text-muted))', marginBottom: '2px', padding: '0 4px' }}>
-                        {isUser ? (activeConv.contact?.name || 'User') : (isAgent ? "Agent" : (activeConv.bot?.name || "Zimmy"))}
+                        {isUser ? (activeConv.contact?.name || 'Cliente') : (isAgent ? "Atendente" : (activeConv.bot?.name || "Zimmy"))}
                       </span>
                       <div style={{ padding: '10px 14px', borderRadius: '12px', fontSize: '13px', lineHeight: '1.45', wordBreak: 'break-word', background: isUser ? 'hsl(var(--border) / 0.5)' : (isAgent ? 'linear-gradient(135deg, hsl(var(--secondary) / 0.3), hsl(var(--secondary) / 0.15))' : 'linear-gradient(135deg, hsl(var(--primary) / 0.4), hsl(var(--primary) / 0.2))'), border: `1px solid ${isUser ? 'hsl(var(--border))' : (isAgent ? 'hsl(var(--secondary) / 0.3)' : 'hsl(var(--primary) / 0.3)')}` }}>
                         {msg.content}
@@ -420,7 +420,7 @@ export default function OmnichannelInbox({ token, user }) {
             <div style={{ display: 'flex', gap: '20px' }}>
               {[
                 { icon: '💬', value: stats.totalConversations, label: 'Total de\nConversas', color: 'hsl(var(--primary))' },
-                { icon: '🟢', value: tabCounts.human_requested || 0, label: 'Agentes\nDistintos', color: '#4caf50' },
+                { icon: '🟢', value: tabCounts.human_requested || 0, label: 'Humano\nSolicitado', color: '#4caf50' },
                 { icon: '✦', value: stats.distinctChannels, label: 'Canais\nDistintos', color: '#ff9800' }
               ].map((stat, i) => (
                 <div key={i} style={{
