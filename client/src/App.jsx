@@ -3170,69 +3170,63 @@ export default function App() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   {/* Category Group 1 */}
                   <div>
-                    <span style={{ fontSize: '10px', textTransform: 'uppercase', color: 'hsl(var(--text-muted))', fontWeight: '700', letterSpacing: '0.1em', paddingLeft: '8px' }}>Canais</span>
+                    <span style={{ fontSize: '10px', textTransform: 'uppercase', color: 'hsl(var(--text-muted))', fontWeight: '700', letterSpacing: '0.1em', paddingLeft: '12px' }}>Canais</span>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '8px' }}>
                       <div 
                         onClick={() => setActiveHubCategory('inicio')}
                         className={`nav-item ${activeHubCategory === 'inicio' ? 'active' : ''}`}
-                        style={{ padding: '10px 12px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px', fontWeight: '600' }}
                       >
                         <Zap size={16} />
-                        <span>⚡ Início</span>
+                        <span>Início</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Category Group 2 */}
                   <div>
-                    <span style={{ fontSize: '10px', textTransform: 'uppercase', color: 'hsl(var(--text-muted))', fontWeight: '700', letterSpacing: '0.1em', paddingLeft: '8px' }}>Público</span>
+                    <span style={{ fontSize: '10px', textTransform: 'uppercase', color: 'hsl(var(--text-muted))', fontWeight: '700', letterSpacing: '0.1em', paddingLeft: '12px' }}>Público</span>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '8px' }}>
                       <div 
                         onClick={() => setActiveHubCategory('geral')}
                         className={`nav-item ${activeHubCategory === 'geral' ? 'active' : ''}`}
-                        style={{ padding: '10px 12px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px', fontWeight: '600' }}
                       >
                         <MessageSquare size={16} />
-                        <span>💬 Geral</span>
+                        <span>Geral</span>
                       </div>
                       <div 
                         onClick={() => setActiveHubCategory('comunicados')}
                         className={`nav-item ${activeHubCategory === 'comunicados' ? 'active' : ''}`}
-                        style={{ padding: '10px 12px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px', fontWeight: '600' }}
                       >
                         <Megaphone size={16} />
-                        <span>📢 Comunicados</span>
+                        <span>Comunicados</span>
                       </div>
                       <div 
                         onClick={() => setActiveHubCategory('meta')}
                         className={`nav-item ${activeHubCategory === 'meta' ? 'active' : ''}`}
-                        style={{ padding: '10px 12px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px', fontWeight: '600' }}
                       >
                         <Phone size={16} />
-                        <span>🔌 Integração Meta</span>
+                        <span>Integração Meta</span>
                       </div>
                       <div 
                         onClick={() => setActiveHubCategory('prompts')}
                         className={`nav-item ${activeHubCategory === 'prompts' ? 'active' : ''}`}
-                        style={{ padding: '10px 12px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px', fontWeight: '600' }}
                       >
                         <Sparkles size={16} />
-                        <span>💡 Compartilhar Prompts</span>
+                        <span>Compartilhar Prompts</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Category Group 3 */}
                   <div>
-                    <span style={{ fontSize: '10px', textTransform: 'uppercase', color: 'hsl(var(--text-muted))', fontWeight: '700', letterSpacing: '0.1em', paddingLeft: '8px' }}>Ajuda</span>
+                    <span style={{ fontSize: '10px', textTransform: 'uppercase', color: 'hsl(var(--text-muted))', fontWeight: '700', letterSpacing: '0.1em', paddingLeft: '12px' }}>Ajuda</span>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '8px' }}>
                       <div 
                         onClick={() => setActiveHubCategory('faq')}
                         className={`nav-item ${activeHubCategory === 'faq' ? 'active' : ''}`}
-                        style={{ padding: '10px 12px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px', fontWeight: '600' }}
                       >
                         <HelpCircle size={16} />
-                        <span>❓ Suporte & FAQ</span>
+                        <span>Suporte & FAQ</span>
                       </div>
                     </div>
                   </div>
