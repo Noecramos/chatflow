@@ -1430,7 +1430,7 @@ export default function App() {
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'hsl(var(--border) / 0.4)', padding: '6px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: '600', cursor: 'pointer', border: '1px solid hsl(var(--border))' }}>
               <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#25d366' }}></span>
-              <span>{organization?.name || "Noviapp"}</span>
+              <span>Online</span>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
