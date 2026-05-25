@@ -7,11 +7,11 @@ import {
 import io from 'socket.io-client';
 
 const STATUS_TABS = [
+  { key: 'all', label: 'Todas conversas' },
   { key: 'unresolved', label: 'Não Resolvidas' },
   { key: 'unread', label: 'Não Lidas' },
   { key: 'human_requested', label: 'Humano Solicitado' },
-  { key: 'resolved', label: 'Resolvidas' },
-  { key: 'all', label: 'Todas conversas' }
+  { key: 'resolved', label: 'Resolvidas' }
 ];
 
 const PRIORITY_OPTIONS = [
@@ -36,7 +36,7 @@ export default function OmnichannelInbox({ token, user }) {
   const [handoverLoading, setHandoverLoading] = useState(false);
   const [metaLoading, setMetaLoading] = useState(false);
   
-  const [activeTab, setActiveTab] = useState('unresolved');
+  const [activeTab, setActiveTab] = useState('all');
   const [searchFilter, setSearchFilter] = useState('');
   const [channelFilter, setChannelFilter] = useState('ALL');
   const [tabCounts, setTabCounts] = useState({});
