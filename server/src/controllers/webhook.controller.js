@@ -6,6 +6,48 @@ const prisma = require('../db');
 const metaService = require('../services/meta');
 const aiService = require('../services/ai.service');
 
+const processedMessageIds = new Set();
+const processedMessageIdsQueue = [];
+
+async function isDuplicate(msgId) {
+  if (!msgId) return false;
+
+  // Check in-memory cache
+  if (processedMessageIds.has(msgId)) {
+    console.log(`[Webhook Deduplication] Duplicate detected (in-memory): ${msgId}`);
+    return true;
+  }
+
+  // Check database to persist across restarts
+  try {
+    const existing = await prisma.message.findFirst({
+      where: {
+        metadata: {
+          contains: msgId
+        }
+      }
+    });
+    if (existing) {
+      console.log(`[Webhook Deduplication] Duplicate detected (database): ${msgId}`);
+      // Add to cache for faster future lookups
+      processedMessageIds.add(msgId);
+      processedMessageIdsQueue.push(msgId);
+      return true;
+    }
+  } catch (err) {
+    console.warn("[Webhook Deduplication] DB lookup failed:", err.message);
+  }
+
+  // Add to in-memory cache
+  processedMessageIds.add(msgId);
+  processedMessageIdsQueue.push(msgId);
+  if (processedMessageIdsQueue.length > 5000) {
+    const oldest = processedMessageIdsQueue.shift();
+    processedMessageIds.delete(oldest);
+  }
+
+  return false;
+}
 
 let io = null;
 
@@ -67,12 +109,18 @@ module.exports = {
 
         if (!message) return;
 
+        // Webhook retry deduplication
+        if (await isDuplicate(message.id)) {
+          console.log(`[Meta Webhook] Skipping duplicate WhatsApp message: ${message.id}`);
+          return;
+        }
+
         const senderPhone = message.from;
         const senderName = contact?.profile?.name || `WhatsApp User (${senderPhone.slice(-4)})`;
         const phoneId = change.metadata?.phone_number_id;
 
         let messageText = "";
-        let metaDetails = {};
+        let metaDetails = { whatsappMessageId: message.id };
 
         if (message.type === 'text') {
           messageText = message.text.body;
@@ -80,15 +128,15 @@ module.exports = {
           const interactive = message.interactive;
           if (interactive.type === 'list_reply') {
             messageText = interactive.list_reply.title;
-            metaDetails = { list_reply_id: interactive.list_reply.id };
+            metaDetails = { ...metaDetails, list_reply_id: interactive.list_reply.id };
           } else if (interactive.type === 'button_reply') {
             messageText = interactive.button_reply.title;
-            metaDetails = { button_reply_id: interactive.button_reply.id };
+            metaDetails = { ...metaDetails, button_reply_id: interactive.button_reply.id };
           }
         } else if (message.type === 'order') {
           const order = message.order;
           messageText = `WhatsApp Native Order Submitted: ${order.product_items.length} items.`;
-          metaDetails = { orderItems: order.product_items, catalogId: order.catalog_id };
+          metaDetails = { ...metaDetails, orderItems: order.product_items, catalogId: order.catalog_id };
         } else {
           messageText = `[Media/Interactive payload: ${message.type}]`;
         }
@@ -116,15 +164,22 @@ module.exports = {
 
         if (!message && !postback) return;
 
+        // Webhook retry deduplication
+        const msgId = message?.mid;
+        if (msgId && await isDuplicate(msgId)) {
+          console.log(`[Meta Webhook] Skipping duplicate IG/Messenger message: ${msgId}`);
+          return;
+        }
+
         let messageText = "";
-        let metaDetails = {};
+        let metaDetails = msgId ? { messengerMessageId: msgId } : {};
 
         if (message) {
           messageText = message.text || "[Media attachment]";
-          metaDetails = message.attachments ? { attachments: message.attachments } : {};
+          metaDetails = message.attachments ? { ...metaDetails, attachments: message.attachments } : metaDetails;
         } else if (postback) {
           messageText = postback.title;
-          metaDetails = { payload: postback.payload };
+          metaDetails = { ...metaDetails, payload: postback.payload };
         }
 
         const channelType = body.object === 'instagram' ? 'INSTAGRAM' : 'MESSENGER';

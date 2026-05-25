@@ -11,6 +11,7 @@ import {
 import OmnichannelInbox from './components/OmnichannelInbox';
 import EcommerceDashboard from './components/EcommerceDashboard';
 import CrmDashboard from './components/CrmDashboard';
+import Documentation from './components/Documentation';
 
 export default function App() {
   const [token, setToken] = useState(localStorage.getItem('token') || '');
@@ -1298,6 +1299,11 @@ export default function App() {
             <span className="badge" style={{ marginLeft: 'auto', background: 'linear-gradient(135deg, hsl(var(--primary)), #8a2be2)', color: '#fff', fontSize: '8px', padding: '2px 5px' }}>NEW</span>
           </div>
 
+          <div onClick={() => setActiveTab('DOCS')} className={`nav-item ${activeTab === 'DOCS' ? 'active' : ''}`}>
+            <HelpCircle size={17} />
+            <span>Documentação</span>
+          </div>
+
           <div onClick={() => setActiveTab('CONFIGURACOES')} className={`nav-item ${activeTab === 'CONFIGURACOES' ? 'active' : ''}`}>
             <Settings size={17} />
             <span>Configurações</span>
@@ -1381,6 +1387,7 @@ export default function App() {
                 {activeTab === 'DISPAROS' && "Disparos"}
                 {activeTab === 'NOVIAPI' && "NoviAPI"}
                 {activeTab === 'METRICAS' && "Métricas"}
+                {activeTab === 'DOCS' && "Documentação"}
                 {activeTab === 'CONFIGURACOES' && "Configurações"}
               </span>
             )}
@@ -3735,6 +3742,11 @@ export default function App() {
                 )}
               </div>
             </div>
+          )}
+
+          {/* TAB 12: DOCUMENTACAO */}
+          {activeTab === 'DOCS' && (
+            <Documentation />
           )}
 
           {/* TAB 11: CONFIGURACOES */}
