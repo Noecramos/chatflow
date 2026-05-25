@@ -1689,8 +1689,8 @@ export default function App() {
                 
                 {/* Left logo card */}
                 <div className="glass" style={{ padding: '30px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
-                  <div style={{ position: 'relative', width: '110px', height: '110px' }}>
-                    <div style={{ width: '110px', height: '110px', borderRadius: '50%', border: '2px dashed hsl(var(--border))', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.01)', overflow: 'hidden' }}>
+                  <div style={{ position: 'relative', width: '120px', height: '120px' }}>
+                    <div onClick={handleLogoUpload} style={{ width: '120px', height: '120px', borderRadius: '50%', border: '2px dashed hsl(var(--border))', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.01)', overflow: 'hidden', cursor: 'pointer' }}>
                       {orgLogo ? (
                         <img src={orgLogo} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       ) : (
@@ -1700,8 +1700,8 @@ export default function App() {
                         </div>
                       )}
                     </div>
-                    <button onClick={handleLogoUpload} style={{ position: 'absolute', bottom: '2px', right: '2px', background: 'hsl(var(--primary))', color: '#fff', border: '2px solid hsl(var(--bg))', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', cursor: 'pointer', zIndex: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }}>
-                      <Settings size={14} style={{ margin: 'auto' }} />
+                    <button onClick={handleLogoUpload} style={{ position: 'absolute', bottom: '-2px', right: '-2px', background: '#8a2be2', color: '#fff', border: '3px solid #0e0e12', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, boxShadow: '0 3px 12px rgba(138, 43, 226, 0.5)' }}>
+                      <Edit size={15} />
                     </button>
                   </div>
                   <div style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', textAlign: 'center' }}>
