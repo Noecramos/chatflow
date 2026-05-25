@@ -6,7 +6,7 @@ import {
   FileCode, Globe, Bell, CheckCircle2, ChevronRight, 
   Plus, Search, HelpCircle, ShieldAlert, Clock, ArrowRight,
   TrendingUp, BarChart3, AlertCircle, Copy, ToggleLeft, ToggleRight, Trash2, Edit, Sliders,
-  Phone, Upload
+  Phone, Upload, Instagram, Facebook
 } from 'lucide-react';
 import OmnichannelInbox from './components/OmnichannelInbox';
 import EcommerceDashboard from './components/EcommerceDashboard';
@@ -97,6 +97,16 @@ export default function App() {
   const [wabaPhoneNumberId, setWabaPhoneNumberId] = useState('');
   const [wabaBusinessId, setWabaBusinessId] = useState('');
   const [savingWaba, setSavingWaba] = useState(false);
+
+  // Instagram Integration states
+  const [igAccessToken, setIgAccessToken] = useState('');
+  const [igPageId, setIgPageId] = useState('');
+  const [savingIg, setSavingIg] = useState(false);
+
+  // Facebook Messenger Integration states
+  const [fbAccessToken, setFbAccessToken] = useState('');
+  const [fbPageId, setFbPageId] = useState('');
+  const [savingFb, setSavingFb] = useState(false);
 
   const handleAuthSubmit = async (e) => {
     e.preventDefault();
@@ -530,6 +540,66 @@ export default function App() {
     } finally {
       setSavingWaba(false);
     }
+  };
+
+  const handleSaveIgCredentials = async () => {
+    if (!igAccessToken.trim() || !igPageId.trim()) {
+      alert('Preencha o Access Token e o Page ID do Instagram.');
+      return;
+    }
+    if (!selectedBot && bots.length === 0) {
+      alert('Crie um Agente AI antes de configurar a integração Instagram.');
+      return;
+    }
+    const botId = selectedBot?.id || bots[0]?.id;
+    setSavingIg(true);
+    try {
+      const res = await fetch(`/channels/bots/${botId}/integrations`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({
+          type: 'INSTAGRAM',
+          credentials: { accessToken: igAccessToken, pageId: igPageId },
+          isActive: true
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('Credenciais do Instagram salvas com sucesso!');
+        setIgAccessToken(''); setIgPageId('');
+      } else { alert(data.error || 'Erro ao salvar credenciais.'); }
+    } catch (err) { console.error(err); alert('Falha de conexão.'); }
+    finally { setSavingIg(false); }
+  };
+
+  const handleSaveFbCredentials = async () => {
+    if (!fbAccessToken.trim() || !fbPageId.trim()) {
+      alert('Preencha o Access Token e o Page ID do Facebook.');
+      return;
+    }
+    if (!selectedBot && bots.length === 0) {
+      alert('Crie um Agente AI antes de configurar a integração Facebook.');
+      return;
+    }
+    const botId = selectedBot?.id || bots[0]?.id;
+    setSavingFb(true);
+    try {
+      const res = await fetch(`/channels/bots/${botId}/integrations`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({
+          type: 'MESSENGER',
+          credentials: { accessToken: fbAccessToken, pageId: fbPageId },
+          isActive: true
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('Credenciais do Facebook Messenger salvas com sucesso!');
+        setFbAccessToken(''); setFbPageId('');
+      } else { alert(data.error || 'Erro ao salvar credenciais.'); }
+    } catch (err) { console.error(err); alert('Falha de conexão.'); }
+    finally { setSavingFb(false); }
   };
 
   const addQuickReply = (e) => {
@@ -1661,6 +1731,82 @@ export default function App() {
                     style={{ padding: '10px 20px', fontSize: '13px', fontWeight: '700' }}
                   >
                     {savingWaba ? 'Salvando...' : 'Salvar Credenciais WhatsApp'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Instagram Credentials Form */}
+              <div className="glass" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <h4 style={{ fontSize: '14px', fontWeight: '700', borderBottom: '1px solid hsl(var(--border))', paddingBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Instagram size={18} style={{ color: '#E1306C' }} /> Credenciais Instagram Business
+                </h4>
+                <p style={{ color: 'hsl(var(--text-muted))', fontSize: '12px', margin: 0 }}>
+                  Insira o Page Access Token da página Facebook vinculada à conta Instagram Business.
+                </p>
+
+                <div>
+                  <label style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '6px', fontWeight: '600' }}>
+                    Page Access Token
+                  </label>
+                  <input type="password" placeholder="EAAxxxxxxx..." value={igAccessToken}
+                    onChange={(e) => setIgAccessToken(e.target.value)}
+                    style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '10px', borderRadius: '6px', fontSize: '13px', fontFamily: 'monospace' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '6px', fontWeight: '600' }}>
+                    Instagram Page ID
+                  </label>
+                  <input type="text" placeholder="Ex: 17841400000000000" value={igPageId}
+                    onChange={(e) => setIgPageId(e.target.value)}
+                    style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '10px', borderRadius: '6px', fontSize: '13px', fontFamily: 'monospace' }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px', marginTop: '6px' }}>
+                  <button onClick={handleSaveIgCredentials}
+                    disabled={savingIg || !igAccessToken.trim() || !igPageId.trim()}
+                    className="btn-primary" style={{ padding: '10px 20px', fontSize: '13px', fontWeight: '700' }}>
+                    {savingIg ? 'Salvando...' : 'Salvar Credenciais Instagram'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Facebook Messenger Credentials Form */}
+              <div className="glass" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <h4 style={{ fontSize: '14px', fontWeight: '700', borderBottom: '1px solid hsl(var(--border))', paddingBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Facebook size={18} style={{ color: '#1877F2' }} /> Credenciais Facebook Messenger
+                </h4>
+                <p style={{ color: 'hsl(var(--text-muted))', fontSize: '12px', margin: 0 }}>
+                  Insira o Page Access Token da página do Facebook para receber e responder mensagens do Messenger.
+                </p>
+
+                <div>
+                  <label style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '6px', fontWeight: '600' }}>
+                    Page Access Token
+                  </label>
+                  <input type="password" placeholder="EAAxxxxxxx..." value={fbAccessToken}
+                    onChange={(e) => setFbAccessToken(e.target.value)}
+                    style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '10px', borderRadius: '6px', fontSize: '13px', fontFamily: 'monospace' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '6px', fontWeight: '600' }}>
+                    Facebook Page ID
+                  </label>
+                  <input type="text" placeholder="Ex: 102345678901234" value={fbPageId}
+                    onChange={(e) => setFbPageId(e.target.value)}
+                    style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '10px', borderRadius: '6px', fontSize: '13px', fontFamily: 'monospace' }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px', marginTop: '6px' }}>
+                  <button onClick={handleSaveFbCredentials}
+                    disabled={savingFb || !fbAccessToken.trim() || !fbPageId.trim()}
+                    className="btn-primary" style={{ padding: '10px 20px', fontSize: '13px', fontWeight: '700' }}>
+                    {savingFb ? 'Salvando...' : 'Salvar Credenciais Facebook'}
                   </button>
                 </div>
               </div>
