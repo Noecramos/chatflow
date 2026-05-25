@@ -6,6 +6,11 @@ const { verifyToken } = require('../middleware/auth.middleware');
 // Pipeline view — contacts grouped by stage
 router.get('/pipeline', verifyToken, crmController.getPipeline);
 
+// Debug endpoint (no DB, no auth)
+router.get('/debug', (req, res) => {
+  res.json({ success: true, debug: true, time: new Date().toISOString(), msg: 'CRM routes are reachable' });
+});
+
 // CRM Metrics — aggregated KPIs
 router.get('/metrics', verifyToken, crmController.getMetrics);
 
