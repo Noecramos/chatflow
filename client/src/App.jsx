@@ -1349,22 +1349,50 @@ export default function App() {
         <div className="main-header" style={{ height: '65px', padding: '0 25px' }}>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: '500' }}>
-            <span style={{ color: 'hsl(var(--text-muted))' }}>Início</span>
-            <ChevronRight size={12} style={{ color: 'hsl(var(--border))' }} />
-            <span style={{ color: '#fff', fontWeight: '600' }}>
-              {activeTab === 'CONVERSAS' && "Conversas"}
-              {activeTab === 'CRM' && "Fluxo CRM"}
-              {activeTab === 'CONTATOS' && "Contatos"}
-              {activeTab === 'AGENTES' && "Agentes AI"}
-              {activeTab === 'OPERADORES' && "Operadores"}
-              {activeTab === 'CONHECIMENTO' && "Bases de conhecimento"}
-              {activeTab === 'ARTEFATOS' && "Artefatos"}
-              {activeTab === 'DISPAROS' && "Disparos"}
-              {activeTab === 'NOVIAPI' && "NoviAPI"}
-              {activeTab === 'METRICAS' && "Métricas"}
-              {activeTab === 'HUB' && "Hub"}
-              {activeTab === 'CONFIGURACOES' && "Configurações"}
+            <span 
+              onClick={() => { setActiveTab('CONVERSAS'); fetchConversations(); }}
+              style={{ color: 'hsl(var(--text-muted))', cursor: 'pointer', transition: 'color 0.2s' }}
+              onMouseEnter={(e) => e.target.style.color = '#fff'}
+              onMouseLeave={(e) => e.target.style.color = 'hsl(var(--text-muted))'}
+            >
+              Início
             </span>
+            <ChevronRight size={12} style={{ color: 'hsl(var(--border))' }} />
+            {activeTab === 'HUB' ? (
+              <>
+                <span 
+                  onClick={() => setActiveHubCategory('inicio')}
+                  style={{ color: 'hsl(var(--text-muted))', cursor: 'pointer', transition: 'color 0.2s' }}
+                  onMouseEnter={(e) => e.target.style.color = '#fff'}
+                  onMouseLeave={(e) => e.target.style.color = 'hsl(var(--text-muted))'}
+                >
+                  Hub
+                </span>
+                <ChevronRight size={12} style={{ color: 'hsl(var(--border))' }} />
+                <span style={{ color: '#fff', fontWeight: '600' }}>
+                  {activeHubCategory === 'inicio' && "Início"}
+                  {activeHubCategory === 'geral' && "Geral"}
+                  {activeHubCategory === 'comunicados' && "Comunicados"}
+                  {activeHubCategory === 'meta' && "Integração Meta"}
+                  {activeHubCategory === 'prompts' && "Compartilhar Prompts"}
+                  {activeHubCategory === 'faq' && "Suporte & FAQ"}
+                </span>
+              </>
+            ) : (
+              <span style={{ color: '#fff', fontWeight: '600' }}>
+                {activeTab === 'CONVERSAS' && "Conversas"}
+                {activeTab === 'CRM' && "Fluxo CRM"}
+                {activeTab === 'CONTATOS' && "Contatos"}
+                {activeTab === 'AGENTES' && "Agentes AI"}
+                {activeTab === 'OPERADORES' && "Operadores"}
+                {activeTab === 'CONHECIMENTO' && "Bases de conhecimento"}
+                {activeTab === 'ARTEFATOS' && "Artefatos"}
+                {activeTab === 'DISPAROS' && "Disparos"}
+                {activeTab === 'NOVIAPI' && "NoviAPI"}
+                {activeTab === 'METRICAS' && "Métricas"}
+                {activeTab === 'CONFIGURACOES' && "Configurações"}
+              </span>
+            )}
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
