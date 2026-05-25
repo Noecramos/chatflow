@@ -85,11 +85,31 @@ export default function App() {
   const [newReplyTitle, setNewReplyTitle] = useState('');
   const [newReplyContent, setNewReplyContent] = useState('');
 
-  // Mass Broadcast Campaign states
+  // Mass Broadcast Campaign & Contact List States
   const [broadcastText, setBroadcastText] = useState('');
   const [broadcastLabel, setBroadcastLabel] = useState('Lead');
   const [broadcastProgress, setBroadcastProgress] = useState(0);
   const [sendingBroadcast, setSendingBroadcast] = useState(false);
+  const [campaigns, setCampaigns] = useState([]);
+  const [contactLists, setContactLists] = useState([]);
+  const [activeBroadcastTab, setActiveBroadcastTab] = useState('ativos'); // ativos, agendados, concluidos, listas
+  const [isCreateCampaignOpen, setIsCreateCampaignOpen] = useState(false);
+  const [isManageListsOpen, setIsManageListsOpen] = useState(false);
+  const [selectedCampaignLogs, setSelectedCampaignLogs] = useState([]);
+  const [isLogsModalOpen, setIsLogsModalOpen] = useState(false);
+  const [activeLogCampaignId, setActiveLogCampaignId] = useState(null);
+  const [newCampaignName, setNewCampaignName] = useState('');
+  const [newCampaignTargetType, setNewCampaignTargetType] = useState('LABEL'); // LABEL or LIST
+  const [newCampaignListId, setNewCampaignListId] = useState('');
+  const [newCampaignLabel, setNewCampaignLabel] = useState('Lead');
+  const [newCampaignContent, setNewCampaignContent] = useState('');
+  const [newCampaignScheduleEnabled, setNewCampaignScheduleEnabled] = useState(false);
+  const [newCampaignScheduledFor, setNewCampaignScheduledFor] = useState('');
+  const [newListName, setNewListName] = useState('');
+  const [newListContactIds, setNewListContactIds] = useState([]);
+  const [campaignLogsLoading, setCampaignLogsLoading] = useState(false);
+  const [listCreationLoading, setListCreationLoading] = useState(false);
+  const [campaignCreationLoading, setCampaignCreationLoading] = useState(false);
 
   // Logo upload state
   const [orgLogo, setOrgLogo] = useState(() => localStorage.getItem('chatflow_org_logo') || null);
@@ -182,6 +202,50 @@ export default function App() {
       console.error("Failed to load threads:", e);
     }
   };
+
+  const fetchCampaigns = async () => {
+    if (!token) return;
+    try {
+      const res = await fetch('/inbox/broadcasts', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCampaigns(data.campaigns);
+      }
+    } catch (e) {
+      console.error("Failed to load campaigns:", e);
+    }
+  };
+
+  const fetchContactLists = async () => {
+    if (!token) return;
+    try {
+      const res = await fetch('/inbox/contact-lists', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setContactLists(data.contactLists);
+      }
+    } catch (e) {
+      console.error("Failed to load contact lists:", e);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'DISPAROS' && token) {
+      fetchCampaigns();
+      fetchContactLists();
+
+      // Start dynamic progress bar polling every 4 seconds for processing campaigns
+      const pollInterval = setInterval(() => {
+        fetchCampaigns();
+      }, 4000);
+
+      return () => clearInterval(pollInterval);
+    }
+  }, [activeTab, token]);
 
   const fetchBotsList = async () => {
     if (!token) return;
@@ -440,40 +504,161 @@ export default function App() {
     }
   };
 
-  const triggerBroadcast = async (e) => {
+  const handleCreateCampaign = async (e) => {
     e.preventDefault();
-    if (!broadcastText.trim()) return;
-    setSendingBroadcast(true);
-    setBroadcastProgress(10);
+    if (!newCampaignName.trim() || !newCampaignContent.trim()) {
+      alert("Nome e mensagem são obrigatórios.");
+      return;
+    }
 
+    setCampaignCreationLoading(true);
     try {
-      const res = await fetch('/inbox/broadcast', {
+      const scheduledFor = newCampaignScheduleEnabled && newCampaignScheduledFor 
+        ? new Date(newCampaignScheduledFor).toISOString() 
+        : null;
+
+      const res = await fetch('/inbox/broadcasts', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          label: broadcastLabel,
-          content: broadcastText
+          name: newCampaignName,
+          label: newCampaignTargetType === 'LABEL' ? newCampaignLabel : null,
+          contactListId: newCampaignTargetType === 'LIST' ? newCampaignListId : null,
+          content: newCampaignContent,
+          scheduledFor
         })
       });
+
       const data = await res.json();
-      setBroadcastProgress(100);
-      setSendingBroadcast(false);
-      
       if (data.success) {
-        alert(data.message);
-        setBroadcastText('');
-        setBroadcastProgress(0);
-        fetchConversations();
+        alert("Disparo criado com sucesso!");
+        setNewCampaignName('');
+        setNewCampaignContent('');
+        setNewCampaignScheduleEnabled(false);
+        setNewCampaignScheduledFor('');
+        setIsCreateCampaignOpen(false);
+        fetchCampaigns();
+      } else {
+        alert("Falha: " + data.error);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao criar campanha de disparos.");
+    } finally {
+      setCampaignCreationLoading(false);
+    }
+  };
+
+  const handleStopCampaign = async (campaignId) => {
+    if (!confirm("Deseja realmente parar este disparo?")) return;
+    try {
+      const res = await fetch(`/inbox/broadcasts/${campaignId}/stop`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchCampaigns();
       } else {
         alert(data.error);
       }
     } catch (err) {
       console.error(err);
-      setSendingBroadcast(false);
-      alert("Falha ao disparar mensagens.");
+    }
+  };
+
+  const handleRetryFailedCampaign = async (campaignId) => {
+    if (!confirm("Deseja reenviar os disparos que falharam nesta campanha?")) return;
+    try {
+      const res = await fetch(`/inbox/broadcasts/${campaignId}/retry`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert(`Disparos reenviados para ${data.retriedCount} contatos!`);
+        fetchCampaigns();
+      } else {
+        alert(data.error);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleViewCampaignLogs = async (campaignId) => {
+    setCampaignLogsLoading(true);
+    try {
+      const res = await fetch(`/inbox/broadcasts/${campaignId}/logs`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSelectedCampaignLogs(data.logs);
+        setActiveLogCampaignId(campaignId);
+        setIsLogsModalOpen(true);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setCampaignLogsLoading(false);
+    }
+  };
+
+  const handleCreateContactList = async (e) => {
+    e.preventDefault();
+    if (!newListName.trim() || newListContactIds.length === 0) {
+      alert("Nome e seleção de contatos são obrigatórios.");
+      return;
+    }
+
+    setListCreationLoading(true);
+    try {
+      const res = await fetch('/inbox/contact-lists', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: newListName,
+          contactIds: newListContactIds
+        })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        alert("Lista de contatos criada com sucesso!");
+        setNewListName('');
+        setNewListContactIds([]);
+        setIsManageListsOpen(false);
+        fetchContactLists();
+      } else {
+        alert(data.error);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setListCreationLoading(false);
+    }
+  };
+
+  const handleDeleteContactList = async (listId) => {
+    if (!confirm("Deseja realmente excluir esta lista de contatos?")) return;
+    try {
+      const res = await fetch(`/inbox/contact-lists/${listId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchContactLists();
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -1627,58 +1812,493 @@ export default function App() {
 
           {/* TAB 7: DISPAROS */}
           {activeTab === 'DISPAROS' && (
-            <div style={{ padding: '25px', display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '700px', margin: '0 auto' }}>
-              <div>
-                <h3 style={{ fontSize: '20px', fontWeight: '800' }}>Disparos em Massa</h3>
-                <p style={{ color: 'hsl(var(--text-muted))', fontSize: '12px', marginTop: '2px' }}>
-                  Configure e dispare mensagens em lote para seus clientes baseados em rótulos específicos do CRM.
-                </p>
+            <div style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '1000px', margin: '0 auto' }}>
+              
+              {/* Header with quick action buttons */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <h3 style={{ fontSize: '22px', fontWeight: '800', fontFamily: 'var(--font-display)' }}>🚀 Campanhas de Disparos</h3>
+                  <p style={{ color: 'hsl(var(--text-muted))', fontSize: '13px', marginTop: '2px' }}>
+                    Configure, agende e acompanhe disparos em lote omnichannel (WhatsApp, Instagram, Facebook).
+                  </p>
+                </div>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button onClick={() => setIsManageListsOpen(true)} className="btn-secondary" style={{ padding: '8px 16px', fontSize: '12px' }}>
+                    📁 Listas de Contatos
+                  </button>
+                  <button onClick={() => setIsCreateCampaignOpen(true)} className="btn-primary" style={{ padding: '8px 16px', fontSize: '12px' }}>
+                    ➕ Novo Disparo
+                  </button>
+                </div>
               </div>
 
-              <div className="glass" style={{ padding: '24px' }}>
-                <form onSubmit={triggerBroadcast} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  <div>
-                    <label style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '6px', fontWeight: '600' }}>Rótulo Alvo (CRM Labels)</label>
-                    <select 
-                      value={broadcastLabel} 
-                      onChange={(e) => setBroadcastLabel(e.target.value)}
-                      style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '8px 10px', borderRadius: '6px', fontSize: '13px' }}
-                    >
-                      <option value="Lead">Todos os Leads Sincronizados ({conversations.filter(c => c.label === 'Lead' || !c.label).length} contatos)</option>
-                      <option value="Billing">Faturamento / Billing ({conversations.filter(c => c.label === 'Billing').length} contatos)</option>
-                      <option value="Support">Suporte Técnico ({conversations.filter(c => c.label === 'Support').length} contatos)</option>
-                    </select>
-                  </div>
+              {/* Sub-tab selection bar */}
+              <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid hsl(var(--border) / 0.5)', paddingBottom: '10px' }}>
+                {[
+                  { key: 'ativos', label: '⚡ Ativos', count: campaigns.filter(c => c.status === 'PROCESSING' || c.status === 'PAUSED').length },
+                  { key: 'agendados', label: '📅 Agendados', count: campaigns.filter(c => c.status === 'PENDING').length },
+                  { key: 'concluidos', label: '✅ Concluídos', count: campaigns.filter(c => c.status === 'COMPLETED').length },
+                  { key: 'listas', label: '📁 Listas Salvas', count: contactLists.length }
+                ].map(tab => (
+                  <button
+                    key={tab.key}
+                    onClick={() => setActiveBroadcastTab(tab.key)}
+                    style={{
+                      padding: '8px 16px',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      borderRadius: '6px',
+                      border: 'none',
+                      background: activeBroadcastTab === tab.key ? 'hsl(var(--primary) / 0.15)' : 'transparent',
+                      color: activeBroadcastTab === tab.key ? 'hsl(var(--primary))' : 'hsl(var(--text-muted))',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    <span>{tab.label}</span>
+                    <span style={{ fontSize: '10px', background: activeBroadcastTab === tab.key ? 'hsl(var(--primary) / 0.2)' : 'hsl(var(--border) / 0.5)', padding: '2px 6px', borderRadius: '8px' }}>
+                      {tab.count}
+                    </span>
+                  </button>
+                ))}
+              </div>
 
-                  <div>
-                    <label style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '6px', fontWeight: '600' }}>Conteúdo do Disparo</label>
-                    <textarea 
-                      required
-                      rows={5}
-                      value={broadcastText}
-                      onChange={(e) => setBroadcastText(e.target.value)}
-                      placeholder="Olá! Temos novidades imperdíveis da nossa loja..."
-                      style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '12px', borderRadius: '6px', fontSize: '13px', resize: 'vertical' }}
-                    />
-                  </div>
-
-                  {sendingBroadcast && (
-                    <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '4px' }}>
-                        <span>Disparando mensagens no banco de dados e socket.io...</span>
-                        <span>{broadcastProgress}%</span>
+              {/* Sub-view: Active Campaigns */}
+              {activeBroadcastTab === 'ativos' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {campaigns.filter(c => c.status === 'PROCESSING' || c.status === 'PAUSED').map(c => {
+                    const pct = c.totalCount > 0 ? Math.round((c.sentCount + c.errorCount) / c.totalCount * 100) : 0;
+                    return (
+                      <div key={c.id} className="glass glowing-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                          <div>
+                            <h4 style={{ fontSize: '15px', fontWeight: '700' }}>{c.name}</h4>
+                            <span style={{ fontSize: '10px', color: 'hsl(var(--text-muted))' }}>
+                              Alvo: {c.contactList ? `Lista "${c.contactList.name}"` : `CRM Rótulo "${c.label || 'Todos'}"`}
+                            </span>
+                          </div>
+                          <span className="badge" style={{
+                            background: c.status === 'PROCESSING' ? '#006aff20' : '#ff980020',
+                            color: c.status === 'PROCESSING' ? '#006aff' : '#ff9800',
+                            borderColor: c.status === 'PROCESSING' ? '#006aff' : '#ff9800',
+                            borderWidth: '1px',
+                            borderStyle: 'solid'
+                          }}>
+                            {c.status === 'PROCESSING' ? 'Enviando...' : 'Pausado'}
+                          </span>
+                        </div>
+                        <p style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', fontStyle: 'italic', background: 'hsl(var(--border) / 0.1)', padding: '8px', borderRadius: '4px' }}>
+                          "{c.content}"
+                        </p>
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'hsl(var(--text-muted))', marginBottom: '4px' }}>
+                            <span>Progresso: {c.sentCount + c.errorCount} de {c.totalCount} contatos</span>
+                            <span>{pct}%</span>
+                          </div>
+                          <div style={{ width: '100%', height: '6px', background: 'hsl(var(--border) / 0.3)', borderRadius: '3px', overflow: 'hidden' }}>
+                            <div style={{ width: `${pct}%`, height: '100%', background: 'hsl(var(--primary))', transition: 'width 0.4s ease' }} />
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
+                          <div style={{ display: 'flex', gap: '12px', fontSize: '11px' }}>
+                            <span style={{ color: '#00c853', fontWeight: '600' }}>✓ {c.sentCount} Sucessos</span>
+                            <span style={{ color: '#ff1744', fontWeight: '600' }}>✗ {c.errorCount} Falhas</span>
+                          </div>
+                          {c.status === 'PROCESSING' ? (
+                            <button onClick={() => handleStopCampaign(c.id)} className="btn-secondary" style={{ padding: '4px 10px', fontSize: '11px', borderColor: '#ff1744', color: '#ff1744' }}>
+                              ⏸ Pausar Disparos
+                            </button>
+                          ) : (
+                            <button onClick={() => handleRetryFailedCampaign(c.id)} className="btn-primary" style={{ padding: '4px 10px', fontSize: '11px' }}>
+                              ▶ Retomar Disparos
+                            </button>
+                          )}
+                        </div>
                       </div>
-                      <div style={{ width: '100%', height: '6px', background: 'hsl(var(--border))', borderRadius: '3px', overflow: 'hidden' }}>
-                        <div style={{ width: `${broadcastProgress}%`, height: '100%', background: 'hsl(var(--primary))', transition: 'width 0.3s' }}></div>
-                      </div>
+                    );
+                  })}
+                  {campaigns.filter(c => c.status === 'PROCESSING' || c.status === 'PAUSED').length === 0 && (
+                    <div style={{ textAlign: 'center', padding: '50px 20px', color: 'hsl(var(--text-muted))' }}>
+                      <p style={{ fontSize: '14px' }}>Nenhum disparo em andamento ou pausado no momento.</p>
+                      <button onClick={() => setIsCreateCampaignOpen(true)} className="btn-primary" style={{ marginTop: '12px', fontSize: '12px', padding: '6px 14px' }}>
+                        Criar Nova Campanha
+                      </button>
                     </div>
                   )}
+                </div>
+              )}
 
-                  <button type="submit" disabled={sendingBroadcast || !broadcastText.trim()} className="btn-primary" style={{ alignSelf: 'flex-start', padding: '10px 20px', fontSize: '13px' }}>
-                    {sendingBroadcast ? "Enviando Disparos..." : "Iniciar Campanha de Disparos"}
-                  </button>
-                </form>
-              </div>
+              {/* Sub-view: Scheduled Campaigns */}
+              {activeBroadcastTab === 'agendados' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {campaigns.filter(c => c.status === 'PENDING').map(c => (
+                    <div key={c.id} className="glass glowing-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                        <div>
+                          <h4 style={{ fontSize: '15px', fontWeight: '700' }}>{c.name}</h4>
+                          <span style={{ fontSize: '11px', color: 'hsl(var(--text-muted))' }}>
+                            📅 Agendado para: <strong>{new Date(c.scheduledFor).toLocaleString('pt-BR')}</strong>
+                          </span>
+                        </div>
+                        <span className="badge" style={{ background: 'hsl(var(--border) / 0.5)', color: 'hsl(var(--text-muted))' }}>
+                          Agendado
+                        </span>
+                      </div>
+                      <p style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', fontStyle: 'italic', background: 'hsl(var(--border) / 0.1)', padding: '8px', borderRadius: '4px' }}>
+                        "{c.content}"
+                      </p>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '11px', color: 'hsl(var(--text-muted))' }}>
+                          Público Alvo: {c.contactList ? `Lista "${c.contactList.name}"` : `CRM Rótulo "${c.label || 'Todos'}"`} ({c.totalCount} contatos)
+                        </span>
+                        <button onClick={() => handleStopCampaign(c.id)} className="btn-secondary" style={{ padding: '4px 10px', fontSize: '11px', color: '#ff1744', borderColor: '#ff1744' }}>
+                          Excluir Agendamento
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  {campaigns.filter(c => c.status === 'PENDING').length === 0 && (
+                    <div style={{ textAlign: 'center', padding: '50px 20px', color: 'hsl(var(--text-muted))' }}>
+                      <p style={{ fontSize: '14px' }}>Nenhum disparo agendado.</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Sub-view: Completed Campaigns */}
+              {activeBroadcastTab === 'concluidos' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {campaigns.filter(c => c.status === 'COMPLETED').map(c => (
+                    <div key={c.id} className="glass glowing-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                        <div>
+                          <h4 style={{ fontSize: '15px', fontWeight: '700' }}>{c.name}</h4>
+                          <span style={{ fontSize: '11px', color: 'hsl(var(--text-muted))' }}>
+                            Concluído em: {c.completedAt ? new Date(c.completedAt).toLocaleString('pt-BR') : 'Recente'}
+                          </span>
+                        </div>
+                        <span className="badge" style={{ background: '#00c85320', color: '#00c853', borderColor: '#00c853', borderStyle: 'solid', borderWidth: '1px' }}>
+                          Concluído
+                        </span>
+                      </div>
+                      <p style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', fontStyle: 'italic', background: 'hsl(var(--border) / 0.1)', padding: '8px', borderRadius: '4px' }}>
+                        "{c.content}"
+                      </p>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', gap: '12px', fontSize: '11px' }}>
+                          <span style={{ color: '#00c853', fontWeight: '600' }}>✓ {c.sentCount} Enviados com Sucesso</span>
+                          <span style={{ color: '#ff1744', fontWeight: '600' }}>✗ {c.errorCount} Falhas</span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button onClick={() => handleViewCampaignLogs(c.id)} className="btn-secondary" style={{ padding: '4px 10px', fontSize: '11px' }}>
+                            🔍 Ver Logs
+                          </button>
+                          {c.errorCount > 0 && (
+                            <button onClick={() => handleRetryFailedCampaign(c.id)} className="btn-primary" style={{ padding: '4px 10px', fontSize: '11px', background: '#e6683c' }}>
+                              🔄 Reenviar Falhas
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {campaigns.filter(c => c.status === 'COMPLETED').length === 0 && (
+                    <div style={{ textAlign: 'center', padding: '50px 20px', color: 'hsl(var(--text-muted))' }}>
+                      <p style={{ fontSize: '14px' }}>Nenhum disparo concluído ainda.</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Sub-view: Contact Lists */}
+              {activeBroadcastTab === 'listas' && (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+                  {contactLists.map(list => (
+                    <div key={list.id} className="glass glowing-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <h4 style={{ fontSize: '15px', fontWeight: '700' }}>📁 {list.name}</h4>
+                        <button onClick={() => handleDeleteContactList(list.id)} className="btn-secondary" style={{ padding: '3px 8px', fontSize: '10px', color: '#ff1744', borderColor: '#ff1744' }}>
+                          Excluir
+                        </button>
+                      </div>
+                      <div style={{ fontSize: '11px', color: 'hsl(var(--text-muted))' }}>
+                        Membros sincronizados: <strong>{list.contacts.length} contatos</strong>
+                      </div>
+                      <div style={{ maxHeight: '100px', overflowY: 'auto', background: 'hsl(var(--border) / 0.1)', padding: '6px', borderRadius: '4px', display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                        {list.contacts.slice(0, 8).map(contact => (
+                          <span key={contact.id} style={{ fontSize: '9px', background: 'hsl(var(--border) / 0.3)', padding: '2px 4px', borderRadius: '4px' }}>
+                            {contact.name}
+                          </span>
+                        ))}
+                        {list.contacts.length > 8 && (
+                          <span style={{ fontSize: '9px', color: 'hsl(var(--text-muted))' }}>+{list.contacts.length - 8} mais</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  {contactLists.length === 0 && (
+                    <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '50px 20px', color: 'hsl(var(--text-muted))' }}>
+                      <p style={{ fontSize: '14px' }}>Nenhuma lista de contatos criada ainda.</p>
+                      <button onClick={() => setIsManageListsOpen(true)} className="btn-primary" style={{ marginTop: '12px', fontSize: '12px', padding: '6px 14px' }}>
+                        Criar Primeira Lista
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* MODAL 1: Create Broadcast Campaign */}
+              {isCreateCampaignOpen && (
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+                  <div className="glass" style={{ width: '90%', maxWidth: '500px', padding: '28px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    <div>
+                      <h4 style={{ fontSize: '18px', fontWeight: '800' }}>📢 Nova Campanha de Disparo</h4>
+                      <p style={{ color: 'hsl(var(--text-muted))', fontSize: '12px', marginTop: '2px' }}>Envie mensagens ativas em lote.</p>
+                    </div>
+                    <form onSubmit={handleCreateCampaign} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      <div>
+                        <label style={{ fontSize: '11px', textTransform: 'uppercase', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px', fontWeight: '600' }}>Nome da Campanha</label>
+                        <input
+                          type="text"
+                          required
+                          value={newCampaignName}
+                          onChange={(e) => setNewCampaignName(e.target.value)}
+                          placeholder="Campanha Promoção Black Friday"
+                          style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '8px 10px', borderRadius: '6px', fontSize: '13px', color: '#fff' }}
+                        />
+                      </div>
+                      
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                        <div>
+                          <label style={{ fontSize: '11px', textTransform: 'uppercase', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px', fontWeight: '600' }}>Segmentar Por</label>
+                          <select
+                            value={newCampaignTargetType}
+                            onChange={(e) => setNewCampaignTargetType(e.target.value)}
+                            style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '8px 10px', borderRadius: '6px', fontSize: '13px' }}
+                          >
+                            <option value="LABEL">Rótulo CRM</option>
+                            <option value="LIST">Lista Personalizada</option>
+                          </select>
+                        </div>
+                        <div>
+                          {newCampaignTargetType === 'LABEL' ? (
+                            <>
+                              <label style={{ fontSize: '11px', textTransform: 'uppercase', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px', fontWeight: '600' }}>Rótulo Alvo</label>
+                              <select
+                                value={newCampaignLabel}
+                                onChange={(e) => setNewCampaignLabel(e.target.value)}
+                                style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '8px 10px', borderRadius: '6px', fontSize: '13px' }}
+                              >
+                                <option value="Lead">Todos os Leads (Lead)</option>
+                                <option value="Billing">Faturamento / Billing</option>
+                                <option value="Support">Suporte Técnico</option>
+                              </select>
+                            </>
+                          ) : (
+                            <>
+                              <label style={{ fontSize: '11px', textTransform: 'uppercase', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px', fontWeight: '600' }}>Escolher Lista</label>
+                              <select
+                                required
+                                value={newCampaignListId}
+                                onChange={(e) => setNewCampaignListId(e.target.value)}
+                                style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '8px 10px', borderRadius: '6px', fontSize: '13px' }}
+                              >
+                                <option value="">Selecione uma lista...</option>
+                                {contactLists.map(list => (
+                                  <option key={list.id} value={list.id}>{list.name} ({list.contacts.length} contatos)</option>
+                                ))}
+                              </select>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label style={{ fontSize: '11px', textTransform: 'uppercase', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px', fontWeight: '600' }}>Mensagem do Disparo</label>
+                        <textarea
+                          required
+                          rows={4}
+                          value={newCampaignContent}
+                          onChange={(e) => setNewCampaignContent(e.target.value)}
+                          placeholder="Olá! Separamos uma promoção incrível para você..."
+                          style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '10px', borderRadius: '6px', fontSize: '13px', color: '#fff', resize: 'vertical' }}
+                        />
+                      </div>
+
+                      <div>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', cursor: 'pointer' }}>
+                          <input
+                            type="checkbox"
+                            checked={newCampaignScheduleEnabled}
+                            onChange={(e) => setNewCampaignScheduleEnabled(e.target.checked)}
+                          />
+                          <span>📅 Agendar envio para depois?</span>
+                        </label>
+                      </div>
+
+                      {newCampaignScheduleEnabled && (
+                        <div>
+                          <label style={{ fontSize: '11px', textTransform: 'uppercase', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px', fontWeight: '600' }}>Data & Hora de Disparo</label>
+                          <input
+                            type="datetime-local"
+                            required
+                            value={newCampaignScheduledFor}
+                            onChange={(e) => setNewCampaignScheduledFor(e.target.value)}
+                            style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '8px 10px', borderRadius: '6px', fontSize: '13px', color: '#fff' }}
+                          />
+                        </div>
+                      )}
+
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
+                        <button type="button" onClick={() => setIsCreateCampaignOpen(false)} className="btn-secondary" style={{ padding: '8px 16px', fontSize: '12px' }}>
+                          Cancelar
+                        </button>
+                        <button type="submit" disabled={campaignCreationLoading} className="btn-primary" style={{ padding: '8px 16px', fontSize: '12px' }}>
+                          {campaignCreationLoading ? "Carregando..." : newCampaignScheduleEnabled ? "Agendar Disparo" : "Iniciar Disparos"}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              )}
+
+              {/* MODAL 2: Create/Manage Contact Lists */}
+              {isManageListsOpen && (
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+                  <div className="glass" style={{ width: '90%', maxWidth: '550px', padding: '28px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    <div>
+                      <h4 style={{ fontSize: '18px', fontWeight: '800' }}>📁 Criar Lista de Contatos</h4>
+                      <p style={{ color: 'hsl(var(--text-muted))', fontSize: '12px', marginTop: '2px' }}>Segmentação de contatos para disparos.</p>
+                    </div>
+                    <form onSubmit={handleCreateContactList} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      <div>
+                        <label style={{ fontSize: '11px', textTransform: 'uppercase', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px', fontWeight: '600' }}>Nome da Lista</label>
+                        <input
+                          type="text"
+                          required
+                          value={newListName}
+                          onChange={(e) => setNewListName(e.target.value)}
+                          placeholder="Lista Leads VIPs"
+                          style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '8px 10px', borderRadius: '6px', fontSize: '13px', color: '#fff' }}
+                        />
+                      </div>
+
+                      <div>
+                        <label style={{ fontSize: '11px', textTransform: 'uppercase', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px', fontWeight: '600' }}>
+                          Selecionar Contatos ({newListContactIds.length} selecionados)
+                        </label>
+                        <div style={{
+                          maxHeight: '200px',
+                          overflowY: 'auto',
+                          background: 'hsl(var(--border) / 0.2)',
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '6px',
+                          padding: '10px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '8px'
+                        }}>
+                          {Array.from(new Map(conversations.map(c => [c.contact?.id, c.contact])).values()).filter(Boolean).map(contact => {
+                            const isChecked = newListContactIds.includes(contact.id);
+                            return (
+                              <label key={contact.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '12px', cursor: 'pointer', padding: '4px', borderRadius: '4px', background: isChecked ? 'hsl(var(--primary) / 0.1)' : 'transparent' }}>
+                                <input
+                                  type="checkbox"
+                                  checked={isChecked}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setNewListContactIds(prev => [...prev, contact.id]);
+                                    } else {
+                                      setNewListContactIds(prev => prev.filter(id => id !== contact.id));
+                                    }
+                                  }}
+                                />
+                                <div style={{ display: 'flex', justifyContent: 'space-between', flex: 1, alignItems: 'center' }}>
+                                  <strong>{contact.name}</strong>
+                                  <span style={{ fontSize: '9px', opacity: 0.7 }}>{contact.platformType} ({contact.platformId})</span>
+                                </div>
+                              </label>
+                            );
+                          })}
+                          {Array.from(new Map(conversations.map(c => [c.contact?.id, c.contact])).values()).filter(Boolean).length === 0 && (
+                            <p style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', textAlign: 'center', padding: '10px' }}>
+                              Nenhum contato encontrado no histórico recente.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
+                        <button type="button" onClick={() => setIsManageListsOpen(false)} className="btn-secondary" style={{ padding: '8px 16px', fontSize: '12px' }}>
+                          Cancelar
+                        </button>
+                        <button type="submit" disabled={listCreationLoading} className="btn-primary" style={{ padding: '8px 16px', fontSize: '12px' }}>
+                          {listCreationLoading ? "Criando..." : "Criar Lista"}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              )}
+
+              {/* MODAL 3: Detailed Campaign Delivery Logs */}
+              {isLogsModalOpen && (
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+                  <div className="glass" style={{ width: '95%', maxWidth: '650px', padding: '28px', display: 'flex', flexDirection: 'column', gap: '20px', maxHeight: '90vh', overflowY: 'auto' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <h4 style={{ fontSize: '18px', fontWeight: '800' }}>📋 Auditoria de Envios</h4>
+                        <p style={{ color: 'hsl(var(--text-muted))', fontSize: '12px', marginTop: '2px' }}>Lista detalhada de status de entrega da campanha.</p>
+                      </div>
+                      <button onClick={() => setIsLogsModalOpen(false)} className="btn-secondary" style={{ padding: '4px 12px', fontSize: '11px' }}>
+                        Fechar
+                      </button>
+                    </div>
+
+                    <div style={{ overflowX: 'auto' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                        <thead>
+                          <tr style={{ borderBottom: '1px solid hsl(var(--border))', color: 'hsl(var(--text-muted))' }}>
+                            <th style={{ padding: '8px', textAlign: 'left' }}>Contato</th>
+                            <th style={{ padding: '8px', textAlign: 'left' }}>Telefone / Identificador</th>
+                            <th style={{ padding: '8px', textAlign: 'center' }}>Status</th>
+                            <th style={{ padding: '8px', textAlign: 'left' }}>Observações</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {selectedCampaignLogs.map(log => (
+                            <tr key={log.id} style={{ borderBottom: '1px solid hsl(var(--border) / 0.3)' }}>
+                              <td style={{ padding: '8px', fontWeight: '600' }}>{log.contact?.name || 'N/D'}</td>
+                              <td style={{ padding: '8px' }}>{log.contact?.platformId || 'N/D'} ({log.contact?.platformType || 'N/D'})</td>
+                              <td style={{ padding: '8px', textAlign: 'center' }}>
+                                <span className="badge" style={{
+                                  background: log.status === 'SUCCESS' ? '#00c85320' : '#ff174420',
+                                  color: log.status === 'SUCCESS' ? '#00c853' : '#ff1744'
+                                }}>
+                                  {log.status === 'SUCCESS' ? 'Sucesso' : 'Falha'}
+                                </span>
+                              </td>
+                              <td style={{ padding: '8px', color: 'hsl(var(--text-muted))', fontSize: '10px' }}>
+                                {log.status === 'FAILED' ? log.errorMessage || 'Erro indeterminado' : 'Entregue com sucesso'}
+                              </td>
+                            </tr>
+                          ))}
+                          {selectedCampaignLogs.length === 0 && (
+                            <tr>
+                              <td colSpan="4" style={{ textAlign: 'center', padding: '20px', color: 'hsl(var(--text-muted))' }}>
+                                Nenhum log registrado para este disparo.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

@@ -28,6 +28,8 @@ model Organization {
   conversations       InboxConversation[]
   contacts            Contact[]
   orders              Order[]
+  contactLists        ContactList[]
+  broadcastCampaigns  BroadcastCampaign[]
 }
 
 model User {
@@ -115,6 +117,8 @@ model Contact {
   updatedAt      DateTime            @updatedAt
   conversations  InboxConversation[]
   orders         Order[]
+  contactLists   ContactList[]       @relation("ContactListContacts")
+  broadcastLogs  BroadcastLog[]
 }
 
 model InboxConversation {
@@ -192,4 +196,44 @@ model KnowledgeChunk {
   content    String
   embedding  String   // serialized JSON list of vector floats
   createdAt  DateTime @default(now())
+}
+
+model ContactList {
+  id             String              @id @default(uuid())
+  name           String
+  organizationId String
+  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  contacts       Contact[]           @relation("ContactListContacts")
+  campaigns      BroadcastCampaign[]
+  createdAt      DateTime            @default(now())
+}
+
+model BroadcastCampaign {
+  id             String         @id @default(uuid())
+  name           String
+  organizationId String
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  label          String?
+  contactListId  String?
+  contactList    ContactList?   @relation(fields: [contactListId], references: [id], onDelete: SetNull)
+  content        String
+  status         String         @default("PENDING") // PENDING, PROCESSING, COMPLETED, PAUSED, CANCELLED
+  sentCount      Int            @default(0)
+  errorCount     Int            @default(0)
+  totalCount     Int            @default(0)
+  scheduledFor   DateTime?
+  createdAt      DateTime       @default(now())
+  completedAt    DateTime?
+  logs           BroadcastLog[]
+}
+
+model BroadcastLog {
+  id             String            @id @default(uuid())
+  campaignId     String
+  campaign       BroadcastCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  contactId      String
+  contact        Contact           @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  status         String            // SUCCESS, FAILED
+  errorMessage   String?
+  sentAt         DateTime          @default(now())
 }

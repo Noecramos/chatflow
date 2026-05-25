@@ -22,8 +22,17 @@ router.get('/conversations/:id/suggestions', verifyToken, inboxController.getAiS
 router.get('/agents', verifyToken, inboxController.listAgents);
 router.post('/agents', verifyToken, inboxController.createAgent);
 
-// Mass Broadcast Campaign Management
-router.post('/broadcast', verifyToken, inboxController.executeMassBroadcast);
+// Omnichannel Mass Broadcast Campaign & Contact List Management
+router.post('/broadcast', verifyToken, inboxController.executeMassBroadcast); // Fallback keep
+router.get('/broadcasts', verifyToken, inboxController.getBroadcastCampaigns);
+router.post('/broadcasts', verifyToken, inboxController.createBroadcastCampaign);
+router.post('/broadcasts/:id/stop', verifyToken, inboxController.stopBroadcastCampaign);
+router.post('/broadcasts/:id/retry', verifyToken, inboxController.retryFailedDispatches);
+router.get('/broadcasts/:id/logs', verifyToken, inboxController.getCampaignLogs);
+
+router.get('/contact-lists', verifyToken, inboxController.getContactLists);
+router.post('/contact-lists', verifyToken, inboxController.createContactList);
+router.delete('/contact-lists/:id', verifyToken, inboxController.deleteContactList);
 
 // Public Widget Integration API (no token required)
 router.post('/widget/message', inboxController.handleWidgetMessage);

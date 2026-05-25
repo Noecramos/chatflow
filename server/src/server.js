@@ -80,6 +80,10 @@ const io = socketIo(server, {
 webhookController.setSocketIO(io);
 inboxController.setSocketIO(io);
 
+const broadcastWorker = require('./services/broadcast-worker');
+broadcastWorker.setSocketIO(io);
+broadcastWorker.start();
+
 const JWT_SECRET = process.env.JWT_SECRET || 'chatvolt-super-secret-key-change-in-production';
 io.use((socket, next) => {
   const token = socket.handshake.auth?.token;

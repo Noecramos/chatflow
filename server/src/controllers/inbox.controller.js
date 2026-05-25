@@ -689,6 +689,268 @@ Suggested Agent Reply:`
       console.error("Broadcast failed:", e);
       return res.status(500).json({ success: false, error: e.message });
     }
+  },
+
+  /**
+   * Fetch all broadcast campaigns for organization
+   */
+  async getBroadcastCampaigns(req, res) {
+    const { organizationId } = req.user;
+    try {
+      const campaigns = await prisma.broadcastCampaign.findMany({
+        where: { organizationId },
+        orderBy: { createdAt: 'desc' },
+        include: { contactList: true }
+      });
+      return res.status(200).json({ success: true, campaigns });
+    } catch (e) {
+      console.error("Failed to fetch campaigns:", e);
+      return res.status(500).json({ success: false, error: e.message });
+    }
+  },
+
+  /**
+   * Create a new broadcast campaign
+   */
+  async createBroadcastCampaign(req, res) {
+    const { organizationId } = req.user;
+    const { name, label, contactListId, content, scheduledFor } = req.body;
+
+    if (!name || !content) {
+      return res.status(400).json({ success: false, error: "Campaign name and message content are required." });
+    }
+
+    try {
+      // Calculate target contacts count
+      let targetCount = 0;
+      if (contactListId) {
+        const list = await prisma.contactList.findUnique({
+          where: { id: contactListId },
+          include: { _count: { select: { contacts: true } } }
+        });
+        if (list) targetCount = list._count.contacts;
+      } else if (label) {
+        targetCount = await prisma.contact.count({
+          where: {
+            organizationId,
+            conversations: {
+              some: {
+                label,
+                status: { not: 'CLOSED' }
+              }
+            }
+          }
+        });
+      } else {
+        targetCount = await prisma.contact.count({
+          where: { organizationId }
+        });
+      }
+
+      const status = scheduledFor ? "PENDING" : "PROCESSING";
+      const parsedSchedule = scheduledFor ? new Date(scheduledFor) : null;
+
+      const campaign = await prisma.broadcastCampaign.create({
+        data: {
+          name,
+          organizationId,
+          label: label || null,
+          contactListId: contactListId || null,
+          content,
+          status,
+          totalCount: targetCount,
+          scheduledFor: parsedSchedule
+        },
+        include: { contactList: true }
+      });
+
+      return res.status(201).json({ success: true, campaign });
+    } catch (e) {
+      console.error("Failed to create campaign:", e);
+      return res.status(500).json({ success: false, error: e.message });
+    }
+  },
+
+  /**
+   * Stop/pause an active campaign
+   */
+  async stopBroadcastCampaign(req, res) {
+    const { organizationId } = req.user;
+    const { id } = req.params;
+
+    try {
+      const campaign = await prisma.broadcastCampaign.findFirst({
+        where: { id, organizationId }
+      });
+
+      if (!campaign) {
+        return res.status(404).json({ success: false, error: "Campaign not found." });
+      }
+
+      const updated = await prisma.broadcastCampaign.update({
+        where: { id },
+        data: { status: "PAUSED" }
+      });
+
+      if (io) {
+        io.to(organizationId).emit("campaign_status_updated", {
+          campaignId: id,
+          status: "PAUSED"
+        });
+      }
+
+      return res.status(200).json({ success: true, campaign: updated });
+    } catch (e) {
+      console.error("Failed to pause campaign:", e);
+      return res.status(500).json({ success: false, error: e.message });
+    }
+  },
+
+  /**
+   * Retry failed dispatches in a campaign
+   */
+  async retryFailedDispatches(req, res) {
+    const { organizationId } = req.user;
+    const { id } = req.params;
+
+    try {
+      const campaign = await prisma.broadcastCampaign.findFirst({
+        where: { id, organizationId }
+      });
+
+      if (!campaign) {
+        return res.status(404).json({ success: false, error: "Campaign not found." });
+      }
+
+      // Delete failed logs so background worker can re-process them
+      const deleteResult = await prisma.broadcastLog.deleteMany({
+        where: { campaignId: id, status: "FAILED" }
+      });
+
+      // Reset error count and transition campaign back to PROCESSING
+      const updated = await prisma.broadcastCampaign.update({
+        where: { id },
+        data: {
+          status: "PROCESSING",
+          errorCount: { decrement: deleteResult.count >= 0 ? deleteResult.count : 0 }
+        }
+      });
+
+      if (io) {
+        io.to(organizationId).emit("campaign_status_updated", {
+          campaignId: id,
+          status: "PROCESSING"
+        });
+      }
+
+      return res.status(200).json({ success: true, campaign: updated, retriedCount: deleteResult.count });
+    } catch (e) {
+      console.error("Failed to retry campaign:", e);
+      return res.status(500).json({ success: false, error: e.message });
+    }
+  },
+
+  /**
+   * Get detailed campaign logs
+   */
+  async getCampaignLogs(req, res) {
+    const { organizationId } = req.user;
+    const { id } = req.params;
+
+    try {
+      const campaign = await prisma.broadcastCampaign.findFirst({
+        where: { id, organizationId }
+      });
+
+      if (!campaign) {
+        return res.status(404).json({ success: false, error: "Campaign not found." });
+      }
+
+      const logs = await prisma.broadcastLog.findMany({
+        where: { campaignId: id },
+        include: { contact: true },
+        orderBy: { sentAt: 'desc' }
+      });
+
+      return res.status(200).json({ success: true, logs });
+    } catch (e) {
+      console.error("Failed to fetch logs:", e);
+      return res.status(500).json({ success: false, error: e.message });
+    }
+  },
+
+  /**
+   * Get custom contact lists
+   */
+  async getContactLists(req, res) {
+    const { organizationId } = req.user;
+    try {
+      const contactLists = await prisma.contactList.findMany({
+        where: { organizationId },
+        orderBy: { createdAt: 'desc' },
+        include: { contacts: true }
+      });
+      return res.status(200).json({ success: true, contactLists });
+    } catch (e) {
+      console.error("Failed to fetch contact lists:", e);
+      return res.status(500).json({ success: false, error: e.message });
+    }
+  },
+
+  /**
+   * Create custom contact list
+   */
+  async createContactList(req, res) {
+    const { organizationId } = req.user;
+    const { name, contactIds } = req.body;
+
+    if (!name || !contactIds || !Array.isArray(contactIds)) {
+      return res.status(400).json({ success: false, error: "List name and contact IDs are required." });
+    }
+
+    try {
+      const list = await prisma.contactList.create({
+        data: {
+          name,
+          organizationId,
+          contacts: {
+            connect: contactIds.map(id => ({ id }))
+          }
+        },
+        include: { contacts: true }
+      });
+      return res.status(201).json({ success: true, contactList: list });
+    } catch (e) {
+      console.error("Failed to create list:", e);
+      return res.status(500).json({ success: false, error: e.message });
+    }
+  },
+
+  /**
+   * Delete contact list
+   */
+  async deleteContactList(req, res) {
+    const { organizationId } = req.user;
+    const { id } = req.params;
+
+    try {
+      const list = await prisma.contactList.findFirst({
+        where: { id, organizationId }
+      });
+
+      if (!list) {
+        return res.status(404).json({ success: false, error: "Contact list not found." });
+      }
+
+      await prisma.contactList.delete({
+        where: { id }
+      });
+
+      return res.status(200).json({ success: true, message: "Contact list deleted successfully." });
+    } catch (e) {
+      console.error("Failed to delete list:", e);
+      return res.status(500).json({ success: false, error: e.message });
+    }
   }
 };
 
