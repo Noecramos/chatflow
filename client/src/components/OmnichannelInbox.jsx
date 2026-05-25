@@ -143,6 +143,27 @@ export default function OmnichannelInbox({ token, user }) {
 
   const getPriorityColor = (p) => PRIORITY_OPTIONS.find(o => o.key === p)?.color || '#ff9800';
 
+  const translateSystemMessage = (content) => {
+    if (!content) return "";
+    const lower = content.toLowerCase().trim();
+    if (lower.includes("ai muted. agent in control")) {
+      return "IA silenciada. Operador no controle.";
+    }
+    if (lower.includes("ai re-activated. bot in control") || lower.includes("ai reactivated. bot in control")) {
+      return "IA reativada. Bot no controle.";
+    }
+    if (lower.includes("ai muted. conversation assumed by human agent")) {
+      return "IA silenciada. Conversa assumida pelo operador.";
+    }
+    if (lower.includes("ai reactivated. conversation returned to bot")) {
+      return "IA reativada. Conversa retornada ao Bot.";
+    }
+    if (lower.includes("our live support agents have assumed this thread")) {
+      return "Nossos agentes de suporte assumiram esta conversa. Um representante humano responderá em breve!";
+    }
+    return content;
+  };
+
   // ═══ RENDER ═══
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 65px)', overflow: 'hidden' }}>
@@ -335,7 +356,7 @@ export default function OmnichannelInbox({ token, user }) {
                   const isUser = msg.senderType === 'USER';
                   const isSystem = msg.senderType === 'SYSTEM';
                   const isAgent = msg.senderType === 'AGENT';
-                  if (isSystem) return (<div key={msg.id} style={{ display: 'flex', justifyContent: 'center', margin: '4px 0' }}><div style={{ padding: '4px 14px', borderRadius: '16px', fontSize: '10px', color: 'hsl(var(--secondary))', background: 'hsl(var(--border) / 0.3)', display: 'flex', alignItems: 'center', gap: '4px' }}><ShieldAlert size={10} /> {msg.content}</div></div>);
+                  if (isSystem) return (<div key={msg.id} style={{ display: 'flex', justifyContent: 'center', margin: '4px 0' }}><div style={{ padding: '4px 14px', borderRadius: '16px', fontSize: '10px', color: 'hsl(var(--secondary))', background: 'hsl(var(--border) / 0.3)', display: 'flex', alignItems: 'center', gap: '4px' }}><ShieldAlert size={10} /> {translateSystemMessage(msg.content)}</div></div>);
 
                   let displayName = activeConv.bot?.name || "Zimmy";
                   if (isUser) {

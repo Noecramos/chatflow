@@ -111,8 +111,8 @@ module.exports = {
 
       // Insert system note record
       const noteContent = isHumanHandoverActive 
-        ? "AI muted. Conversation assumed by Human Agent." 
-        : "AI reactivated. Conversation returned to Bot.";
+        ? "IA silenciada. Conversa assumida pelo operador." 
+        : "IA reativada. Conversa retornada ao Bot.";
 
       const systemMessage = await prisma.message.create({
         data: {
@@ -315,7 +315,7 @@ module.exports = {
       // AI response RAG + E-commerce
       let reply = "";
       if (session.isHumanHandoverActive) {
-        reply = "Our live support agents have assumed this thread. A human representative will reply to you shortly!";
+        reply = "Nossos agentes de suporte assumiram esta conversa. Um representante humano responderá em breve!";
       } else {
         const aiService = require('../services/ai.service');
         reply = await aiService.processChatMessage(prisma, bot, session, message);
