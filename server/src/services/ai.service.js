@@ -122,8 +122,8 @@ module.exports = {
 
     // Sanitization: Gemini API requires the history list to strictly alternate roles starting with a 'user' turn.
     // Since the database registers bot greetings first, we skip items until we locate the first historical user message.
-    // Also, we slice(0, -1) to omit the newly saved current user message which we will append explicitly.
-    const parsedHistory = [];
+    // Also, we combine consecutive messages from the same role to avoid API alternation crashes.
+    const sanitizedHistory = [];
     let foundFirstUser = false;
     const historicalMessages = history.slice(0, -1);
 
@@ -132,17 +132,34 @@ module.exports = {
         foundFirstUser = true;
       }
       if (foundFirstUser) {
-        parsedHistory.push({
-          role: msg.senderType === 'USER' ? 'user' : 'model',
-          parts: [{ text: msg.content }]
-        });
+        const role = msg.senderType === 'USER' ? 'user' : 'model';
+        const lastMsg = sanitizedHistory[sanitizedHistory.length - 1];
+
+        if (lastMsg && lastMsg.role === role) {
+          // Merge consecutive same-role messages
+          lastMsg.parts[0].text += `\n${msg.content}`;
+        } else {
+          sanitizedHistory.push({
+            role: role,
+            parts: [{ text: msg.content }]
+          });
+        }
       }
     }
 
-    const contents = [
-      ...parsedHistory,
-      { role: 'user', parts: [{ text: userMessageContent }] }
-    ];
+    const contents = [...sanitizedHistory];
+    const lastHistoryMsg = contents[contents.length - 1];
+
+    if (lastHistoryMsg && lastHistoryMsg.role === 'user') {
+      // Merge current user message into the last historical user message to maintain alternation
+      lastHistoryMsg.parts[0].text += `\n${userMessageContent}`;
+    } else {
+      // Append as a new user turn
+      contents.push({
+        role: 'user',
+        parts: [{ text: userMessageContent }]
+      });
+    }
 
     if (!geminiKey) {
       console.warn("GEMINI_API_KEY is not configured.");
