@@ -6,6 +6,19 @@ const { GoogleGenAI } = require('@google/genai');
 const ragService = require('./rag.service');
 const cartService = require('./ecommerce');
 
+// Auto-upgrade deprecated/removed Gemini model identifiers
+const DEPRECATED_MODEL_MAP = {
+  'gemini-1.5-flash': 'gemini-2.5-flash',
+  'gemini-1.5-pro': 'gemini-2.5-flash',
+  'gemini-1.0-pro': 'gemini-2.5-flash',
+  'gemini-pro': 'gemini-2.5-flash',
+};
+
+function resolveModel(modelName) {
+  const model = (modelName || 'gemini-2.5-flash').toLowerCase();
+  return DEPRECATED_MODEL_MAP[model] || model;
+}
+
 
 function buildSystemInstruction(bot, contextChunks) {
   let instruction = bot.systemPrompt;
@@ -169,8 +182,10 @@ module.exports = {
     try {
       const ai = new GoogleGenAI({ apiKey: geminiKey });
       
+      const effectiveModel = resolveModel(bot.model);
+      console.log(`[AI] Using model: ${effectiveModel} (original: ${bot.model})`);
       const response = await ai.models.generateContent({
-        model: bot.model || 'gemini-2.5-flash',
+        model: effectiveModel,
         contents: contents,
         config: {
           systemInstruction: systemPrompt,
@@ -254,7 +269,7 @@ module.exports = {
         });
 
         const finalResponse = await ai.models.generateContent({
-          model: bot.model || 'gemini-2.5-flash',
+          model: effectiveModel,
           contents: contents,
           config: {
             systemInstruction: systemPrompt,
@@ -269,8 +284,8 @@ module.exports = {
       return response.text;
 
     } catch (err) {
-      console.error("Gemini AI Core transmission error:", err?.message || err, JSON.stringify({ model: bot.model, orgId: bot.organizationId, hasKey: !!geminiKey, keyLen: geminiKey?.length }));
-      return `Desculpe, estou com uma dificuldade técnica momentânea. [Debug: ${err?.message || 'Unknown error'}]`;
+      console.error("Gemini AI Core transmission error:", err?.message || err, JSON.stringify({ model: bot.model, resolvedModel: resolveModel(bot.model), orgId: bot.organizationId }));
+      return "Desculpe, estou enfrentando uma dificuldade técnica momentânea. Por favor, tente novamente em alguns instantes.";
     }
   }
 };
