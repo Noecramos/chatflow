@@ -227,11 +227,24 @@ export default function OmnichannelInbox({ token, user }) {
                           {conv.channel.type === 'WHATSAPP' ? '📱' : conv.channel.type === 'INSTAGRAM' ? '📸' : conv.channel.type === 'MESSENGER' ? '💬' : '🌐'}
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap' }}>
                             <span style={{ fontWeight: isUnread ? '700' : '500', fontSize: '13px' }}>
                               {conv.contact?.name || 'Visitante'}
                             </span>
-                            {isHandover && <UserCheck size={12} style={{ color: 'hsl(var(--secondary))' }} />}
+                            {isHandover && (
+                              <span style={{ 
+                                background: '#e8f5e9', 
+                                color: '#2e7d32', 
+                                fontSize: '9px', 
+                                fontWeight: '700', 
+                                padding: '2px 6px', 
+                                borderRadius: '4px', 
+                                border: '1px solid #c8e6c9',
+                                whiteSpace: 'nowrap'
+                              }}>
+                                Humano Solicitado
+                              </span>
+                            )}
                             {conv.status === 'CLOSED' && <CheckCircle size={11} style={{ color: '#4caf50' }} />}
                           </div>
                           <p style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', marginTop: '3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '220px' }}>
@@ -268,7 +281,23 @@ export default function OmnichannelInbox({ token, user }) {
               <div style={{ padding: '12px 20px', borderBottom: '1px solid hsl(var(--border))', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'hsl(var(--bg-card) / 0.15)', flexShrink: 0 }}>
                 <div>
                   <h4 style={{ fontSize: '15px', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
-                    {activeConv.contact?.name || 'Cliente'} {renderChannelBadge(activeConv.channel.type)}
+                    {activeConv.contact?.name || 'Cliente'} 
+                    {renderChannelBadge(activeConv.channel.type)}
+                    {activeConv.isHumanHandoverActive && (
+                      <span style={{ 
+                        background: '#e8f5e9', 
+                        color: '#2e7d32', 
+                        fontSize: '9px', 
+                        fontWeight: '700', 
+                        padding: '2px 6px', 
+                        borderRadius: '4px', 
+                        border: '1px solid #c8e6c9',
+                        textTransform: 'uppercase',
+                        whiteSpace: 'nowrap'
+                      }}>
+                        Humano Solicitado
+                      </span>
+                    )}
                   </h4>
                   <p style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', margin: '2px 0 0' }}>
                     ID: <code style={{ fontSize: '10px' }}>{activeConv.contact?.platformId}</code> · Bot: <strong>{activeConv.bot?.name || "Zimmy"}</strong>
