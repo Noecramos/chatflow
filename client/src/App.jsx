@@ -1299,23 +1299,25 @@ export default function App() {
             <span className="badge" style={{ marginLeft: 'auto', background: 'linear-gradient(135deg, hsl(var(--primary)), #8a2be2)', color: '#fff', fontSize: '8px', padding: '2px 5px' }}>NEW</span>
           </div>
 
-          <div onClick={() => setActiveTab('DOCS')} className={`nav-item ${activeTab === 'DOCS' ? 'active' : ''}`}>
-            <HelpCircle size={17} />
-            <span>Documentação</span>
-          </div>
-
           <div onClick={() => setActiveTab('CONFIGURACOES')} className={`nav-item ${activeTab === 'CONFIGURACOES' ? 'active' : ''}`}>
             <Settings size={17} />
             <span>Configurações</span>
+          </div>
+
+          <div onClick={() => setActiveTab('DOCS')} className={`nav-item ${activeTab === 'DOCS' ? 'active' : ''}`}>
+            <HelpCircle size={17} />
+            <span>Documentação</span>
           </div>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', borderTop: '1px solid hsl(var(--border))', paddingTop: '14px' }}>
           <div style={{ padding: '0 8px' }}>
             <div style={{ fontWeight: '700', fontSize: '13px', color: '#fff' }}>{user.firstName} {user.lastName}</div>
-            <div style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {organization?.name || "Noviapp"}
-            </div>
+            {organization?.name && organization.name !== `${user.firstName} ${user.lastName}` && (
+              <div style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {organization.name}
+              </div>
+            )}
           </div>
           <button 
             onClick={handleLogout}
@@ -2144,7 +2146,7 @@ export default function App() {
           {activeTab === 'DISPAROS' && (
             <div style={{ padding: '40px', display: 'flex', flexDirection: 'column', gap: '32px', maxWidth: '1200px', margin: '0 auto' }}>
               
-              {/* Premium Megaphone Header (ChatVolt Style) */}
+              {/* Premium Megaphone Header (ChatFlow Style) */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                   <div className="pulse-glowing" style={{
@@ -2173,7 +2175,7 @@ export default function App() {
                   </div>
                 </div>
                 
-                {/* ChatVolt Sized Header Action Buttons */}
+                {/* ChatFlow Sized Header Action Buttons */}
                 <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                   <button onClick={() => alert('Para adquirir créditos de disparos adicionais para WhatsApp Oficial da Meta, entre em contato com comercial@noviapp.ai')} style={{
                     background: 'transparent',
@@ -2302,7 +2304,7 @@ export default function App() {
                     );
                   })}
                   
-                  {/* ChatVolt Welcome Empty State if no Active Campaigns */}
+                  {/* ChatFlow Welcome Empty State if no Active Campaigns */}
                   {campaigns.filter(c => c.status === 'PROCESSING' || c.status === 'PAUSED').length === 0 && campaigns.length === 0 ? (
                     <div className="glass" style={{ padding: '60px 40px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '28px', borderRadius: '16px', border: '1px solid hsl(var(--border))', background: 'hsl(var(--bg-card) / 0.3)', width: '100%' }}>
                       <div className="pulse-glowing" style={{

@@ -414,7 +414,7 @@ export default function OmnichannelInbox({ token, user }) {
             </div>
           </>
         ) : (
-          /* Stats Panel - ChatVolt style with big cards */
+          /* Stats Panel - ChatFlow style with big cards */
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px' }}>
             <h3 style={{ fontSize: '18px', fontWeight: '500', color: 'hsl(var(--text-muted))', marginBottom: '30px' }}>Estatísticas das Conversas Encontradas</h3>
             <div style={{ display: 'flex', gap: '20px' }}>

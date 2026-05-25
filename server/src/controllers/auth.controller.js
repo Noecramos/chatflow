@@ -6,7 +6,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const prisma = require('../db');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'chatvolt-super-secret-key-change-in-production';
+const JWT_SECRET = process.env.JWT_SECRET || 'chatflow-super-secret-key-change-in-production';
 
 module.exports = {
   /**

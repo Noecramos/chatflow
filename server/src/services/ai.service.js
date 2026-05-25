@@ -241,7 +241,7 @@ module.exports = {
                 orderId: order.id, 
                 totalAmount: total, 
                 pixCopyPasteKey: pixKey,
-                paymentLink: `https://checkout.chatvolt.com/pay/${order.id}` 
+                paymentLink: `https://checkout.chatflow.com/pay/${order.id}` 
               });
             } catch (err) {
               toolResult = JSON.stringify({ success: false, error: err.message });

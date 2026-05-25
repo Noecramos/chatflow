@@ -86,7 +86,7 @@ const broadcastWorker = require('./services/broadcast-worker');
 broadcastWorker.setSocketIO(io);
 broadcastWorker.start();
 
-const JWT_SECRET = process.env.JWT_SECRET || 'chatvolt-super-secret-key-change-in-production';
+const JWT_SECRET = process.env.JWT_SECRET || 'chatflow-super-secret-key-change-in-production';
 io.use((socket, next) => {
   const token = socket.handshake.auth?.token;
   if (!token) return next(new Error("Token required."));

@@ -178,7 +178,7 @@ module.exports = {
 
     // Generate dynamic Brazilian Pix instant payment code
     const randomHex = Math.floor(1000 + Math.random() * 9000).toString(16).toUpperCase();
-    const mockPixKey = `00020101021226830014br.gov.bcb.pix2561pix.chatvolt.com/qr/order_key_${randomHex}5204000053039865406${total.toFixed(2)}5802BR5913ChatVoltSaaS6009SaoPaulo62070503***6304${randomHex}`;
+    const mockPixKey = `00020101021226830014br.gov.bcb.pix2561pix.chatflow.com/qr/order_key_${randomHex}5204000053039865406${total.toFixed(2)}5802BR5913ChatFlowSaaS6009SaoPaulo62070503***6304${randomHex}`;
 
     const order = await prisma.order.create({
       data: {

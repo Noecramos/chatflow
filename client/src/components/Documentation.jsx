@@ -207,7 +207,7 @@ export default function Documentation() {
                 Explore as Funcionalidades
               </h2>
 
-              {/* Interactive Doc Cards Grid (ChatVolt style mockup) */}
+              {/* Interactive Doc Cards Grid (ChatFlow style mockup) */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px', marginBottom: '40px' }}>
                 
                 <div onClick={() => navigateToDoc('agentes')} className="glowing-card glass" style={{ padding: '24px', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -693,7 +693,7 @@ export default function Documentation() {
                     <Code size={14} color="hsl(var(--primary))" /> index.html
                   </span>
                   <button 
-                    onClick={() => copyToClipboard(`<script src="https://checkout.chatvolt.com/widget/chatflow.js" data-bot-id="SEU_BOT_ID" defer></script>`)}
+                    onClick={() => copyToClipboard(`<script src="https://checkout.chatflow.com/widget/chatflow.js" data-bot-id="SEU_BOT_ID" defer></script>`)}
                     style={{ 
                       background: 'transparent', 
                       border: 'none', 
@@ -710,7 +710,7 @@ export default function Documentation() {
                 </div>
                 <pre style={{ margin: 0, padding: '20px', overflowX: 'auto', fontSize: '13px', color: '#a5b4fc', fontFamily: 'Courier New, monospace' }}>
 {`<script 
-  src="https://checkout.chatvolt.com/widget/chatflow.js" 
+  src="https://checkout.chatflow.com/widget/chatflow.js" 
   data-bot-id="SEU_BOT_ID" 
   defer>
 </script>`}
@@ -809,7 +809,9 @@ export default function Documentation() {
               Fale diretamente com nosso suporte dedicado.
             </p>
             <a 
-              href="mailto:support@chatflow.ai" 
+              href="https://wa.me/5581999999999?text=Olá!%20Preciso%20de%20ajuda%20com%20o%20ChatFlow." 
+              target="_blank"
+              rel="noopener noreferrer"
               style={{ 
                 fontSize: '11px', 
                 color: 'hsl(var(--primary))', 

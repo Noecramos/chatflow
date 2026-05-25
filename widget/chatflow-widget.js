@@ -6,20 +6,20 @@
   const serverUrl = scriptTag.getAttribute('data-server-url') || new URL(scriptTag.src).origin;
 
   if (!botId) {
-    console.error("ChatVolt Widget: Missing 'data-bot-id' attribute.");
+    console.error("ChatFlow Widget: Missing 'data-bot-id' attribute.");
     return;
   }
 
   // Generate unique session identifier per customer browser visitor
-  let sessionId = localStorage.getItem(`chatvolt_session_${botId}`);
+  let sessionId = localStorage.getItem(`chatflow_session_${botId}`);
   if (!sessionId) {
     sessionId = 'session_' + Math.random().toString(36).substring(2, 15);
-    localStorage.setItem(`chatvolt_session_${botId}`, sessionId);
+    localStorage.setItem(`chatflow_session_${botId}`, sessionId);
   }
 
   // 2. Inject Widget DOM components directly into the document
   const widgetContainer = document.createElement('div');
-  widgetContainer.id = 'chatvolt-widget-container';
+  widgetContainer.id = 'chatflow-widget-container';
   widgetContainer.style.position = 'fixed';
   widgetContainer.style.bottom = '20px';
   widgetContainer.style.right = '20px';
@@ -29,7 +29,7 @@
 
   // Floating Bubble Button
   const bubbleButton = document.createElement('button');
-  bubbleButton.id = 'chatvolt-bubble-button';
+  bubbleButton.id = 'chatflow-bubble-button';
   bubbleButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>`;
   bubbleButton.style.width = '60px';
   bubbleButton.style.height = '60px';
@@ -48,7 +48,7 @@
 
   // Chat window dialog
   const chatWindow = document.createElement('div');
-  chatWindow.id = 'chatvolt-chat-window';
+  chatWindow.id = 'chatflow-chat-window';
   chatWindow.style.position = 'absolute';
   chatWindow.style.bottom = '80px';
   chatWindow.style.right = '0';
@@ -74,33 +74,33 @@
         <div style="width: 10px; height: 10px; border-radius: 50%; background: #25d366; box-shadow: 0 0 10px rgba(37, 211, 102, 0.5)"></div>
         <span style="font-weight: 700; color: #fff; font-size: 15px;">Zimmy</span>
       </div>
-      <button id="chatvolt-close" style="background: transparent; border: none; color: #7f7f9e; cursor: pointer; padding: 0;">
+      <button id="chatflow-close" style="background: transparent; border: none; color: #7f7f9e; cursor: pointer; padding: 0;">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
       </button>
     </div>
 
     <!-- Messages list timeline -->
-    <div id="chatvolt-messages" style="flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;"></div>
+    <div id="chatflow-messages" style="flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;"></div>
 
     <!-- Loading message element -->
-    <div id="chatvolt-loader" style="padding: 10px 16px; font-size: 11px; color: #7f7f9e; display: none; align-items: center; gap: 6px;">
+    <div id="chatflow-loader" style="padding: 10px 16px; font-size: 11px; color: #7f7f9e; display: none; align-items: center; gap: 6px;">
       <span style="font-style: italic">Assistant is thinking...</span>
     </div>
 
     <!-- Message input form -->
-    <form id="chatvolt-form" style="border-top: 1px solid #242430; padding: 12px; display: flex; gap: 8px; background: #121218;">
-      <input id="chatvolt-input" type="text" placeholder="Type a message..." style="flex: 1; background: #20202b; border: 1px solid #2c2c3e; border-radius: 6px; padding: 8px 12px; color: #fff; font-size: 13px; outline: none; transition: border-color 0.2s;" />
+    <form id="chatflow-form" style="border-top: 1px solid #242430; padding: 12px; display: flex; gap: 8px; background: #121218;">
+      <input id="chatflow-input" type="text" placeholder="Type a message..." style="flex: 1; background: #20202b; border: 1px solid #2c2c3e; border-radius: 6px; padding: 8px 12px; color: #fff; font-size: 13px; outline: none; transition: border-color 0.2s;" />
       <button type="submit" style="background: ${themeColor}; border: none; border-radius: 6px; padding: 0 12px; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; outline: none;">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
       </button>
     </form>
   `;
 
-  const messagesContainer = chatWindow.querySelector('#chatvolt-messages');
-  const chatForm = chatWindow.querySelector('#chatvolt-form');
-  const chatInput = chatWindow.querySelector('#chatvolt-input');
-  const chatClose = chatWindow.querySelector('#chatvolt-close');
-  const loader = chatWindow.querySelector('#chatvolt-loader');
+  const messagesContainer = chatWindow.querySelector('#chatflow-messages');
+  const chatForm = chatWindow.querySelector('#chatflow-form');
+  const chatInput = chatWindow.querySelector('#chatflow-input');
+  const chatClose = chatWindow.querySelector('#chatflow-close');
+  const loader = chatWindow.querySelector('#chatflow-loader');
 
   // Load Greeting message on boot
   appendMessage("Hello! Welcome to our store. How can I assist you with catalog searching, product checkouts, or support today?", 'BOT');

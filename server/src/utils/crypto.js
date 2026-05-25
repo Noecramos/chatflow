@@ -6,7 +6,7 @@
 const crypto = require('crypto');
 
 const ALGORITHM = 'aes-256-cbc';
-const GLOBAL_SECRET = process.env.JWT_SECRET || 'chatvolt-super-secure-global-secret-key-32ch';
+const GLOBAL_SECRET = process.env.JWT_SECRET || 'chatflow-super-secure-global-secret-key-32ch';
 
 // Ensure the encryption key is exactly 32 bytes
 function getSecretKey(orgId = '') {

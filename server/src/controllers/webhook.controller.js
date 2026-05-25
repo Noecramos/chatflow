@@ -73,7 +73,7 @@ module.exports = {
     const token = req.query['hub.verify_token'];
     const challenge = req.query['hub.challenge'];
 
-    const verifyToken = process.env.META_VERIFY_TOKEN || 'chatvolt_verify_token_123';
+    const verifyToken = process.env.META_VERIFY_TOKEN || 'chatflow_verify_token_123';
 
     if (mode && token) {
       if (mode === 'subscribe' && token === verifyToken) {

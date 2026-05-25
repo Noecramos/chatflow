@@ -1,5 +1,5 @@
 /**
- * ChatVolt SaaS Flow Integration Test Script
+ * ChatFlow SaaS Flow Integration Test Script
  * Tests registration, channel configurations, webhook message processing,
  * shopping cart manipulations, and instant Pix checkout validations.
  */
@@ -16,7 +16,7 @@ function wait(ms) {
 
 async function runTests() {
   console.log("===============================================================================");
-  console.log("             CHATVOLT ENTERPRISE INTEGRATION TEST FLOW BOOTSTRAPPER            ");
+  console.log("             CHATFLOW ENTERPRISE INTEGRATION TEST FLOW BOOTSTRAPPER            ");
   console.log("===============================================================================");
 
   const timestamp = Date.now();
