@@ -11,6 +11,7 @@ const inboxRoutes = require('./routes/inbox');
 const channelsRoutes = require('./routes/channels');
 const ecommerceRoutes = require('./routes/ecommerce');
 const webhookRoutes = require('./routes/webhook');
+const crmRoutes = require('./routes/crm');
 
 const webhookController = require('./controllers/webhook.controller');
 const inboxController = require('./controllers/inbox.controller');
@@ -35,6 +36,7 @@ app.use('/inbox', inboxRoutes);
 app.use('/channels', channelsRoutes);
 app.use('/ecommerce', ecommerceRoutes);
 app.use('/webhooks', webhookRoutes);
+app.use('/crm', crmRoutes);
 
 // Global Error Boundary & Logging Middleware
 app.use((err, req, res, next) => {

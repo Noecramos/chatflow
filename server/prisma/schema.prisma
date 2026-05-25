@@ -103,6 +103,14 @@ model Contact {
   platformId     String              // Phone number or Username
   platformType   String              // WHATSAPP, INSTAGRAM, MESSENGER, WIDGET
   metadata       String              @default("{}")
+  // CRM Pipeline Fields
+  leadStage      String              @default("NOVO")       // NOVO, QUALIFICADO, NEGOCIACAO, PROPOSTA, FECHADO_WON, FECHADO_LOST
+  leadValue      Float               @default(0)            // Expected deal value in R$
+  leadSource     String?                                    // WHATSAPP, INSTAGRAM, MESSENGER, WIDGET, MANUAL
+  leadNotes      String?                                    // CRM notes about the lead
+  closedAt       DateTime?                                  // When deal was closed (won or lost)
+  nextFollowUp   DateTime?                                  // Scheduled follow-up date
+  tags           String              @default("[]")         // JSON array of custom tags
   createdAt      DateTime            @default(now())
   updatedAt      DateTime            @updatedAt
   conversations  InboxConversation[]

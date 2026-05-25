@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import OmnichannelInbox from './components/OmnichannelInbox';
 import EcommerceDashboard from './components/EcommerceDashboard';
+import CrmDashboard from './components/CrmDashboard';
 
 export default function App() {
   const [token, setToken] = useState(localStorage.getItem('token') || '');
@@ -64,6 +65,7 @@ export default function App() {
   // Human Operators (Operadores) states
   const [conversations, setConversations] = useState([]);
   const [agents, setAgents] = useState([]);
+  const [crmPipeline, setCrmPipeline] = useState([]);
   const [newAgentEmail, setNewAgentEmail] = useState('');
   const [newAgentPassword, setNewAgentPassword] = useState('');
   const [newAgentFirstName, setNewAgentFirstName] = useState('');
@@ -754,7 +756,7 @@ export default function App() {
             )}
           </div>
 
-          <div onClick={() => { setActiveTab('CRM'); fetchConversations(); }} className={`nav-item ${activeTab === 'CRM' ? 'active' : ''}`}>
+          <div onClick={() => { setActiveTab('CRM'); fetch('/crm/pipeline', { headers: { 'Authorization': `Bearer ${token}` } }).then(r => r.json()).then(d => { if (d.success) setCrmPipeline(d.pipeline); }).catch(console.error); }} className={`nav-item ${activeTab === 'CRM' ? 'active' : ''}`}>
             <Layers size={17} />
             <span>Fluxo CRM</span>
           </div>
@@ -925,66 +927,153 @@ export default function App() {
           {/* TAB 2: FLUXO CRM */}
           {activeTab === 'CRM' && (
             <div style={{ padding: '25px', display: 'flex', flexDirection: 'column', gap: '20px', height: '100%' }}>
-              <div>
-                <h3 style={{ fontSize: '20px', fontWeight: '800' }}>Painel CRM Funnel</h3>
-                <p style={{ color: 'hsl(var(--text-muted))', fontSize: '12px', marginTop: '2px' }}>
-                  Suas conversas do Omnichannel Inbox distribuídas dinamicamente de acordo com rótulos e transações registradas.
-                </p>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <h3 style={{ fontSize: '20px', fontWeight: '800' }}>Pipeline de Vendas</h3>
+                  <p style={{ color: 'hsl(var(--text-muted))', fontSize: '12px', marginTop: '2px' }}>
+                    Gerencie seus leads através do funil de vendas. Altere etapas, valores e acompanhe o progresso.
+                  </p>
+                </div>
+                <button onClick={async () => {
+                  try {
+                    const res = await fetch('/crm/pipeline', { headers: { 'Authorization': `Bearer ${token}` } });
+                    const data = await res.json();
+                    if (data.success) setCrmPipeline(data.pipeline);
+                  } catch (e) { console.error(e); }
+                }} className="btn-primary" style={{ padding: '8px 14px', fontSize: '12px' }}>↻ Atualizar</button>
               </div>
 
-              <div style={{ display: 'flex', gap: '16px', flex: 1, overflowX: 'auto', alignItems: 'start', paddingBottom: '20px' }}>
-                {[
-                  { name: 'Novo Lead', color: 'hsl(var(--primary))', label: '' },
-                  { name: 'Qualificado', color: '#006aff', label: 'Lead' },
-                  { name: 'Negociação', color: '#f9d423', label: 'Support' },
-                  { name: 'Aguardando Pgto', color: 'hsl(var(--warning))', label: 'Billing' },
-                  { name: 'Finalizado (Won)', color: 'hsl(var(--success))', label: 'Closed' }
-                ].map(col => {
-                  const colThreads = conversations.filter(c => {
-                    if (col.name === 'Novo Lead') {
-                      return !c.label && c.status !== 'CLOSED';
-                    }
-                    if (col.name === 'Finalizado (Won)') {
-                      return c.status === 'CLOSED';
-                    }
-                    return c.label === col.label;
-                  });
-
-                  return (
-                    <div className="glass" key={col.name} style={{ flex: '0 0 240px', background: 'rgba(255,255,255,0.01)', border: '1px solid hsl(var(--border) / 0.6)', padding: '14px', borderRadius: '10px', display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '100%' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', color: col.color, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: col.color }}></span>
-                          {col.name}
-                        </span>
-                        <span className="org-badge" style={{ padding: '2px 6px', fontSize: '10px' }}>{colThreads.length}</span>
-                      </div>
-
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', overflowY: 'auto', maxHeight: '420px', minHeight: '120px' }}>
-                        {colThreads.length === 0 ? (
-                          <div style={{ textAlign: 'center', padding: '20px 5px', color: 'hsl(var(--text-muted))', fontSize: '11px', border: '1px dashed hsl(var(--border) / 0.5)', borderRadius: '6px' }}>
-                            Sem leads nesta etapa.
-                          </div>
-                        ) : (
-                          colThreads.map(thread => (
-                            <div key={thread.id} className="glowing-card" style={{ padding: '12px', background: 'hsl(var(--bg-card))', display: 'flex', flexDirection: 'column', gap: '8px', cursor: 'pointer' }} onClick={() => setActiveTab('CONVERSAS')}>
-                              <div style={{ fontSize: '12px', fontWeight: '700', color: '#fff' }}>{thread.contact?.name || 'Visitante'}</div>
-                              <div style={{ fontSize: '10px', color: 'hsl(var(--text-muted))' }}>ID: <code>{thread.contact?.platformId.slice(0, 14)}...</code></div>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
-                                <span style={{ fontSize: '9px', background: 'rgba(255,255,255,0.05)', padding: '2px 6px', borderRadius: '4px' }}>
-                                  {thread.channel.type}
-                                </span>
-                                <span style={{ fontSize: '9px', color: 'hsl(var(--text-muted))' }}>
-                                  {new Date(thread.lastMessageAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </span>
-                              </div>
-                            </div>
-                          ))
-                        )}
+              <div style={{ display: 'flex', gap: '14px', flex: 1, overflowX: 'auto', alignItems: 'start', paddingBottom: '20px' }}>
+                {(crmPipeline.length > 0 ? crmPipeline : [
+                  { key: 'NOVO', name: 'Novo Lead', color: '#8a2be2', contacts: [], count: 0, totalValue: 0 },
+                  { key: 'QUALIFICADO', name: 'Qualificado', color: '#006aff', contacts: [], count: 0, totalValue: 0 },
+                  { key: 'NEGOCIACAO', name: 'Negociação', color: '#f9d423', contacts: [], count: 0, totalValue: 0 },
+                  { key: 'PROPOSTA', name: 'Proposta', color: '#ff6b35', contacts: [], count: 0, totalValue: 0 },
+                  { key: 'FECHADO_WON', name: 'Fechado (Won)', color: '#00c853', contacts: [], count: 0, totalValue: 0 },
+                  { key: 'FECHADO_LOST', name: 'Perdido (Lost)', color: '#ff1744', contacts: [], count: 0, totalValue: 0 }
+                ]).map(col => (
+                  <div className="glass" key={col.key} style={{
+                    flex: '0 0 250px',
+                    background: 'rgba(255,255,255,0.01)',
+                    border: `1px solid ${col.color}30`,
+                    padding: '14px',
+                    borderRadius: '10px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px',
+                    maxHeight: '100%'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', color: col.color, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: col.color }} />
+                        {col.name}
+                      </span>
+                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                        <span className="org-badge" style={{ padding: '2px 6px', fontSize: '10px' }}>{col.count}</span>
                       </div>
                     </div>
-                  );
-                })}
+                    {col.totalValue > 0 && (
+                      <div style={{ fontSize: '11px', color: col.color, fontWeight: '700', marginTop: '-6px' }}>
+                        R$ {col.totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </div>
+                    )}
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', overflowY: 'auto', maxHeight: '420px', minHeight: '80px' }}>
+                      {col.contacts.length === 0 ? (
+                        <div style={{ textAlign: 'center', padding: '16px 5px', color: 'hsl(var(--text-muted))', fontSize: '11px', border: '1px dashed hsl(var(--border) / 0.5)', borderRadius: '6px' }}>
+                          Sem leads nesta etapa.
+                        </div>
+                      ) : (
+                        col.contacts.map(contact => {
+                          const isOverdue = contact.nextFollowUp && new Date(contact.nextFollowUp) < new Date();
+                          const channelColors = { WHATSAPP: '#25d366', INSTAGRAM: '#E1306C', MESSENGER: '#1877F2', WIDGET: '#8a2be2' };
+                          return (
+                            <div key={contact.id} className="glowing-card" style={{
+                              padding: '12px',
+                              background: 'hsl(var(--bg-card))',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '6px',
+                              borderLeft: `3px solid ${col.color}`
+                            }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ fontSize: '12px', fontWeight: '700', color: '#fff' }}>{contact.name}</span>
+                                <span style={{
+                                  fontSize: '9px',
+                                  padding: '2px 6px',
+                                  borderRadius: '4px',
+                                  background: `${channelColors[contact.platformType] || '#999'}20`,
+                                  color: channelColors[contact.platformType] || '#999',
+                                  fontWeight: '600'
+                                }}>{contact.platformType}</span>
+                              </div>
+
+                              {contact.leadValue > 0 && (
+                                <div style={{ fontSize: '13px', fontWeight: '700', color: 'hsl(var(--secondary))' }}>
+                                  R$ {contact.leadValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                </div>
+                              )}
+
+                              {contact.tags && contact.tags.length > 0 && (
+                                <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                                  {contact.tags.map((tag, i) => (
+                                    <span key={i} style={{ fontSize: '9px', padding: '1px 6px', borderRadius: '10px', background: 'hsl(var(--primary) / 0.15)', color: 'hsl(var(--primary))', fontWeight: '600' }}>{tag}</span>
+                                  ))}
+                                </div>
+                              )}
+
+                              {contact.nextFollowUp && (
+                                <div style={{ fontSize: '10px', color: isOverdue ? '#ff1744' : '#f9d423', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                  ⏰ {isOverdue ? 'Atrasado: ' : 'Follow-up: '}
+                                  {new Date(contact.nextFollowUp).toLocaleDateString('pt-BR')}
+                                </div>
+                              )}
+
+                              {/* Stage Change Dropdown */}
+                              <select
+                                value={col.key}
+                                onChange={async (e) => {
+                                  const newStage = e.target.value;
+                                  try {
+                                    await fetch(`/crm/contacts/${contact.id}/stage`, {
+                                      method: 'PUT',
+                                      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                                      body: JSON.stringify({ stage: newStage })
+                                    });
+                                    // Refresh pipeline
+                                    const res = await fetch('/crm/pipeline', { headers: { 'Authorization': `Bearer ${token}` } });
+                                    const data = await res.json();
+                                    if (data.success) setCrmPipeline(data.pipeline);
+                                  } catch (err) { console.error(err); }
+                                }}
+                                style={{
+                                  fontSize: '10px',
+                                  padding: '3px 6px',
+                                  background: 'hsl(var(--border) / 0.3)',
+                                  border: '1px solid hsl(var(--border))',
+                                  borderRadius: '4px',
+                                  color: '#fff',
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                <option value="NOVO">→ Novo Lead</option>
+                                <option value="QUALIFICADO">→ Qualificado</option>
+                                <option value="NEGOCIACAO">→ Negociação</option>
+                                <option value="PROPOSTA">→ Proposta</option>
+                                <option value="FECHADO_WON">→ Fechado (Won)</option>
+                                <option value="FECHADO_LOST">→ Perdido (Lost)</option>
+                              </select>
+
+                              <div style={{ fontSize: '9px', color: 'hsl(var(--text-muted))' }}>
+                                {new Date(contact.updatedAt).toLocaleDateString('pt-BR')}
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}
@@ -1629,7 +1718,11 @@ export default function App() {
 
           {/* TAB 9: METRICAS */}
           {activeTab === 'METRICAS' && (
-            <EcommerceDashboard token={token} />
+            <div>
+              <CrmDashboard token={token} />
+              <hr style={{ border: 'none', borderTop: '1px solid hsl(var(--border))', margin: '10px 30px' }} />
+              <EcommerceDashboard token={token} />
+            </div>
           )}
 
           {/* TAB 10: HUB */}

@@ -209,7 +209,8 @@ async function processOmnichannelMessage({ senderId, senderName, channelType, ch
         name: senderName,
         platformId: senderId,
         platformType: channelType,
-        phone: channelType === 'WHATSAPP' ? senderId : null
+        phone: channelType === 'WHATSAPP' ? senderId : null,
+        leadSource: channelType
       }
     });
   }
