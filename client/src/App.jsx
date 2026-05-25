@@ -1311,14 +1311,11 @@ export default function App() {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', borderTop: '1px solid hsl(var(--border))', paddingTop: '14px' }}>
-          <div style={{ padding: '0 8px' }}>
-            <div style={{ fontWeight: '700', fontSize: '13px', color: '#fff' }}>{user.firstName} {user.lastName}</div>
-            {organization?.name && organization.name !== `${user.firstName} ${user.lastName}` && (
-              <div style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {organization.name}
-              </div>
-            )}
-          </div>
+          {organization?.name && organization.name !== `${user.firstName} ${user.lastName}` && (
+            <div style={{ padding: '0 8px' }}>
+              <div style={{ fontWeight: '700', fontSize: '13px', color: '#fff' }}>{organization.name}</div>
+            </div>
+          )}
           <button 
             onClick={handleLogout}
             style={{
