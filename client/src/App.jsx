@@ -5,7 +5,8 @@ import {
   Layers, User, UserCheck, FileText, Megaphone, 
   FileCode, Globe, Bell, CheckCircle2, ChevronRight, 
   Plus, Search, HelpCircle, ShieldAlert, Clock, ArrowRight,
-  TrendingUp, BarChart3, AlertCircle, Copy, ToggleLeft, ToggleRight, Trash2, Edit, Sliders
+  TrendingUp, BarChart3, AlertCircle, Copy, ToggleLeft, ToggleRight, Trash2, Edit, Sliders,
+  Phone, Upload
 } from 'lucide-react';
 import OmnichannelInbox from './components/OmnichannelInbox';
 import EcommerceDashboard from './components/EcommerceDashboard';
@@ -87,6 +88,15 @@ export default function App() {
   const [broadcastLabel, setBroadcastLabel] = useState('Lead');
   const [broadcastProgress, setBroadcastProgress] = useState(0);
   const [sendingBroadcast, setSendingBroadcast] = useState(false);
+
+  // Logo upload state
+  const [orgLogo, setOrgLogo] = useState(() => localStorage.getItem('chatflow_org_logo') || null);
+
+  // META WABA Integration states
+  const [wabaAccessToken, setWabaAccessToken] = useState('');
+  const [wabaPhoneNumberId, setWabaPhoneNumberId] = useState('');
+  const [wabaBusinessId, setWabaBusinessId] = useState('');
+  const [savingWaba, setSavingWaba] = useState(false);
 
   const handleAuthSubmit = async (e) => {
     e.preventDefault();
@@ -452,6 +462,73 @@ export default function App() {
       console.error(err);
       setSendingBroadcast(false);
       alert("Falha ao disparar mensagens.");
+    }
+  };
+
+  const handleLogoUpload = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (file.size > 2 * 1024 * 1024) {
+        alert('A imagem deve ter no máximo 2MB.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const dataUrl = ev.target.result;
+        localStorage.setItem('chatflow_org_logo', dataUrl);
+        setOrgLogo(dataUrl);
+      };
+      reader.readAsDataURL(file);
+    };
+    input.click();
+  };
+
+  const handleSaveWabaCredentials = async () => {
+    if (!wabaAccessToken.trim() || !wabaPhoneNumberId.trim()) {
+      alert('Preencha o Access Token e o Phone Number ID.');
+      return;
+    }
+    if (!selectedBot && bots.length === 0) {
+      alert('Crie um Agente AI antes de configurar a integração WhatsApp.');
+      return;
+    }
+    const botId = selectedBot?.id || bots[0]?.id;
+    setSavingWaba(true);
+    try {
+      const res = await fetch(`/channels/bots/${botId}/integrations`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          type: 'WHATSAPP',
+          credentials: {
+            accessToken: wabaAccessToken,
+            phoneNumberId: wabaPhoneNumberId,
+            businessAccountId: wabaBusinessId
+          },
+          isActive: true
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('Credenciais do WhatsApp Business salvas com sucesso!');
+        setWabaAccessToken('');
+        setWabaPhoneNumberId('');
+        setWabaBusinessId('');
+      } else {
+        alert(data.error || 'Erro ao salvar credenciais.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Falha de conexão ao salvar credenciais.');
+    } finally {
+      setSavingWaba(false);
     }
   };
 
@@ -1503,8 +1580,8 @@ export default function App() {
                 <div style={{ fontSize: '13px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '10px', alignItems: 'center' }}>
                     <strong>Webhook Callback URL:</strong>
-                    <code style={{ background: 'rgba(255,255,255,0.03)', padding: '6px 12px', borderRadius: '4px', fontSize: '11px', border: '1px solid hsl(var(--border))' }}>
-                      http://localhost:5000/webhooks/meta
+                    <code style={{ background: 'rgba(255,255,255,0.03)', padding: '6px 12px', borderRadius: '4px', fontSize: '11px', border: '1px solid hsl(var(--border))', wordBreak: 'break-all' }}>
+                      https://chatflow-production-262f.up.railway.app/webhooks/meta
                     </code>
                   </div>
 
@@ -1519,11 +1596,72 @@ export default function App() {
                 <div className="glass" style={{ padding: '16px', background: 'rgba(255,255,255,0.01)', border: '1px dashed hsl(var(--border))', marginTop: '10px' }}>
                   <h5 style={{ fontWeight: '700', marginBottom: '8px', fontSize: '12px' }}>Passo a Passo de Integração WhatsApp:</h5>
                   <ol style={{ margin: 0, paddingLeft: '20px', fontSize: '12px', display: 'flex', flexDirection: 'column', gap: '6px', color: 'hsl(var(--text-muted))' }}>
-                    <li>Acesse o portal **Meta for Developers** e crie um App Business.</li>
-                    <li>Ative o produto **WhatsApp** e clique em Webhooks.</li>
+                    <li>Acesse o portal <strong>Meta for Developers</strong> e crie um App Business.</li>
+                    <li>Ative o produto <strong>WhatsApp</strong> e clique em Webhooks.</li>
                     <li>Insira a URL de Callback e o Verify Token fornecidos acima.</li>
-                    <li>Siga as instruções para assinar o campo de evento **messages**!</li>
+                    <li>Siga as instruções para assinar o campo de evento <strong>messages</strong>!</li>
+                    <li>Copie o <strong>Access Token permanente</strong> e o <strong>Phone Number ID</strong> e insira abaixo.</li>
                   </ol>
+                </div>
+              </div>
+
+              {/* WABA Credentials Form */}
+              <div className="glass" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <h4 style={{ fontSize: '14px', fontWeight: '700', borderBottom: '1px solid hsl(var(--border))', paddingBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Phone size={18} style={{ color: '#25d366' }} /> Credenciais WhatsApp Business API (WABA)
+                </h4>
+                <p style={{ color: 'hsl(var(--text-muted))', fontSize: '12px', margin: 0 }}>
+                  Insira as credenciais da API oficial do WhatsApp Business para ativar a integração de mensagens.
+                </p>
+
+                <div>
+                  <label style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '6px', fontWeight: '600' }}>
+                    Access Token (Permanente)
+                  </label>
+                  <input
+                    type="password"
+                    placeholder="EAAxxxxxxx..."
+                    value={wabaAccessToken}
+                    onChange={(e) => setWabaAccessToken(e.target.value)}
+                    style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '10px', borderRadius: '6px', fontSize: '13px', fontFamily: 'monospace' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '6px', fontWeight: '600' }}>
+                    Phone Number ID
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ex: 109876543210987"
+                    value={wabaPhoneNumberId}
+                    onChange={(e) => setWabaPhoneNumberId(e.target.value)}
+                    style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '10px', borderRadius: '6px', fontSize: '13px', fontFamily: 'monospace' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '6px', fontWeight: '600' }}>
+                    Business Account ID (opcional)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ex: 102345678901234"
+                    value={wabaBusinessId}
+                    onChange={(e) => setWabaBusinessId(e.target.value)}
+                    style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '10px', borderRadius: '6px', fontSize: '13px', fontFamily: 'monospace' }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px', marginTop: '6px' }}>
+                  <button
+                    onClick={handleSaveWabaCredentials}
+                    disabled={savingWaba || !wabaAccessToken.trim() || !wabaPhoneNumberId.trim()}
+                    className="btn-primary"
+                    style={{ padding: '10px 20px', fontSize: '13px', fontWeight: '700' }}
+                  >
+                    {savingWaba ? 'Salvando...' : 'Salvar Credenciais WhatsApp'}
+                  </button>
                 </div>
               </div>
             </div>
@@ -1551,18 +1689,27 @@ export default function App() {
                 
                 {/* Left logo card */}
                 <div className="glass" style={{ padding: '30px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
-                  <div style={{ width: '110px', height: '110px', borderRadius: '50%', border: '2px dashed hsl(var(--border))', display: 'flex', alignItems: 'center', justifyCenter: 'center', background: 'rgba(255,255,255,0.01)', position: 'relative' }}>
-                    <div style={{ margin: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', color: 'hsl(var(--text-muted))' }}>
-                      <Database size={24} />
-                      <span style={{ fontSize: '10px' }}>Logo</span>
-                    </div>
-                    <button style={{ position: 'absolute', bottom: '0', right: '0', background: 'hsl(var(--primary))', color: '#fff', border: 'none', width: '30px', height: '30px', borderRadius: '50%', display: 'flex', cursor: 'pointer' }}>
+                  <div style={{ width: '110px', height: '110px', borderRadius: '50%', border: '2px dashed hsl(var(--border))', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.01)', position: 'relative', overflow: 'hidden' }}>
+                    {orgLogo ? (
+                      <img src={orgLogo} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <div style={{ margin: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', color: 'hsl(var(--text-muted))' }}>
+                        <Upload size={24} />
+                        <span style={{ fontSize: '10px' }}>Logo</span>
+                      </div>
+                    )}
+                    <button onClick={handleLogoUpload} style={{ position: 'absolute', bottom: '0', right: '0', background: 'hsl(var(--primary))', color: '#fff', border: 'none', width: '30px', height: '30px', borderRadius: '50%', display: 'flex', cursor: 'pointer', zIndex: 2 }}>
                       <Settings size={14} style={{ margin: 'auto' }} />
                     </button>
                   </div>
                   <div style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', textAlign: 'center' }}>
                     UUID: <code style={{ color: 'hsl(var(--secondary))' }}>{organization?.id || "default"}</code>
                   </div>
+                  {orgLogo && (
+                    <button onClick={() => { localStorage.removeItem('chatflow_org_logo'); setOrgLogo(null); }} style={{ background: 'transparent', border: 'none', color: 'hsl(var(--destructive))', fontSize: '11px', cursor: 'pointer', textDecoration: 'underline' }}>
+                      Remover Logo
+                    </button>
+                  )}
                 </div>
 
                 {/* Form fields */}
