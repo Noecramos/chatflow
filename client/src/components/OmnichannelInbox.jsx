@@ -305,10 +305,23 @@ export default function OmnichannelInbox({ token, user }) {
                   const isSystem = msg.senderType === 'SYSTEM';
                   const isAgent = msg.senderType === 'AGENT';
                   if (isSystem) return (<div key={msg.id} style={{ display: 'flex', justifyContent: 'center', margin: '4px 0' }}><div style={{ padding: '4px 14px', borderRadius: '16px', fontSize: '10px', color: 'hsl(var(--secondary))', background: 'hsl(var(--border) / 0.3)', display: 'flex', alignItems: 'center', gap: '4px' }}><ShieldAlert size={10} /> {msg.content}</div></div>);
+
+                  let displayName = activeConv.bot?.name || "Zimmy";
+                  if (isUser) {
+                    displayName = activeConv.contact?.name || 'Cliente';
+                  } else if (isAgent) {
+                    try {
+                      const meta = JSON.parse(msg.metadata || '{}');
+                      displayName = meta.senderName || "Atendente";
+                    } catch (e) {
+                      displayName = "Atendente";
+                    }
+                  }
+
                   return (
                     <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isUser ? 'flex-start' : 'flex-end', maxWidth: '70%', alignSelf: isUser ? 'flex-start' : 'flex-end' }}>
                       <span style={{ fontSize: '9px', color: 'hsl(var(--text-muted))', marginBottom: '2px', padding: '0 4px' }}>
-                        {isUser ? (activeConv.contact?.name || 'Cliente') : (isAgent ? "Atendente" : (activeConv.bot?.name || "Zimmy"))}
+                        {displayName}
                       </span>
                       <div style={{ padding: '10px 14px', borderRadius: '12px', fontSize: '13px', lineHeight: '1.45', wordBreak: 'break-word', background: isUser ? 'hsl(var(--border) / 0.5)' : (isAgent ? 'linear-gradient(135deg, hsl(var(--secondary) / 0.3), hsl(var(--secondary) / 0.15))' : 'linear-gradient(135deg, hsl(var(--primary) / 0.4), hsl(var(--primary) / 0.2))'), border: `1px solid ${isUser ? 'hsl(var(--border))' : (isAgent ? 'hsl(var(--secondary) / 0.3)' : 'hsl(var(--primary) / 0.3)')}` }}>
                         {msg.content}

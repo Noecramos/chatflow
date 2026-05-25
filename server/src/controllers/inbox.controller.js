@@ -188,9 +188,15 @@ module.exports = {
         }
       });
 
+      const operator = await prisma.user.findUnique({
+        where: { id: req.user.userId },
+        select: { firstName: true, lastName: true }
+      });
+      const operatorName = operator ? `${operator.firstName} ${operator.lastName}` : "Atendente";
+
       const noteText = isHumanHandoverActive 
-        ? "AI muted. Agent in control." 
-        : "AI re-activated. Bot in control.";
+        ? `${operatorName} assumiu o controle. IA silenciada.` 
+        : `${operatorName} devolveu o controle. IA reativada.`;
 
       const systemMessage = await prisma.message.create({
         data: {
@@ -281,12 +287,19 @@ module.exports = {
         return res.status(502).json({ success: false, error: `Transmission failed: ${err.message}` });
       }
 
+      const operator = await prisma.user.findUnique({
+        where: { id: req.user.userId },
+        select: { firstName: true, lastName: true }
+      });
+      const operatorName = operator ? `${operator.firstName} ${operator.lastName}` : "Atendente";
+
       // Save Message
       const agentMessage = await prisma.message.create({
         data: {
           conversationId: id,
           senderType: "AGENT",
-          content: content
+          content: content,
+          metadata: JSON.stringify({ senderName: operatorName })
         }
       });
 
