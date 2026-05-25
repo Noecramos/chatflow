@@ -269,8 +269,8 @@ module.exports = {
       return response.text;
 
     } catch (err) {
-      console.error("Gemini AI Core transmission error:", err);
-      return "I received your message, but experienced a small connection glitch. How can I help you with your order checkout today?";
+      console.error("Gemini AI Core transmission error:", err?.message || err, JSON.stringify({ model: bot.model, orgId: bot.organizationId, hasKey: !!geminiKey, keyLen: geminiKey?.length }));
+      return `Desculpe, estou com uma dificuldade técnica momentânea. [Debug: ${err?.message || 'Unknown error'}]`;
     }
   }
 };
