@@ -30,6 +30,7 @@ model Organization {
   orders              Order[]
   contactLists        ContactList[]
   broadcastCampaigns  BroadcastCampaign[]
+  customScripts       CustomScript[]
 }
 
 model User {
@@ -237,3 +238,16 @@ model BroadcastLog {
   errorMessage   String?
   sentAt         DateTime          @default(now())
 }
+
+model CustomScript {
+  id             String       @id @default(uuid())
+  name           String
+  description    String?
+  code           String       @default("async (input) => {\n  const val = input.value;\n  return { success: true, data: val };\n}")
+  isActive       Boolean      @default(true)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+

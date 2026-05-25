@@ -12,6 +12,7 @@ const channelsRoutes = require('./routes/channels');
 const ecommerceRoutes = require('./routes/ecommerce');
 const webhookRoutes = require('./routes/webhook');
 const crmRoutes = require('./routes/crm');
+const noviapiRoutes = require('./routes/noviapi');
 
 const webhookController = require('./controllers/webhook.controller');
 const inboxController = require('./controllers/inbox.controller');
@@ -37,6 +38,7 @@ app.use('/channels', channelsRoutes);
 app.use('/ecommerce', ecommerceRoutes);
 app.use('/webhooks', webhookRoutes);
 app.use('/inbox/crm', crmRoutes);  // Under /inbox so Railway proxy forwards it
+app.use('/channels', noviapiRoutes);
 
 // Serve client static build (production SPA)
 const clientDistPath = path.join(__dirname, '../../client/dist');
