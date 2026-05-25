@@ -113,17 +113,36 @@ module.exports = {
     const matchedChunks = await ragService.searchKnowledge(prisma, bot.id, userMessageContent, queryEmbedding, 3);
     const systemPrompt = buildSystemInstruction(bot, matchedChunks);
 
-    // Fetch last 8 messages
+    // Fetch last 10 messages to construct conversational timeline
     const history = await prisma.message.findMany({
       where: { conversationId: conversation.id },
       orderBy: { createdAt: 'asc' },
-      take: 8
+      take: 10
     });
 
-    const parsedHistory = history.map(msg => ({
-      role: msg.senderType === 'USER' ? 'user' : 'model',
-      parts: [{ text: msg.content }]
-    }));
+    // Sanitization: Gemini API requires the history list to strictly alternate roles starting with a 'user' turn.
+    // Since the database registers bot greetings first, we skip items until we locate the first historical user message.
+    // Also, we slice(0, -1) to omit the newly saved current user message which we will append explicitly.
+    const parsedHistory = [];
+    let foundFirstUser = false;
+    const historicalMessages = history.slice(0, -1);
+
+    for (const msg of historicalMessages) {
+      if (msg.senderType === 'USER') {
+        foundFirstUser = true;
+      }
+      if (foundFirstUser) {
+        parsedHistory.push({
+          role: msg.senderType === 'USER' ? 'user' : 'model',
+          parts: [{ text: msg.content }]
+        });
+      }
+    }
+
+    const contents = [
+      ...parsedHistory,
+      { role: 'user', parts: [{ text: userMessageContent }] }
+    ];
 
     if (!geminiKey) {
       console.warn("GEMINI_API_KEY is not configured.");
@@ -133,18 +152,17 @@ module.exports = {
     try {
       const ai = new GoogleGenAI({ apiKey: geminiKey });
       
-      const chat = ai.chats.create({
-        model: 'gemini-2.5-flash',
+      const response = await ai.models.generateContent({
+        model: bot.model || 'gemini-2.5-flash',
+        contents: contents,
         config: {
           systemInstruction: systemPrompt,
           temperature: bot.temperature,
           tools: [{ functionDeclarations: ECOMMERCE_TOOLS }]
-        },
-        history: parsedHistory
+        }
       });
 
-      const result = await chat.sendMessage({ message: userMessageContent });
-      const functionCalls = result.functionCalls;
+      const functionCalls = response.functionCalls;
 
       // Process Ecommerce tool calling triggers
       if (functionCalls && functionCalls.length > 0) {
@@ -204,21 +222,34 @@ module.exports = {
         }
 
         // Return tool results back to LLM for final output synthesis
-        const finalResponse = await chat.sendMessage({
-          message: [
-            {
-              functionResponse: {
-                name: name,
-                response: { result: toolResult }
-              }
+        contents.push({
+          role: 'model',
+          parts: [{ functionCall: call }]
+        });
+        contents.push({
+          role: 'user',
+          parts: [{
+            functionResponse: {
+              name: name,
+              response: { result: toolResult }
             }
-          ]
+          }]
+        });
+
+        const finalResponse = await ai.models.generateContent({
+          model: bot.model || 'gemini-2.5-flash',
+          contents: contents,
+          config: {
+            systemInstruction: systemPrompt,
+            temperature: bot.temperature,
+            tools: [{ functionDeclarations: ECOMMERCE_TOOLS }]
+          }
         });
 
         return finalResponse.text;
       }
 
-      return result.text;
+      return response.text;
 
     } catch (err) {
       console.error("Gemini AI Core transmission error:", err);
