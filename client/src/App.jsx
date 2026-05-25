@@ -27,6 +27,7 @@ export default function App() {
   const [lastName, setLastName] = useState('');
   const [orgName, setOrgName] = useState('');
   const [authError, setAuthError] = useState('');
+  const [authSuccess, setAuthSuccess] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
 
   // Settings & RAG States
@@ -200,6 +201,7 @@ export default function App() {
     e.preventDefault();
     setAuthLoading(true);
     setAuthError('');
+    setAuthSuccess('');
 
     try {
       const endpoint = isRegister ? '/inbox/auth/register' : '/inbox/auth/login';
@@ -214,10 +216,19 @@ export default function App() {
       });
       const data = await res.json();
       if (data.success) {
-        localStorage.setItem('token', data.token);
-        setToken(data.token);
-        setUser(data.user);
-        setOrganization(data.organization);
+        if (isRegister) {
+          setAuthSuccess("Organização criada com sucesso! Faça login com a sua senha para entrar no painel.");
+          setIsRegister(false);
+          setFirstName('');
+          setLastName('');
+          setOrgName('');
+          setPassword('');
+        } else {
+          localStorage.setItem('token', data.token);
+          setToken(data.token);
+          setUser(data.user);
+          setOrganization(data.organization);
+        }
       } else {
         setAuthError(data.error || "Ocorreu um erro na autenticação.");
       }
@@ -1141,6 +1152,12 @@ export default function App() {
             </div>
           )}
 
+          {authSuccess && (
+            <div className="glass" style={{ background: 'hsl(var(--success) / 0.15)', borderColor: 'hsl(var(--success) / 0.3)', padding: '10px 14px', borderRadius: '6px', fontSize: '12px', color: 'hsl(var(--success))' }}>
+              {authSuccess}
+            </div>
+          )}
+
           <form onSubmit={handleAuthSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             {isRegister && (
               <>
@@ -1213,9 +1230,9 @@ export default function App() {
 
           <div style={{ textAlign: 'center', fontSize: '12px', color: 'hsl(var(--text-muted))' }}>
             {isRegister ? (
-              <span>Já possui uma conta? <button onClick={() => { setIsRegister(false); setAuthError(''); }} style={{ background: 'transparent', border: 'none', color: 'hsl(var(--secondary))', cursor: 'pointer', padding: 0, fontWeight: '600' }}>Faça login aqui</button></span>
+              <span>Já possui uma conta? <button onClick={() => { setIsRegister(false); setAuthError(''); setAuthSuccess(''); }} style={{ background: 'transparent', border: 'none', color: 'hsl(var(--secondary))', cursor: 'pointer', padding: 0, fontWeight: '600' }}>Faça login aqui</button></span>
             ) : (
-              <span>Novo no ChatFlow? <button onClick={() => { setIsRegister(true); setAuthError(''); }} style={{ background: 'transparent', border: 'none', color: 'hsl(var(--secondary))', cursor: 'pointer', padding: 0, fontWeight: '600' }}>Registrar organização</button></span>
+              <span>Novo no ChatFlow? <button onClick={() => { setIsRegister(true); setAuthError(''); setAuthSuccess(''); }} style={{ background: 'transparent', border: 'none', color: 'hsl(var(--secondary))', cursor: 'pointer', padding: 0, fontWeight: '600' }}>Registrar organização</button></span>
             )}
           </div>
 
