@@ -17,19 +17,51 @@ module.exports = {
   setSocketIO,
 
   /**
-   * Fetch active conversation list for the Organization
+   * Fetch conversation list with tab filtering, search, and stats
+   * Query params: tab (unresolved|unread|human_requested|resolved|all), search, channel
    */
   async getConversations(req, res) {
     const { organizationId } = req.user;
-    const { status, label } = req.query;
+    const { tab, search, channel } = req.query;
 
     try {
+      // Build where clause based on tab
+      let where = { organizationId };
+
+      switch (tab) {
+        case 'unresolved':
+          where.status = { in: ['OPEN', 'PENDING'] };
+          break;
+        case 'unread':
+          where.isRead = false;
+          where.status = { not: 'CLOSED' };
+          break;
+        case 'human_requested':
+          where.isHumanHandoverActive = true;
+          break;
+        case 'resolved':
+          where.status = 'CLOSED';
+          break;
+        // 'all' or undefined = no filter
+      }
+
+      // Channel filter
+      if (channel && channel !== 'ALL') {
+        where.channel = { type: channel.toUpperCase() };
+      }
+
+      // Text search across contact name, platformId, tags
+      if (search && search.trim()) {
+        where.OR = [
+          { contact: { name: { contains: search, mode: 'insensitive' } } },
+          { contact: { platformId: { contains: search, mode: 'insensitive' } } },
+          { label: { contains: search, mode: 'insensitive' } },
+          { tags: { contains: search, mode: 'insensitive' } }
+        ];
+      }
+
       const conversations = await prisma.inboxConversation.findMany({
-        where: {
-          organizationId,
-          status: status || undefined,
-          label: label || undefined
-        },
+        where,
         include: {
           contact: true,
           channel: { select: { type: true } },
@@ -39,7 +71,28 @@ module.exports = {
         orderBy: { lastMessageAt: 'desc' }
       });
 
-      return res.status(200).json({ success: true, conversations });
+      // Tab counts (for badges)
+      const allConvs = await prisma.inboxConversation.findMany({
+        where: { organizationId },
+        select: { status: true, isRead: true, isHumanHandoverActive: true, channel: { select: { type: true } } }
+      });
+
+      const tabCounts = {
+        unresolved: allConvs.filter(c => c.status === 'OPEN' || c.status === 'PENDING').length,
+        unread: allConvs.filter(c => !c.isRead && c.status !== 'CLOSED').length,
+        human_requested: allConvs.filter(c => c.isHumanHandoverActive).length,
+        resolved: allConvs.filter(c => c.status === 'CLOSED').length,
+        all: allConvs.length
+      };
+
+      // Stats
+      const uniqueChannels = [...new Set(allConvs.map(c => c.channel.type))];
+      const stats = {
+        totalConversations: allConvs.length,
+        distinctChannels: uniqueChannels.length
+      };
+
+      return res.status(200).json({ success: true, conversations, tabCounts, stats });
     } catch (error) {
       console.error("Failed to fetch conversations:", error);
       return res.status(500).json({ success: false, error: error.message });
@@ -160,20 +213,25 @@ module.exports = {
   },
 
   /**
-   * Update properties (labels & notes)
+   * Update properties (labels, notes, priority, status, tags, isRead)
    */
   async updateProperties(req, res) {
     const { id } = req.params;
-    const { label, notes } = req.body;
+    const { label, notes, priority, status, tags, isRead } = req.body;
     const { organizationId } = req.user;
 
     try {
+      const updateData = {};
+      if (label !== undefined) updateData.label = label;
+      if (notes !== undefined) updateData.notes = notes;
+      if (priority !== undefined) updateData.priority = priority;
+      if (status !== undefined) updateData.status = status;
+      if (tags !== undefined) updateData.tags = JSON.stringify(tags);
+      if (isRead !== undefined) updateData.isRead = isRead;
+
       const updated = await prisma.inboxConversation.update({
         where: { id, organizationId },
-        data: {
-          label: label !== undefined ? label : undefined,
-          notes: notes !== undefined ? notes : undefined
-        },
+        data: updateData,
         include: {
           contact: true,
           channel: { select: { type: true } },

@@ -1,9 +1,31 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   MessageSquare, User, Tag, FileText, Send, ShoppingCart, 
-  Bot, RefreshCw, Layers, ShieldAlert, Sparkles, UserCheck 
+  Bot, RefreshCw, Layers, ShieldAlert, Sparkles, UserCheck,
+  Search, AlertTriangle, CheckCircle, Clock, Eye, EyeOff, X, Plus, Hash
 } from 'lucide-react';
 import io from 'socket.io-client';
+
+const STATUS_TABS = [
+  { key: 'unresolved', label: 'Não Resolvidas', icon: Clock },
+  { key: 'unread', label: 'Não Lidas', icon: EyeOff },
+  { key: 'human_requested', label: 'Humano Solicitado', icon: UserCheck },
+  { key: 'resolved', label: 'Resolvidas', icon: CheckCircle },
+  { key: 'all', label: 'Todas conversas', icon: MessageSquare }
+];
+
+const PRIORITY_OPTIONS = [
+  { key: 'BAIXA', label: 'Baixa', color: '#4caf50' },
+  { key: 'MEDIA', label: 'Média', color: '#ff9800' },
+  { key: 'ALTA', label: 'Alta', color: '#f44336' },
+  { key: 'URGENTE', label: 'Urgente', color: '#d50000' }
+];
+
+const STATUS_OPTIONS = [
+  { key: 'OPEN', label: 'Não Resolvida', color: '#f44336' },
+  { key: 'PENDING', label: 'Pendente', color: '#ff9800' },
+  { key: 'CLOSED', label: 'Resolvida', color: '#4caf50' }
+];
 
 export default function OmnichannelInbox({ token, user }) {
   const [conversations, setConversations] = useState([]);
@@ -14,14 +36,24 @@ export default function OmnichannelInbox({ token, user }) {
   const [handoverLoading, setHandoverLoading] = useState(false);
   const [metaLoading, setMetaLoading] = useState(false);
   
-  // Sidebar Search & Filter state
+  // Tab & Filter state
+  const [activeTab, setActiveTab] = useState('unresolved');
   const [searchFilter, setSearchFilter] = useState('');
   const [channelFilter, setChannelFilter] = useState('ALL');
+  const [tabCounts, setTabCounts] = useState({});
+  const [stats, setStats] = useState({ totalConversations: 0, distinctChannels: 0 });
 
   // Sidebar Metadata fields
   const [assignedUser, setAssignedUser] = useState('');
   const [label, setLabel] = useState('');
   const [notes, setNotes] = useState('');
+  const [priority, setPriority] = useState('MEDIA');
+  const [convStatus, setConvStatus] = useState('OPEN');
+  const [convTags, setConvTags] = useState([]);
+  const [newTag, setNewTag] = useState('');
+
+  // Detail panel tab
+  const [detailTab, setDetailTab] = useState('details'); // details | notes
 
   // AI Suggestions
   const [aiSuggestion, setAiSuggestion] = useState('');
@@ -30,15 +62,22 @@ export default function OmnichannelInbox({ token, user }) {
   const messagesEndRef = useRef(null);
   const socketRef = useRef(null);
 
-  // Fetch active conversation list
-  const fetchConversations = async () => {
+  // Fetch conversation list with current tab/filters
+  const fetchConversations = async (tabOverride) => {
     try {
-      const res = await fetch('/inbox/conversations', {
+      const t = tabOverride || activeTab;
+      const params = new URLSearchParams({ tab: t });
+      if (channelFilter !== 'ALL') params.set('channel', channelFilter);
+      if (searchFilter.trim()) params.set('search', searchFilter.trim());
+
+      const res = await fetch(`/inbox/conversations?${params}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
       if (data.success) {
         setConversations(data.conversations);
+        if (data.tabCounts) setTabCounts(data.tabCounts);
+        if (data.stats) setStats(data.stats);
       }
     } catch (e) {
       console.error("Failed to load omnichannel conversations:", e);
@@ -55,11 +94,22 @@ export default function OmnichannelInbox({ token, user }) {
       if (data.success) {
         setMessages(data.messages);
         setCartItems(data.cartItems || []);
-        setAiSuggestion(''); // Clear past suggestions
+        setAiSuggestion('');
       }
     } catch (e) {
       console.error("Failed to load conversation history:", e);
     }
+  };
+
+  // Mark conversation as read
+  const markAsRead = async (convId) => {
+    try {
+      await fetch(`/inbox/conversations/${convId}/properties`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ isRead: true })
+      });
+    } catch (e) { console.error(e); }
   };
 
   // Socket Connections & Real-time setup
@@ -68,16 +118,13 @@ export default function OmnichannelInbox({ token, user }) {
 
     fetchConversations();
 
-    const socket = io('http://localhost:5000', {
+    const socket = io(window.location.hostname === 'localhost' ? 'http://localhost:5000' : window.location.origin, {
       auth: { token }
     });
     
     socketRef.current = socket;
 
     socket.on('message_received', (data) => {
-      console.log("[Socket client] Inbox message arrived:", data);
-      
-      // Update local sidebar threads dynamically
       setConversations(prev => {
         const idx = prev.findIndex(s => s.id === data.session.id);
         const updated = {
@@ -95,14 +142,15 @@ export default function OmnichannelInbox({ token, user }) {
         return [updated, ...prev];
       });
 
-      // Append chat to list if currently focusing on it
       if (activeConv && activeConv.id === data.session.id) {
         setMessages(prev => [...prev, data.message]);
-        // Trigger cart items refetch if cart is updated
         if (data.message.content.toLowerCase().includes("cart") || data.message.content.toLowerCase().includes("order")) {
           fetchConversationDetails(activeConv.id);
         }
       }
+
+      // Refresh tab counts
+      fetchConversations();
     });
 
     socket.on('message_sent', (data) => {
@@ -137,8 +185,18 @@ export default function OmnichannelInbox({ token, user }) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Refetch when tab or channel filter changes
+  useEffect(() => {
+    if (token) fetchConversations();
+  }, [activeTab, channelFilter]);
+
+  // Debounced search
+  useEffect(() => {
+    const t = setTimeout(() => { if (token) fetchConversations(); }, 300);
+    return () => clearTimeout(t);
+  }, [searchFilter]);
+
   const handleSelectConv = (conv) => {
-    // Leave previous thread room to minimize overhead
     if (activeConv && socketRef.current) {
       socketRef.current.emit('leave_conversation', activeConv.id);
     }
@@ -147,14 +205,17 @@ export default function OmnichannelInbox({ token, user }) {
     setAssignedUser(conv.assignedUserId || '');
     setLabel(conv.label || '');
     setNotes(conv.notes || '');
+    setPriority(conv.priority || 'MEDIA');
+    setConvStatus(conv.status || 'OPEN');
+    setConvTags(() => { try { return JSON.parse(conv.tags || '[]'); } catch { return []; } });
+    setDetailTab('details');
     fetchConversationDetails(conv.id);
+    markAsRead(conv.id);
 
-    // Join focused thread room for real-time messages streaming
     if (socketRef.current) {
       socketRef.current.emit('join_conversation', conv.id);
     }
   };
-
 
   // Submit manual live agent message
   const handleSendReply = async (e) => {
@@ -167,49 +228,33 @@ export default function OmnichannelInbox({ token, user }) {
     try {
       const res = await fetch(`/inbox/conversations/${activeConv.id}/reply`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(body)
       });
       const data = await res.json();
-      if (!data.success) {
-        alert(data.error || "Failed to deliver response.");
-      }
-    } catch (err) {
-      console.error(err);
-    }
+      if (!data.success) alert(data.error || "Failed to deliver response.");
+    } catch (err) { console.error(err); }
   };
 
-  // Toggle Human Takeover (take control from AI bot)
+  // Toggle Human Takeover
   const handleToggleHandover = async () => {
     if (!activeConv) return;
     setHandoverLoading(true);
-
     const targetState = !activeConv.isHumanHandoverActive;
 
     try {
       const res = await fetch(`/inbox/conversations/${activeConv.id}/handover`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ isHumanHandoverActive: targetState })
       });
       const data = await res.json();
-      if (data.success) {
-        setActiveConv(prev => ({ ...prev, isHumanHandoverActive: targetState }));
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setHandoverLoading(false);
-    }
+      if (data.success) setActiveConv(prev => ({ ...prev, isHumanHandoverActive: targetState }));
+    } catch (err) { console.error(err); }
+    finally { setHandoverLoading(false); }
   };
 
-  // Save changes to CRM properties
+  // Save CRM properties
   const handleSaveProperties = async () => {
     if (!activeConv) return;
     setMetaLoading(true);
@@ -217,43 +262,64 @@ export default function OmnichannelInbox({ token, user }) {
     try {
       const res = await fetch(`/inbox/conversations/${activeConv.id}/properties`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ label, notes })
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ label, notes, priority, status: convStatus, tags: convTags })
       });
       const data = await res.json();
       if (data.success) {
-        alert("Conversation properties updated successfully!");
+        setActiveConv(prev => ({ ...prev, label, notes, priority, status: convStatus, tags: JSON.stringify(convTags) }));
+        fetchConversations();
       }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setMetaLoading(false);
-    }
+    } catch (err) { console.error(err); }
+    finally { setMetaLoading(false); }
+  };
+
+  // Quick update priority or status
+  const handleQuickUpdate = async (field, value) => {
+    if (!activeConv) return;
+    const body = {};
+    body[field] = value;
+
+    try {
+      await fetch(`/inbox/conversations/${activeConv.id}/properties`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(body)
+      });
+      setActiveConv(prev => ({ ...prev, [field]: value }));
+      if (field === 'status') setConvStatus(value);
+      if (field === 'priority') setPriority(value);
+      fetchConversations();
+    } catch (err) { console.error(err); }
+  };
+
+  // Add tag
+  const handleAddTag = () => {
+    if (!newTag.trim() || convTags.includes(newTag.trim())) return;
+    const updated = [...convTags, newTag.trim()];
+    setConvTags(updated);
+    setNewTag('');
+  };
+
+  // Remove tag
+  const handleRemoveTag = (tag) => {
+    setConvTags(prev => prev.filter(t => t !== tag));
   };
 
   // Assign agent user
   const handleAssignUser = async (userId) => {
     if (!activeConv) return;
     setAssignedUser(userId);
-
     try {
       await fetch(`/inbox/conversations/${activeConv.id}/assign`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ userId })
       });
-    } catch (err) {
-      console.error(err);
-    }
+    } catch (err) { console.error(err); }
   };
 
-  // Generate AI Suggestion (Copilot reply draft)
+  // Generate AI Suggestion
   const handleGenerateSuggestion = async () => {
     if (!activeConv) return;
     setGeneratingSuggestion(true);
@@ -264,16 +330,10 @@ export default function OmnichannelInbox({ token, user }) {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
-      if (data.success) {
-        setAiSuggestion(data.suggestion);
-      } else {
-        alert(data.error || "Failed to generate copilot reply.");
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setGeneratingSuggestion(false);
-    }
+      if (data.success) setAiSuggestion(data.suggestion);
+      else alert(data.error || "Failed to generate copilot reply.");
+    } catch (e) { console.error(e); }
+    finally { setGeneratingSuggestion(false); }
   };
 
   const renderChannelBadge = (type) => {
@@ -284,45 +344,86 @@ export default function OmnichannelInbox({ token, user }) {
     return <span className="badge badge-widget">Web widget</span>;
   };
 
-  // Filters threads
-  const filteredConversations = conversations.filter(c => {
-    const contactName = c.contact?.name || '';
-    const platformId = c.contact?.platformId || '';
-    const matchesSearch = contactName.toLowerCase().includes(searchFilter.toLowerCase()) ||
-                          platformId.toLowerCase().includes(searchFilter.toLowerCase()) ||
-                          (c.label && c.label.toLowerCase().includes(searchFilter.toLowerCase()));
-    
-    const matchesChannel = channelFilter === 'ALL' || c.channel.type.toUpperCase() === channelFilter.toUpperCase();
-    
-    return matchesSearch && matchesChannel;
-  });
+  const getPriorityBadge = (p) => {
+    const opt = PRIORITY_OPTIONS.find(o => o.key === p) || PRIORITY_OPTIONS[1];
+    return <span style={{ fontSize: '9px', padding: '2px 6px', borderRadius: '10px', background: `${opt.color}20`, color: opt.color, fontWeight: '700' }}>● {opt.label}</span>;
+  };
+
+  const getRelativeTime = (date) => {
+    const diff = Date.now() - new Date(date).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'agora';
+    if (mins < 60) return `há ${mins} min`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `há ${hrs} horas`;
+    const days = Math.floor(hrs / 24);
+    return `há ${days} dias`;
+  };
 
   return (
     <div className="glass" style={{ display: 'flex', height: 'calc(100vh - 110px)', margin: '20px', overflow: 'hidden' }}>
       
-      {/* 1. Side List Scroller */}
-      <div style={{ width: '320px', borderRight: '1px solid hsl(var(--border))', display: 'flex', flexDirection: 'column', background: 'hsl(var(--bg-card) / 0.3)' }}>
+      {/* 1. Side List */}
+      <div style={{ width: '340px', borderRight: '1px solid hsl(var(--border))', display: 'flex', flexDirection: 'column', background: 'hsl(var(--bg-card) / 0.3)' }}>
         
-        {/* Filters */}
-        <div style={{ padding: '15px', borderBottom: '1px solid hsl(var(--border))', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 style={{ fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Layers size={18} style={{ color: 'hsl(var(--primary))' }} /> Conversations
-            </h3>
-            <button onClick={fetchConversations} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'hsl(var(--text-muted))' }}>
-              <RefreshCw size={14} />
-            </button>
-          </div>
-          
-          <input 
-            type="text" 
-            placeholder="Search channels & contacts..." 
-            value={searchFilter} 
-            onChange={(e) => setSearchFilter(e.target.value)} 
-            style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '8px 12px', borderRadius: '6px', fontSize: '13px' }}
-          />
+        {/* Status Tabs */}
+        <div style={{ display: 'flex', borderBottom: '1px solid hsl(var(--border))', overflowX: 'auto' }}>
+          {STATUS_TABS.map(tab => {
+            const count = tabCounts[tab.key] || 0;
+            const isActive = activeTab === tab.key;
+            return (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                style={{
+                  flex: '0 0 auto',
+                  padding: '10px 12px',
+                  background: 'transparent',
+                  border: 'none',
+                  borderBottom: isActive ? '2px solid hsl(var(--primary))' : '2px solid transparent',
+                  color: isActive ? 'hsl(var(--primary))' : 'hsl(var(--text-muted))',
+                  fontSize: '11px',
+                  fontWeight: isActive ? '700' : '500',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  transition: 'all 0.2s'
+                }}
+              >
+                {tab.label}
+                {count > 0 && tab.key !== 'all' && (
+                  <span style={{
+                    background: tab.key === 'unread' ? '#f44336' : 'hsl(var(--primary))',
+                    color: '#fff',
+                    borderRadius: '10px',
+                    padding: '1px 6px',
+                    fontSize: '9px',
+                    fontWeight: '700',
+                    minWidth: '16px',
+                    textAlign: 'center'
+                  }}>{count}</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
 
-          <div style={{ display: 'flex', gap: '4px', overflowX: 'auto', paddingBottom: '4px' }}>
+        {/* Search & Channel Filter */}
+        <div style={{ padding: '12px', borderBottom: '1px solid hsl(var(--border))', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ position: 'relative' }}>
+            <Search size={14} style={{ position: 'absolute', left: '10px', top: '9px', color: 'hsl(var(--text-muted))' }} />
+            <input 
+              type="text" 
+              placeholder="Filtro de Texto" 
+              value={searchFilter} 
+              onChange={(e) => setSearchFilter(e.target.value)} 
+              style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '8px 12px 8px 32px', borderRadius: '6px', fontSize: '12px' }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', gap: '4px', overflowX: 'auto' }}>
             {['ALL', 'WHATSAPP', 'INSTAGRAM', 'MESSENGER', 'WIDGET'].map(ch => (
               <button
                 key={ch}
@@ -330,129 +431,111 @@ export default function OmnichannelInbox({ token, user }) {
                 style={{
                   background: channelFilter === ch ? 'hsl(var(--primary))' : 'hsl(var(--border) / 0.4)',
                   color: channelFilter === ch ? '#fff' : 'hsl(var(--text-muted))',
-                  border: 'none',
-                  borderRadius: '12px',
-                  padding: '4px 10px',
-                  fontSize: '11px',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap'
+                  border: 'none', borderRadius: '12px', padding: '3px 8px', fontSize: '10px',
+                  fontWeight: '600', cursor: 'pointer', whiteSpace: 'nowrap'
                 }}
-              >
-                {ch}
-              </button>
+              >{ch}</button>
             ))}
           </div>
         </div>
 
-        {/* Scroller list */}
+        {/* Conversation List */}
         <div style={{ flex: 1, overflowY: 'auto' }}>
-          {filteredConversations.length === 0 ? (
+          {conversations.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '40px 20px', color: 'hsl(var(--text-muted))', fontSize: '13px' }}>
-              No conversations found.
+              <MessageSquare size={32} style={{ marginBottom: '8px', opacity: 0.3 }} />
+              <p>Nenhuma conversa encontrada.</p>
             </div>
           ) : (
-            filteredConversations.map(conv => {
+            conversations.map(conv => {
               const isActive = activeConv && activeConv.id === conv.id;
               const isHandover = conv.isHumanHandoverActive;
+              const isUnread = !conv.isRead;
 
               return (
                 <div
                   key={conv.id}
                   onClick={() => handleSelectConv(conv)}
                   style={{
-                    padding: '14px 18px',
-                    borderBottom: '1px solid hsl(var(--border) / 0.5)',
+                    padding: '12px 16px',
+                    borderBottom: '1px solid hsl(var(--border) / 0.4)',
                     cursor: 'pointer',
                     background: isActive ? 'hsl(var(--primary-glow) / 0.5)' : 'transparent',
-                    borderLeft: isActive ? '3px solid hsl(var(--primary))' : '3px solid transparent',
+                    borderLeft: isActive ? '3px solid hsl(var(--primary))' : isUnread ? '3px solid #f44336' : '3px solid transparent',
                     transition: 'all 0.2s'
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
-                    <span style={{ fontWeight: '600', fontSize: '14px', fontFamily: 'var(--font-display)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      {conv.contact?.name || 'Visitor'}
-                      {isHandover && <UserCheck size={13} style={{ color: 'hsl(var(--secondary))' }} title="Agent Assumed" />}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
+                    <span style={{ fontWeight: isUnread ? '700' : '500', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      {isUnread && <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#f44336', flexShrink: 0 }} />}
+                      {conv.contact?.name || 'Visitante'}
+                      {isHandover && <UserCheck size={12} style={{ color: 'hsl(var(--secondary))' }} />}
                     </span>
-                    <span style={{ fontSize: '11px', color: 'hsl(var(--text-muted))' }}>
-                      {new Date(conv.lastMessageAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    <span style={{ fontSize: '10px', color: 'hsl(var(--text-muted))' }}>
+                      {getRelativeTime(conv.lastMessageAt)}
                     </span>
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2px' }}>
                     {renderChannelBadge(conv.channel.type)}
-                    {conv.label && (
-                      <span style={{ fontSize: '10px', background: 'hsl(var(--border))', padding: '2px 6px', borderRadius: '4px', color: 'hsl(var(--text-muted))' }}>
-                        {conv.label}
-                      </span>
-                    )}
+                    <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                      {conv.priority && conv.priority !== 'MEDIA' && getPriorityBadge(conv.priority)}
+                    </div>
                   </div>
                 </div>
               );
             })
           )}
         </div>
+
+        {/* Stats Footer */}
+        <div style={{ padding: '10px 16px', borderTop: '1px solid hsl(var(--border))', display: 'flex', justifyContent: 'space-around', background: 'hsl(var(--bg-card) / 0.2)' }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '16px', fontWeight: '800' }}>{stats.totalConversations}</div>
+            <div style={{ fontSize: '9px', color: 'hsl(var(--text-muted))' }}>Total de Conversas</div>
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '16px', fontWeight: '800', color: 'hsl(var(--primary))' }}>{tabCounts.unread || 0}</div>
+            <div style={{ fontSize: '9px', color: 'hsl(var(--text-muted))' }}>Não Lidas</div>
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '16px', fontWeight: '800' }}>{stats.distinctChannels}</div>
+            <div style={{ fontSize: '9px', color: 'hsl(var(--text-muted))' }}>Canais</div>
+          </div>
+        </div>
       </div>
 
-      {/* 2. Middle Panel: Messages History Timeline */}
+      {/* 2. Middle Panel: Messages */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'hsl(var(--bg-main) / 0.1)' }}>
         {activeConv ? (
           <>
             {/* Header */}
-            <div style={{ padding: '16px 24px', borderBottom: '1px solid hsl(var(--border))', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'hsl(var(--bg-card) / 0.2)' }}>
+            <div style={{ padding: '14px 20px', borderBottom: '1px solid hsl(var(--border))', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'hsl(var(--bg-card) / 0.2)' }}>
               <div>
-                <h4 style={{ fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <h4 style={{ fontSize: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   {activeConv.contact?.name || 'Customer'}
                   {renderChannelBadge(activeConv.channel.type)}
                 </h4>
-                <p style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', marginTop: '2px' }}>
-                  Platform ID: <code>{activeConv.contact?.platformId}</code> | Bot: <strong>{activeConv.bot?.name || "Volt AI"}</strong>
+                <p style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', marginTop: '2px' }}>
+                  Platform ID: <code>{activeConv.contact?.platformId}</code> | Bot: <strong>{activeConv.bot?.name || "Zimmy"}</strong>
                 </p>
               </div>
 
-              {/* Handover & Smart Suggestions Action controls */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <button
-                  onClick={handleGenerateSuggestion}
-                  disabled={generatingSuggestion}
-                  style={{
-                    background: 'transparent',
-                    border: '1px solid hsl(var(--primary))',
-                    color: 'hsl(var(--primary))',
-                    padding: '8px 12px',
-                    borderRadius: '8px',
-                    fontSize: '12px',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px'
-                  }}
-                >
-                  <Sparkles size={14} className="pulse-glowing" />
-                  {generatingSuggestion ? "Thinking..." : "AI Suggestion"}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <button onClick={handleGenerateSuggestion} disabled={generatingSuggestion}
+                  style={{ background: 'transparent', border: '1px solid hsl(var(--primary))', color: 'hsl(var(--primary))', padding: '7px 12px', borderRadius: '8px', fontSize: '11px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <Sparkles size={13} /> {generatingSuggestion ? "..." : "AI Suggestion"}
                 </button>
 
-                <button
-                  onClick={handleToggleHandover}
-                  disabled={handoverLoading}
+                <button onClick={handleToggleHandover} disabled={handoverLoading}
                   style={{
                     background: activeConv.isHumanHandoverActive 
-                      ? 'linear-gradient(135deg, hsl(var(--secondary)), hsl(var(--secondary) / 0.8))'
-                      : 'hsl(var(--border))',
-                    border: 'none',
-                    color: activeConv.isHumanHandoverActive ? '#000' : 'hsl(var(--text-main))',
-                    padding: '8px 16px',
-                    borderRadius: '8px',
-                    fontSize: '12px',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px'
-                  }}
-                >
-                  <Bot size={14} />
+                      ? 'linear-gradient(135deg, hsl(var(--secondary)), hsl(var(--secondary) / 0.8))' : 'hsl(var(--border))',
+                    border: 'none', color: activeConv.isHumanHandoverActive ? '#000' : 'hsl(var(--text-main))',
+                    padding: '7px 14px', borderRadius: '8px', fontSize: '11px', fontWeight: '600', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', gap: '5px'
+                  }}>
+                  <Bot size={13} />
                   {activeConv.isHumanHandoverActive ? "AI Muted (Live)" : "AI Replying (Auto)"}
                 </button>
               </div>
@@ -460,30 +543,20 @@ export default function OmnichannelInbox({ token, user }) {
 
             {/* AI Suggestion box */}
             {aiSuggestion && (
-              <div className="glass" style={{ margin: '15px 24px 0 24px', padding: '15px', background: 'hsl(var(--primary-glow) / 0.25)', borderColor: 'hsl(var(--primary) / 0.4)', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '11px', fontWeight: '700', color: 'hsl(var(--primary))', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <Sparkles size={12} /> AI ASSISTANT SUGGESTED CO-REPLY
-                  </span>
-                  <button onClick={() => setAiSuggestion('')} style={{ background: 'transparent', border: 'none', color: 'hsl(var(--text-muted))', cursor: 'pointer', fontSize: '11px' }}>
-                    Dismiss
-                  </button>
+              <div className="glass" style={{ margin: '12px 20px 0', padding: '12px', background: 'hsl(var(--primary-glow) / 0.25)', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: '10px', fontWeight: '700', color: 'hsl(var(--primary))' }}><Sparkles size={11} /> AI SUGGESTION</span>
+                  <button onClick={() => setAiSuggestion('')} style={{ background: 'transparent', border: 'none', color: 'hsl(var(--text-muted))', cursor: 'pointer', fontSize: '10px' }}>Dismiss</button>
                 </div>
-                <p style={{ fontSize: '13px', lineHeight: '1.4', margin: 0, fontStyle: 'italic' }}>
-                  "{aiSuggestion}"
-                </p>
-                <button
-                  onClick={() => { setReplyText(aiSuggestion); setAiSuggestion(''); }}
-                  className="btn-primary"
-                  style={{ alignSelf: 'flex-start', padding: '4px 10px', fontSize: '11px' }}
-                >
-                  Use Draft Reply
+                <p style={{ fontSize: '12px', lineHeight: '1.4', margin: 0, fontStyle: 'italic' }}>"{aiSuggestion}"</p>
+                <button onClick={() => { setReplyText(aiSuggestion); setAiSuggestion(''); }} className="btn-primary" style={{ alignSelf: 'flex-start', padding: '3px 8px', fontSize: '10px' }}>
+                  Use Draft
                 </button>
               </div>
             )}
 
             {/* Messages timeline */}
-            <div style={{ flex: 1, padding: '24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div style={{ flex: 1, padding: '20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {messages.map((msg) => {
                 const isUser = msg.senderType === 'USER';
                 const isSystem = msg.senderType === 'SYSTEM';
@@ -491,51 +564,28 @@ export default function OmnichannelInbox({ token, user }) {
 
                 if (isSystem) {
                   return (
-                    <div key={msg.id} style={{ display: 'flex', justifyContent: 'center', margin: '8px 0' }}>
-                      <div className="glass" style={{ padding: '6px 16px', borderRadius: '16px', fontSize: '11px', color: 'hsl(var(--secondary))', display: 'flex', alignItems: 'center', gap: '6px', borderColor: 'hsl(var(--secondary) / 0.3)' }}>
-                        <ShieldAlert size={12} /> {msg.content}
+                    <div key={msg.id} style={{ display: 'flex', justifyContent: 'center', margin: '6px 0' }}>
+                      <div className="glass" style={{ padding: '5px 14px', borderRadius: '16px', fontSize: '10px', color: 'hsl(var(--secondary))', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <ShieldAlert size={11} /> {msg.content}
                       </div>
                     </div>
                   );
                 }
 
                 return (
-                  <div
-                    key={msg.id}
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: isUser ? 'flex-start' : 'flex-end',
-                      maxWidth: '80%',
-                      alignSelf: isUser ? 'flex-start' : 'flex-end'
-                    }}
-                  >
-                    <span style={{ fontSize: '10px', color: 'hsl(var(--text-muted))', marginBottom: '3px', padding: '0 4px' }}>
-                      {isUser ? activeConv.contact?.name : (isAgent ? "Agent (You)" : `${activeConv.bot?.name || "Volt AI"}`)}
+                  <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isUser ? 'flex-start' : 'flex-end', maxWidth: '75%', alignSelf: isUser ? 'flex-start' : 'flex-end' }}>
+                    <span style={{ fontSize: '9px', color: 'hsl(var(--text-muted))', marginBottom: '2px', padding: '0 4px' }}>
+                      {isUser ? activeConv.contact?.name : (isAgent ? "Agent (You)" : `${activeConv.bot?.name || "Zimmy"}`)}
                     </span>
-                    
-                    <div
-                      style={{
-                        padding: '10px 16px',
-                        borderRadius: '12px',
-                        fontSize: '14px',
-                        lineHeight: '1.4',
-                        wordBreak: 'break-word',
-                        background: isUser 
-                          ? 'hsl(var(--border) / 0.5)' 
-                          : (isAgent ? 'linear-gradient(135deg, hsl(var(--secondary) / 0.3), hsl(var(--secondary) / 0.15))' : 'linear-gradient(135deg, hsl(var(--primary) / 0.4), hsl(var(--primary) / 0.2))'),
-                        border: '1px solid',
-                        borderColor: isUser 
-                          ? 'hsl(var(--border))' 
-                          : (isAgent ? 'hsl(var(--secondary) / 0.3)' : 'hsl(var(--primary) / 0.3)'),
-                        color: 'hsl(var(--text-main))',
-                        boxShadow: isUser ? 'none' : (isAgent ? '0 0 10px hsl(var(--secondary-glow))' : '0 0 10px hsl(var(--primary-glow))')
-                      }}
-                    >
+                    <div style={{
+                      padding: '10px 14px', borderRadius: '12px', fontSize: '13px', lineHeight: '1.4', wordBreak: 'break-word',
+                      background: isUser ? 'hsl(var(--border) / 0.5)' : (isAgent ? 'linear-gradient(135deg, hsl(var(--secondary) / 0.3), hsl(var(--secondary) / 0.15))' : 'linear-gradient(135deg, hsl(var(--primary) / 0.4), hsl(var(--primary) / 0.2))'),
+                      border: '1px solid', borderColor: isUser ? 'hsl(var(--border))' : (isAgent ? 'hsl(var(--secondary) / 0.3)' : 'hsl(var(--primary) / 0.3)'),
+                      boxShadow: isUser ? 'none' : (isAgent ? '0 0 8px hsl(var(--secondary-glow))' : '0 0 8px hsl(var(--primary-glow))')
+                    }}>
                       {msg.content}
                     </div>
-
-                    <span style={{ fontSize: '9px', color: 'hsl(var(--text-muted))', marginTop: '3px', alignSelf: isUser ? 'flex-start' : 'flex-end', padding: '0 4px' }}>
+                    <span style={{ fontSize: '8px', color: 'hsl(var(--text-muted))', marginTop: '2px', padding: '0 4px' }}>
                       {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
@@ -545,227 +595,183 @@ export default function OmnichannelInbox({ token, user }) {
             </div>
 
             {/* Composer */}
-            <form onSubmit={handleSendReply} style={{ padding: '16px 20px', borderTop: '1px solid hsl(var(--border))', background: 'hsl(var(--bg-card) / 0.1)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              
-              {/* Quick Replies Dropdown */}
-              {activeConv.isHumanHandoverActive && (() => {
-                const saved = localStorage.getItem('chatvolt_quick_replies');
-                const qrs = saved ? JSON.parse(saved) : [];
-                if (qrs.length === 0) return null;
-                return (
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    <span style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', fontWeight: '600' }}>Resposta Rápida:</span>
-                    <select
-                      onChange={(e) => {
-                        if (e.target.value) {
-                          setReplyText(e.target.value);
-                          e.target.value = ''; // Reset select
-                        }
-                      }}
-                      style={{
-                        background: 'hsl(var(--border) / 0.4)',
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '6px',
-                        padding: '4px 8px',
-                        fontSize: '11px',
-                        outline: 'none',
-                        color: 'hsl(var(--text-main))',
-                        maxWidth: '220px'
-                      }}
-                    >
-                      <option value="">Selecionar modelo...</option>
-                      {qrs.map(qr => (
-                        <option key={qr.id} value={qr.content}>{qr.title}</option>
-                      ))}
-                    </select>
-                  </div>
-                );
-              })()}
-
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <input
-                  type="text"
-                  value={replyText}
-                  onChange={(e) => setReplyText(e.target.value)}
-                  placeholder={activeConv.isHumanHandoverActive 
-                    ? "Type your live agent reply here..." 
-                    : "AI is active. Toggle Live reply mode to send manual responses."}
-                  disabled={!activeConv.isHumanHandoverActive}
-                  style={{
-                    flex: 1,
-                    background: 'hsl(var(--border) / 0.4)',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px',
-                    padding: '12px 16px',
-                    fontSize: '13px',
-                    outline: 'none'
-                  }}
-                />
-                <button
-                  type="submit"
-                  disabled={!activeConv.isHumanHandoverActive || !replyText.trim()}
-                  className="btn-primary"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    background: activeConv.isHumanHandoverActive 
-                      ? 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.8))'
-                      : 'hsl(var(--border))',
-                    cursor: activeConv.isHumanHandoverActive ? 'pointer' : 'not-allowed'
-                  }}
-                >
-                  <Send size={14} /> Send
-                </button>
-              </div>
+            <form onSubmit={handleSendReply} style={{ padding: '14px 18px', borderTop: '1px solid hsl(var(--border))', display: 'flex', gap: '8px' }}>
+              <input
+                type="text" value={replyText} onChange={(e) => setReplyText(e.target.value)}
+                placeholder={activeConv.isHumanHandoverActive ? "Digite sua resposta..." : "AI ativa. Ative o modo Live para responder."}
+                disabled={!activeConv.isHumanHandoverActive}
+                style={{ flex: 1, background: 'hsl(var(--border) / 0.4)', border: '1px solid hsl(var(--border))', borderRadius: '8px', padding: '10px 14px', fontSize: '13px', outline: 'none' }}
+              />
+              <button type="submit" disabled={!activeConv.isHumanHandoverActive || !replyText.trim()} className="btn-primary"
+                style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: activeConv.isHumanHandoverActive ? 'pointer' : 'not-allowed' }}>
+                <Send size={14} /> Send
+              </button>
             </form>
           </>
         ) : (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'hsl(var(--text-muted))' }}>
             <MessageSquare size={48} style={{ color: 'hsl(var(--border))', marginBottom: '14px' }} />
-            <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 600 }}>Select a Conversation</h3>
-            <p style={{ fontSize: '13px', marginTop: '4px' }}>Choose a customer thread to begin live omnichannel agent operations.</p>
+            <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 600 }}>Selecione uma Conversa</h3>
+            <p style={{ fontSize: '13px', marginTop: '4px' }}>Escolha uma conversa para iniciar o atendimento.</p>
           </div>
         )}
       </div>
 
-      {/* 3. Right Sidebar: Customer Meta Details & Active Cart Inspector */}
+      {/* 3. Right Sidebar: Details/Notes Panel */}
       {activeConv && (
-        <div style={{ width: '300px', borderLeft: '1px solid hsl(var(--border))', display: 'flex', flexDirection: 'column', background: 'hsl(var(--bg-card) / 0.3)', padding: '20px', gap: '20px', overflowY: 'auto' }}>
+        <div style={{ width: '280px', borderLeft: '1px solid hsl(var(--border))', display: 'flex', flexDirection: 'column', background: 'hsl(var(--bg-card) / 0.3)', overflowY: 'auto' }}>
           
-          {/* Assigned Agent */}
-          <div>
-            <h4 style={{ fontSize: '13px', color: 'hsl(var(--text-muted))', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              <User size={14} /> Assigned Agent
-            </h4>
-            <select
-              value={assignedUser}
-              onChange={(e) => handleAssignUser(e.target.value)}
-              style={{
-                width: '100%',
-                background: 'hsl(var(--border) / 0.5)',
-                border: '1px solid hsl(var(--border))',
-                borderRadius: '6px',
-                padding: '8px',
-                fontSize: '13px',
-                outline: 'none'
-              }}
-            >
-              <option value="">Unassigned</option>
-              <option value={user.id}>{user.firstName} {user.lastName} (You)</option>
-            </select>
+          {/* Conversation Name Header */}
+          <div style={{ padding: '14px 16px', borderBottom: '1px solid hsl(var(--border))' }}>
+            <h4 style={{ fontSize: '14px', fontWeight: '700' }}>{activeConv.contact?.name || 'Visitante'}</h4>
           </div>
 
-          {/* Contact profile */}
-          <div>
-            <h4 style={{ fontSize: '13px', color: 'hsl(var(--text-muted))', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Contact Profile
-            </h4>
-            <div className="glass" style={{ padding: '12px', borderRadius: '6px', background: 'hsl(var(--bg-card) / 0.2)', fontSize: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div><strong>Name:</strong> {activeConv.contact?.name}</div>
-              <div><strong>Platform:</strong> {activeConv.contact?.platformType}</div>
-              <div><strong>Recipient ID:</strong> <code style={{ fontSize: '11px' }}>{activeConv.contact?.platformId}</code></div>
-              {activeConv.contact?.phone && <div><strong>Phone:</strong> {activeConv.contact.phone}</div>}
-              {activeConv.contact?.email && <div><strong>Email:</strong> {activeConv.contact.email}</div>}
-            </div>
+          {/* Detalhes / Notas Tabs */}
+          <div style={{ display: 'flex', borderBottom: '1px solid hsl(var(--border))' }}>
+            <button onClick={() => setDetailTab('details')} style={{
+              flex: 1, padding: '10px', border: 'none', background: detailTab === 'details' ? 'hsl(var(--primary) / 0.1)' : 'transparent',
+              borderBottom: detailTab === 'details' ? '2px solid hsl(var(--primary))' : 'none',
+              color: detailTab === 'details' ? 'hsl(var(--primary))' : 'hsl(var(--text-muted))',
+              fontSize: '12px', fontWeight: '600', cursor: 'pointer'
+            }}>Detalhes</button>
+            <button onClick={() => setDetailTab('notes')} style={{
+              flex: 1, padding: '10px', border: 'none', background: detailTab === 'notes' ? 'hsl(var(--primary) / 0.1)' : 'transparent',
+              borderBottom: detailTab === 'notes' ? '2px solid hsl(var(--primary))' : 'none',
+              color: detailTab === 'notes' ? 'hsl(var(--primary))' : 'hsl(var(--text-muted))',
+              fontSize: '12px', fontWeight: '600', cursor: 'pointer'
+            }}>Notas</button>
           </div>
 
-          {/* Properties */}
-          <div>
-            <h4 style={{ fontSize: '13px', color: 'hsl(var(--text-muted))', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              <Tag size={14} /> Labels
-            </h4>
-            <select
-              value={label}
-              onChange={(e) => setLabel(e.target.value)}
-              style={{
-                width: '100%',
-                background: 'hsl(var(--border) / 0.5)',
-                border: '1px solid hsl(var(--border))',
-                borderRadius: '6px',
-                padding: '8px',
-                fontSize: '13px',
-                outline: 'none',
-                marginBottom: '14px'
-              }}
-            >
-              <option value="">No Label</option>
-              <option value="Lead">Lead</option>
-              <option value="Billing">Billing</option>
-              <option value="Support">Support</option>
-              <option value="Spam">Spam</option>
-            </select>
-
-            <h4 style={{ fontSize: '13px', color: 'hsl(var(--text-muted))', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              <FileText size={14} /> CRM Internal Notes
-            </h4>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Record transaction summaries or customer preferences..."
-              rows={4}
-              style={{
-                width: '100%',
-                background: 'hsl(var(--border) / 0.5)',
-                border: '1px solid hsl(var(--border))',
-                borderRadius: '6px',
-                padding: '8px 12px',
-                fontSize: '12px',
-                outline: 'none',
-                resize: 'none',
-                lineHeight: '1.4',
-                marginBottom: '10px'
-              }}
-            />
-
-            <button
-              onClick={handleSaveProperties}
-              disabled={metaLoading}
-              className="btn-secondary"
-              style={{ width: '100%', padding: '8px', fontSize: '12px' }}
-            >
-              {metaLoading ? "Saving..." : "Save Properties"}
+          {/* Intervir Button */}
+          <div style={{ padding: '12px 16px' }}>
+            <button onClick={handleToggleHandover} style={{
+              width: '100%', padding: '10px', borderRadius: '8px', border: 'none', fontSize: '13px', fontWeight: '700', cursor: 'pointer',
+              background: activeConv.isHumanHandoverActive ? 'hsl(var(--secondary))' : '#c62828', color: '#fff',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px'
+            }}>
+              🖐 {activeConv.isHumanHandoverActive ? 'Devolver ao AI' : 'Intervir'}
             </button>
           </div>
 
-          <hr style={{ border: 'none', borderTop: '1px solid hsl(var(--border))', margin: '0' }} />
+          <div style={{ padding: '0 16px 16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
 
-          {/* Active Shopping Cart Inspector */}
-          <div>
-            <h4 style={{ fontSize: '13px', color: 'hsl(var(--text-muted))', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              <ShoppingCart size={14} style={{ color: 'hsl(var(--secondary))' }} /> Active Shopping Cart
-            </h4>
-            
-            {cartItems.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '20px 10px', border: '1px dashed hsl(var(--border))', borderRadius: '8px', color: 'hsl(var(--text-muted))', fontSize: '12px' }}>
-                Customer cart is currently empty.
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {cartItems.map((item) => (
-                  <div key={item.id} className="glass" style={{ padding: '8px 12px', borderRadius: '6px', background: 'hsl(var(--bg-card) / 0.4)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', borderColor: 'hsl(var(--border) / 0.5)' }}>
-                    <div>
-                      <div style={{ fontWeight: '600' }}>{item.name}</div>
-                      <div style={{ color: 'hsl(var(--text-muted))', marginTop: '2px' }}>Qty: {item.quantity} × ${item.price.toFixed(2)}</div>
-                    </div>
-                    <div style={{ fontWeight: '700', color: 'hsl(var(--secondary))' }}>
-                      ${(item.price * item.quantity).toFixed(2)}
-                    </div>
+            {detailTab === 'details' ? (
+              <>
+                {/* Etiquetas / Tags */}
+                <div>
+                  <h5 style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Etiquetas</h5>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '6px' }}>
+                    {convTags.length === 0 && <span style={{ fontSize: '11px', color: 'hsl(var(--text-muted))' }}>Não possui etiquetas.</span>}
+                    {convTags.map(tag => (
+                      <span key={tag} style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '10px', background: 'hsl(var(--primary) / 0.15)', color: 'hsl(var(--primary))', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                        {tag}
+                        <X size={10} style={{ cursor: 'pointer' }} onClick={() => handleRemoveTag(tag)} />
+                      </span>
+                    ))}
                   </div>
-                ))}
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 4px', fontSize: '13px', fontWeight: '700', marginTop: '6px' }}>
-                  <span>Total Est:</span>
-                  <span style={{ color: 'hsl(var(--secondary))' }}>
-                    ${cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2)}
-                  </span>
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    <input type="text" value={newTag} onChange={(e) => setNewTag(e.target.value)} placeholder="Adicionar etiqueta..."
+                      onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
+                      style={{ flex: 1, background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '5px 8px', borderRadius: '4px', fontSize: '11px' }} />
+                    <button onClick={handleAddTag} style={{ background: 'hsl(var(--primary))', border: 'none', color: '#fff', borderRadius: '4px', padding: '5px 8px', cursor: 'pointer' }}>
+                      <Plus size={12} />
+                    </button>
+                  </div>
                 </div>
-              </div>
+
+                {/* Status & Priority */}
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <div style={{ flex: 1 }}>
+                    <h5 style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>Status</h5>
+                    <select value={convStatus} onChange={(e) => handleQuickUpdate('status', e.target.value)}
+                      style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', borderRadius: '6px', padding: '6px', fontSize: '11px', color: STATUS_OPTIONS.find(s => s.key === convStatus)?.color || '#fff' }}>
+                      {STATUS_OPTIONS.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
+                    </select>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <h5 style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>Prioridade</h5>
+                    <select value={priority} onChange={(e) => handleQuickUpdate('priority', e.target.value)}
+                      style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', borderRadius: '6px', padding: '6px', fontSize: '11px', color: PRIORITY_OPTIONS.find(p => p.key === priority)?.color || '#fff' }}>
+                      {PRIORITY_OPTIONS.map(p => <option key={p.key} value={p.key}>{p.label}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Responsável */}
+                <div>
+                  <h5 style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>Responsável</h5>
+                  <select value={assignedUser} onChange={(e) => handleAssignUser(e.target.value)}
+                    style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', borderRadius: '6px', padding: '6px', fontSize: '11px' }}>
+                    <option value="">Responsável</option>
+                    <option value={user.id}>{user.firstName} {user.lastName}</option>
+                  </select>
+                </div>
+
+                {/* Contact Profile */}
+                <div>
+                  <h5 style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>Perfil do Contato</h5>
+                  <div className="glass" style={{ padding: '10px', borderRadius: '6px', fontSize: '11px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                    <div><strong>Nome:</strong> {activeConv.contact?.name}</div>
+                    <div><strong>Plataforma:</strong> {activeConv.contact?.platformType}</div>
+                    <div><strong>ID:</strong> <code style={{ fontSize: '10px' }}>{activeConv.contact?.platformId}</code></div>
+                    {activeConv.contact?.phone && <div><strong>Fone:</strong> {activeConv.contact.phone}</div>}
+                  </div>
+                </div>
+
+                {/* Shopping Cart */}
+                <div>
+                  <h5 style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
+                    <ShoppingCart size={12} style={{ marginRight: '4px' }} /> Carrinho
+                  </h5>
+                  {cartItems.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '12px', border: '1px dashed hsl(var(--border))', borderRadius: '6px', color: 'hsl(var(--text-muted))', fontSize: '11px' }}>
+                      Carrinho vazio.
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      {cartItems.map(item => (
+                        <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', padding: '4px 0' }}>
+                          <span>{item.quantity}× {item.name}</span>
+                          <span style={{ color: 'hsl(var(--secondary))' }}>R$ {(item.price * item.quantity).toFixed(2)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              /* Notes Tab */
+              <>
+                <div>
+                  <h5 style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Notas internas do CRM</h5>
+                  <textarea value={notes} onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Registre observações, resumos ou preferências do cliente..."
+                    rows={8}
+                    style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', borderRadius: '6px', padding: '10px', fontSize: '12px', outline: 'none', resize: 'none', lineHeight: '1.5' }}
+                  />
+                </div>
+
+                <div>
+                  <h5 style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Label</h5>
+                  <select value={label} onChange={(e) => setLabel(e.target.value)}
+                    style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', borderRadius: '6px', padding: '6px', fontSize: '11px' }}>
+                    <option value="">Sem Label</option>
+                    <option value="Lead">Lead</option>
+                    <option value="Support">Suporte</option>
+                    <option value="Billing">Faturamento</option>
+                    <option value="Spam">Spam</option>
+                  </select>
+                </div>
+
+                <button onClick={handleSaveProperties} disabled={metaLoading} className="btn-primary"
+                  style={{ width: '100%', padding: '10px', fontSize: '12px' }}>
+                  {metaLoading ? "Salvando..." : "Salvar Propriedades"}
+                </button>
+              </>
             )}
           </div>
-
         </div>
       )}
-
     </div>
   );
 }

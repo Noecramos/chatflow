@@ -128,11 +128,14 @@ model InboxConversation {
   botId                 String
   bot                   Bot           @relation(fields: [botId], references: [id], onDelete: Cascade)
   status                String        @default("OPEN") // OPEN, PENDING, CLOSED
+  priority              String        @default("MEDIA") // BAIXA, MEDIA, ALTA, URGENTE
   assignedUserId        String?
   assignedUser          User?         @relation(fields: [assignedUserId], references: [id])
   isHumanHandoverActive Boolean       @default(false)
   label                 String?       // Lead, Support, Billing
+  tags                  String        @default("[]") // JSON array of tag strings
   notes                 String?
+  isRead                Boolean       @default(false)
   aiSuggestions         String?
   lastMessageAt         DateTime      @default(now())
   createdAt             DateTime      @default(now())
