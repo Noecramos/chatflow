@@ -31,12 +31,12 @@ app.use(express.urlencoded({ extended: true }));
 const path = require('path');
 app.use('/widget', express.static(path.join(__dirname, '../../widget')));
 
-// Register refined Core routes prefixes (strictly keeping only 4 prefixes)
+// Register refined Core routes prefixes
 app.use('/inbox', inboxRoutes);
 app.use('/channels', channelsRoutes);
 app.use('/ecommerce', ecommerceRoutes);
 app.use('/webhooks', webhookRoutes);
-app.use('/crm', crmRoutes);
+app.use('/inbox/crm', crmRoutes);  // Under /inbox so Railway proxy forwards it
 
 // Serve client static build (production SPA)
 const clientDistPath = path.join(__dirname, '../../client/dist');

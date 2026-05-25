@@ -756,7 +756,7 @@ export default function App() {
             )}
           </div>
 
-          <div onClick={() => { setActiveTab('CRM'); fetch('/crm/pipeline', { headers: { 'Authorization': `Bearer ${token}` } }).then(r => { const ct = r.headers.get('content-type'); if (ct && ct.includes('application/json')) return r.json(); console.error('[CRM Nav] Non-JSON:', r.status); return { success: false }; }).then(d => { if (d.success) setCrmPipeline(d.pipeline); }).catch(e => console.error('[CRM Nav]', e)); }} className={`nav-item ${activeTab === 'CRM' ? 'active' : ''}`}>
+          <div onClick={() => { setActiveTab('CRM'); fetch('/inbox/crm/pipeline', { headers: { 'Authorization': `Bearer ${token}` } }).then(r => { const ct = r.headers.get('content-type'); if (ct && ct.includes('application/json')) return r.json(); console.error('[CRM Nav] Non-JSON:', r.status); return { success: false }; }).then(d => { if (d.success) setCrmPipeline(d.pipeline); }).catch(e => console.error('[CRM Nav]', e)); }} className={`nav-item ${activeTab === 'CRM' ? 'active' : ''}`}>
             <Layers size={17} />
             <span>Fluxo CRM</span>
           </div>
@@ -936,7 +936,7 @@ export default function App() {
                 </div>
                 <button onClick={async () => {
                   try {
-                    const res = await fetch('/crm/pipeline', { headers: { 'Authorization': `Bearer ${token}` } });
+                    const res = await fetch('/inbox/crm/pipeline', { headers: { 'Authorization': `Bearer ${token}` } });
                     const contentType = res.headers.get('content-type');
                     if (!contentType || !contentType.includes('application/json')) {
                       const text = await res.text();
@@ -1043,13 +1043,13 @@ export default function App() {
                                 onChange={async (e) => {
                                   const newStage = e.target.value;
                                   try {
-                                    await fetch(`/crm/contacts/${contact.id}/stage`, {
+                                    await fetch(`/inbox/crm/contacts/${contact.id}/stage`, {
                                       method: 'PUT',
                                       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                                       body: JSON.stringify({ stage: newStage })
                                     });
                                     // Refresh pipeline
-                                    const res = await fetch('/crm/pipeline', { headers: { 'Authorization': `Bearer ${token}` } });
+                                    const res = await fetch('/inbox/crm/pipeline', { headers: { 'Authorization': `Bearer ${token}` } });
                                     const ct = res.headers.get('content-type');
                                     if (ct && ct.includes('application/json')) {
                                       const data = await res.json();

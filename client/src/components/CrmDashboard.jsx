@@ -20,7 +20,7 @@ export default function CrmDashboard({ token }) {
   const fetchMetrics = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/crm/metrics', {
+      const res = await fetch('/inbox/crm/metrics', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
