@@ -695,9 +695,9 @@ export default function App() {
             <LogOut size={13} />
             <span>Sair da Conta</span>
           </button>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', marginTop: '10px', borderTop: '1px solid rgba(255,255,255,0.03)', paddingTop: '10px' }}>
-            <img src="/logo1.png" alt="NoviApp Logo" style={{ height: '14px', width: 'auto', opacity: 0.5, transition: 'opacity 0.2s' }} onMouseOver={(e) => e.target.style.opacity = 0.8} onMouseOut={(e) => e.target.style.opacity = 0.5} />
-            <span style={{ fontSize: '9px', color: 'hsl(var(--text-muted))', opacity: 0.5 }}>© 2026 NoviApp AI Systems</span>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', marginTop: '14px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '12px' }}>
+            <img src="/logo1.png" alt="NoviApp Logo" style={{ height: '24px', width: 'auto', opacity: 0.6, transition: 'opacity 0.2s' }} onMouseOver={(e) => e.target.style.opacity = 0.9} onMouseOut={(e) => e.target.style.opacity = 0.6} />
+            <span style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', opacity: 0.6 }}>© 2026 NoviApp AI Systems</span>
           </div>
         </div>
       </div>
