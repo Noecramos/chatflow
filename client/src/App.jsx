@@ -1349,15 +1349,6 @@ export default function App() {
         <div className="main-header" style={{ height: '65px', padding: '0 25px' }}>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: '500' }}>
-            <span 
-              onClick={() => { setActiveTab('CONVERSAS'); fetchConversations(); }}
-              style={{ color: 'hsl(var(--text-muted))', cursor: 'pointer', transition: 'color 0.2s' }}
-              onMouseEnter={(e) => e.target.style.color = '#fff'}
-              onMouseLeave={(e) => e.target.style.color = 'hsl(var(--text-muted))'}
-            >
-              Início
-            </span>
-            <ChevronRight size={12} style={{ color: 'hsl(var(--border))' }} />
             {activeTab === 'HUB' ? (
               <>
                 <span 
