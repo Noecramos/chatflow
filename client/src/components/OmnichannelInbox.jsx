@@ -261,7 +261,9 @@ export default function OmnichannelInbox({ token, user }) {
 
                     {/* Time + Priority bar */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
-                      <span style={{ fontSize: '10px', color: 'hsl(var(--text-muted))' }}>{getRelativeTime(conv.lastMessageAt)}</span>
+                      <span style={{ fontSize: '10px', color: 'hsl(var(--text-muted))' }}>
+                        {getRelativeTime(conv.lastMessageAt)} · {new Date(conv.lastMessageAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      </span>
                       {isUnread && <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f44336' }} />}
                     </div>
                     <div style={{ height: '3px', borderRadius: '2px', marginTop: '6px', background: getPriorityColor(conv.priority), opacity: 0.6 }} />
@@ -356,7 +358,7 @@ export default function OmnichannelInbox({ token, user }) {
                         {msg.content}
                       </div>
                       <span style={{ fontSize: '8px', color: 'hsl(var(--text-muted))', marginTop: '2px', padding: '0 4px' }}>
-                        {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {new Date(msg.createdAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
                   );
