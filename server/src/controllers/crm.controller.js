@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../db');
 
 const PIPELINE_STAGES = [
   { key: 'NOVO', name: 'Novo Lead', color: '#8a2be2' },

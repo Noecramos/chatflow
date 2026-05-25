@@ -38,6 +38,22 @@ app.use('/ecommerce', ecommerceRoutes);
 app.use('/webhooks', webhookRoutes);
 app.use('/crm', crmRoutes);
 
+// Serve client static build (production SPA)
+const clientDistPath = path.join(__dirname, '../../client/dist');
+app.use(express.static(clientDistPath));
+
+// SPA catch-all: any GET that doesn't match an API route serves index.html
+app.get('*', (req, res, next) => {
+  // Don't catch API routes or socket.io
+  if (req.path.startsWith('/inbox') || req.path.startsWith('/channels') || 
+      req.path.startsWith('/ecommerce') || req.path.startsWith('/webhooks') || 
+      req.path.startsWith('/crm') || req.path.startsWith('/health') ||
+      req.path.startsWith('/socket.io') || req.path.startsWith('/widget')) {
+    return next();
+  }
+  res.sendFile(path.join(clientDistPath, 'index.html'));
+});
+
 // Global Error Boundary & Logging Middleware
 app.use((err, req, res, next) => {
   console.error(`[Global Error Handler] [${req.method} ${req.url}] Error: ${err.message}`, err);
