@@ -73,7 +73,9 @@ module.exports = {
   async getMetrics(req, res) {
     try {
       const orgId = req.user.organizationId;
+      const { channel, period } = req.query;
 
+      // 1. Fetch all raw data for the organization
       const allContacts = await prisma.contact.findMany({
         where: { organizationId: orgId },
         select: {
@@ -87,15 +89,58 @@ module.exports = {
         }
       });
 
-      const totalLeads = allContacts.length;
-      const wonDeals = allContacts.filter(c => c.leadStage === 'FECHADO_WON');
-      const lostDeals = allContacts.filter(c => c.leadStage === 'FECHADO_LOST');
-      const activeDeals = allContacts.filter(c => ['NEGOCIACAO', 'PROPOSTA'].includes(c.leadStage));
-      const qualifiedLeads = allContacts.filter(c => c.leadStage === 'QUALIFICADO');
-      const novoLeads = allContacts.filter(c => c.leadStage === 'NOVO');
+      const allConversations = await prisma.inboxConversation.findMany({
+        where: { organizationId: orgId },
+        select: {
+          id: true,
+          status: true,
+          isHumanHandoverActive: true,
+          createdAt: true,
+          channel: { select: { type: true } }
+        }
+      });
+
+      // 2. Filter contacts in-memory
+      let filteredContacts = [...allContacts];
+      if (channel && channel !== 'ALL') {
+        filteredContacts = filteredContacts.filter(c => 
+          (c.leadSource && c.leadSource.toUpperCase() === channel.toUpperCase()) || 
+          (c.platformType && c.platformType.toUpperCase() === channel.toUpperCase())
+        );
+      }
+      if (period && period !== 'ALL') {
+        const now = new Date();
+        let limitDate = new Date();
+        if (period === '7D') limitDate.setDate(now.getDate() - 7);
+        if (period === '30D') limitDate.setDate(now.getDate() - 30);
+        filteredContacts = filteredContacts.filter(c => new Date(c.createdAt) >= limitDate);
+      }
+
+      // 3. Filter conversations in-memory
+      let filteredConversations = [...allConversations];
+      if (channel && channel !== 'ALL') {
+        filteredConversations = filteredConversations.filter(c => 
+          c.channel && c.channel.type.toUpperCase() === channel.toUpperCase()
+        );
+      }
+      if (period && period !== 'ALL') {
+        const now = new Date();
+        let limitDate = new Date();
+        if (period === '7D') limitDate.setDate(now.getDate() - 7);
+        if (period === '30D') limitDate.setDate(now.getDate() - 30);
+        filteredConversations = filteredConversations.filter(c => new Date(c.createdAt) >= limitDate);
+      }
+
+      // 4. Calculate CRM KPIs based on filtered contacts
+      const totalLeads = filteredContacts.length;
+      const wonDeals = filteredContacts.filter(c => c.leadStage === 'FECHADO_WON');
+      const lostDeals = filteredContacts.filter(c => c.leadStage === 'FECHADO_LOST');
+      const activeDeals = filteredContacts.filter(c => ['NEGOCIACAO', 'PROPOSTA'].includes(c.leadStage));
+      const qualifiedLeads = filteredContacts.filter(c => c.leadStage === 'QUALIFICADO');
+      const novoLeads = filteredContacts.filter(c => c.leadStage === 'NOVO');
 
       // Pipeline value = sum of leadValue for non-lost contacts
-      const pipelineValue = allContacts
+      const pipelineValue = filteredContacts
         .filter(c => c.leadStage !== 'FECHADO_LOST')
         .reduce((sum, c) => sum + (c.leadValue || 0), 0);
 
@@ -103,7 +148,7 @@ module.exports = {
       const wonValue = wonDeals.reduce((sum, c) => sum + (c.leadValue || 0), 0);
 
       // Conversion rate (won / total that reached at least QUALIFICADO)
-      const qualifiedOrBeyond = allContacts.filter(c => c.leadStage !== 'NOVO');
+      const qualifiedOrBeyond = filteredContacts.filter(c => c.leadStage !== 'NOVO');
       const conversionRate = qualifiedOrBeyond.length > 0
         ? ((wonDeals.length / qualifiedOrBeyond.length) * 100).toFixed(1)
         : 0;
@@ -122,7 +167,7 @@ module.exports = {
 
       // Leads by channel
       const channelCounts = {};
-      allContacts.forEach(c => {
+      filteredContacts.forEach(c => {
         const ch = c.leadSource || c.platformType || 'UNKNOWN';
         channelCounts[ch] = (channelCounts[ch] || 0) + 1;
       });
@@ -132,19 +177,26 @@ module.exports = {
         key: stage.key,
         name: stage.name,
         color: stage.color,
-        count: allContacts.filter(c => c.leadStage === stage.key).length,
-        value: allContacts.filter(c => c.leadStage === stage.key).reduce((s, c) => s + (c.leadValue || 0), 0)
+        count: filteredContacts.filter(c => c.leadStage === stage.key).length,
+        value: filteredContacts.filter(c => c.leadStage === stage.key).reduce((s, c) => s + (c.leadValue || 0), 0)
       }));
 
       // Daily leads last 30 days
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      const recentContacts = allContacts.filter(c => new Date(c.createdAt) >= thirtyDaysAgo);
+      const recentContacts = filteredContacts.filter(c => new Date(c.createdAt) >= thirtyDaysAgo);
       const dailyLeads = {};
       recentContacts.forEach(c => {
         const day = new Date(c.createdAt).toISOString().split('T')[0];
         dailyLeads[day] = (dailyLeads[day] || 0) + 1;
       });
+
+      // 5. Calculate conversation metrics based on filtered conversations
+      const totalConversations = filteredConversations.length;
+      const humanHandled = filteredConversations.filter(c => c.isHumanHandoverActive).length;
+      const aiHandled = filteredConversations.filter(c => !c.isHumanHandoverActive).length;
+      const unresolved = filteredConversations.filter(c => c.status === 'OPEN' || c.status === 'PENDING').length;
+      const resolved = filteredConversations.filter(c => c.status === 'CLOSED').length;
 
       res.json({
         success: true,
@@ -161,7 +213,14 @@ module.exports = {
           avgDaysToClose: parseFloat(avgDaysToClose),
           channelCounts,
           funnel,
-          dailyLeads
+          dailyLeads,
+          conversationStats: {
+            totalConversations,
+            humanHandled,
+            aiHandled,
+            unresolved,
+            resolved
+          }
         }
       });
     } catch (e) {

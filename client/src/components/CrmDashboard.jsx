@@ -16,11 +16,17 @@ const CHANNEL_ICONS = {
 export default function CrmDashboard({ token }) {
   const [metrics, setMetrics] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [channel, setChannel] = useState('ALL');
+  const [period, setPeriod] = useState('ALL');
 
-  const fetchMetrics = async () => {
+  const fetchMetrics = async (selectedChannel = channel, selectedPeriod = period) => {
     try {
       setLoading(true);
-      const res = await fetch('/inbox/crm/metrics', {
+      const params = new URLSearchParams({
+        channel: selectedChannel,
+        period: selectedPeriod
+      });
+      const res = await fetch(`/inbox/crm/metrics?${params}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
@@ -33,10 +39,12 @@ export default function CrmDashboard({ token }) {
   };
 
   useEffect(() => {
-    if (token) fetchMetrics();
-  }, [token]);
+    if (token) {
+      fetchMetrics(channel, period);
+    }
+  }, [token, channel, period]);
 
-  if (loading || !metrics) {
+  if (!metrics) {
     return (
       <div style={{ padding: '60px', textAlign: 'center', color: 'hsl(var(--text-muted))' }}>
         <RefreshCw size={32} className="spin" style={{ marginBottom: '12px', opacity: 0.5 }} />
@@ -65,9 +73,38 @@ export default function CrmDashboard({ token }) {
             Visão geral do funil de vendas, taxa de conversão e desempenho omnichannel.
           </p>
         </div>
-        <button onClick={fetchMetrics} className="btn-primary" style={{ padding: '8px 16px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <button onClick={() => fetchMetrics(channel, period)} className="btn-primary" style={{ padding: '8px 16px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
           <RefreshCw size={14} /> Atualizar
         </button>
+      </div>
+
+      {/* Filters Bar */}
+      <div className="glass" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderRadius: '10px', gap: '15px', flexWrap: 'wrap', border: '1px solid hsl(var(--border) / 0.4)', background: 'rgba(9, 9, 14, 0.4)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '12px', fontWeight: '600', color: 'hsl(var(--text-muted))' }}>Canal:</span>
+            <select value={channel} onChange={(e) => setChannel(e.target.value)}
+              style={{ background: 'hsl(var(--border) / 0.4)', border: '1px solid hsl(var(--border))', padding: '6px 12px', borderRadius: '6px', fontSize: '12.5px', color: '#fff', cursor: 'pointer', outline: 'none' }}>
+              <option value="ALL">Todos os Canais</option>
+              <option value="WHATSAPP">WhatsApp</option>
+              <option value="INSTAGRAM">Instagram</option>
+              <option value="MESSENGER">Messenger</option>
+              <option value="WIDGET">Web Widget</option>
+            </select>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '12px', fontWeight: '600', color: 'hsl(var(--text-muted))' }}>Período:</span>
+            <select value={period} onChange={(e) => setPeriod(e.target.value)}
+              style={{ background: 'hsl(var(--border) / 0.4)', border: '1px solid hsl(var(--border))', padding: '6px 12px', borderRadius: '6px', fontSize: '12.5px', color: '#fff', cursor: 'pointer', outline: 'none' }}>
+              <option value="ALL">Todos os Tempos</option>
+              <option value="7D">Últimos 7 dias</option>
+              <option value="30D">Últimos 30 dias</option>
+            </select>
+          </div>
+        </div>
+        <div style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', fontWeight: '500' }}>
+          {loading ? "Sincronizando..." : "Dados atualizados"}
+        </div>
       </div>
 
       {/* KPI Cards Row */}
@@ -154,6 +191,97 @@ export default function CrmDashboard({ token }) {
             </p>
           )}
         </div>
+      </div>
+
+      {/* Omnichannel Inbox & AI Metrics Section */}
+      <div className="glass" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <h4 style={{ fontSize: '15px', fontWeight: '700', borderBottom: '1px solid hsl(var(--border))', paddingBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+          <MessageSquare size={18} style={{ color: 'hsl(var(--secondary))' }} /> Desempenho de Atendimento & IA
+        </h4>
+        
+        {metrics.conversationStats ? (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px', alignItems: 'start' }}>
+            
+            {/* Total conversations card */}
+            <div style={{ background: 'hsl(var(--bg-card) / 0.2)', border: '1px solid hsl(var(--border) / 0.4)', borderRadius: '10px', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <span style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '0.03em', fontWeight: '600' }}>Volume de Conversas</span>
+                <h3 style={{ fontSize: '28px', fontWeight: '800', marginTop: '6px', color: '#fff' }}>{metrics.conversationStats.totalConversations}</h3>
+                <span style={{ fontSize: '11px', color: 'hsl(var(--text-muted))' }}>Sessões únicas unificadas</span>
+              </div>
+              <div style={{ background: 'hsl(var(--secondary) / 0.15)', color: 'hsl(var(--secondary))', padding: '12px', borderRadius: '50%' }}>
+                <MessageSquare size={24} />
+              </div>
+            </div>
+
+            {/* Handover AI vs Human breakdown */}
+            <div style={{ background: 'hsl(var(--bg-card) / 0.2)', border: '1px solid hsl(var(--border) / 0.4)', borderRadius: '10px', padding: '16px 20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                <span style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '0.03em', fontWeight: '600' }}>Controle de Conversas</span>
+                <span style={{ fontSize: '10px', color: 'hsl(var(--secondary))', fontWeight: '700', background: 'hsl(var(--secondary) / 0.15)', padding: '2px 8px', borderRadius: '10px' }}>IA vs Humano</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '8px' }}>
+                <span>🤖 IA Ativa: <strong>{metrics.conversationStats.aiHandled}</strong> ({metrics.conversationStats.totalConversations > 0 ? ((metrics.conversationStats.aiHandled / metrics.conversationStats.totalConversations) * 100).toFixed(0) : 0}%)</span>
+                <span>👤 Humano: <strong>{metrics.conversationStats.humanHandled}</strong> ({metrics.conversationStats.totalConversations > 0 ? ((metrics.conversationStats.humanHandled / metrics.conversationStats.totalConversations) * 100).toFixed(0) : 0}%)</span>
+              </div>
+              {/* Progress Bar */}
+              <div style={{ width: '100%', height: '10px', background: 'hsl(var(--border) / 0.3)', borderRadius: '5px', overflow: 'hidden', display: 'flex' }}>
+                <div style={{ 
+                  width: `${metrics.conversationStats.totalConversations > 0 ? (metrics.conversationStats.aiHandled / metrics.conversationStats.totalConversations) * 100 : 50}%`, 
+                  background: 'hsl(var(--primary))', 
+                  height: '100%', 
+                  transition: 'width 0.6s ease' 
+                }} title="IA" />
+                <div style={{ 
+                  width: `${metrics.conversationStats.totalConversations > 0 ? (metrics.conversationStats.humanHandled / metrics.conversationStats.totalConversations) * 100 : 50}%`, 
+                  background: 'hsl(var(--secondary))', 
+                  height: '100%', 
+                  transition: 'width 0.6s ease' 
+                }} title="Humano" />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: 'hsl(var(--text-muted))', marginTop: '6px' }}>
+                <span>Roxo = IA Automatizada</span>
+                <span>Ciano = Humano Solicitado</span>
+              </div>
+            </div>
+
+            {/* Resolution Rate breakdown */}
+            <div style={{ background: 'hsl(var(--bg-card) / 0.2)', border: '1px solid hsl(var(--border) / 0.4)', borderRadius: '10px', padding: '16px 20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                <span style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '0.03em', fontWeight: '600' }}>Status de Resolução</span>
+                <span style={{ fontSize: '10px', color: '#00c853', fontWeight: '700', background: 'rgba(0, 200, 83, 0.15)', padding: '2px 8px', borderRadius: '10px' }}>Taxa de Fim</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '8px' }}>
+                <span>✅ Resolvidas: <strong>{metrics.conversationStats.resolved}</strong> ({metrics.conversationStats.totalConversations > 0 ? ((metrics.conversationStats.resolved / metrics.conversationStats.totalConversations) * 100).toFixed(0) : 0}%)</span>
+                <span>⏳ Pendentes: <strong>{metrics.conversationStats.unresolved}</strong> ({metrics.conversationStats.totalConversations > 0 ? ((metrics.conversationStats.unresolved / metrics.conversationStats.totalConversations) * 100).toFixed(0) : 0}%)</span>
+              </div>
+              {/* Progress Bar */}
+              <div style={{ width: '100%', height: '10px', background: 'hsl(var(--border) / 0.3)', borderRadius: '5px', overflow: 'hidden', display: 'flex' }}>
+                <div style={{ 
+                  width: `${metrics.conversationStats.totalConversations > 0 ? (metrics.conversationStats.resolved / metrics.conversationStats.totalConversations) * 100 : 50}%`, 
+                  background: '#00c853', 
+                  height: '100%', 
+                  transition: 'width 0.6s ease' 
+                }} title="Resolvidas" />
+                <div style={{ 
+                  width: `${metrics.conversationStats.totalConversations > 0 ? (metrics.conversationStats.unresolved / metrics.conversationStats.totalConversations) * 100 : 50}%`, 
+                  background: '#ff9800', 
+                  height: '100%', 
+                  transition: 'width 0.6s ease' 
+                }} title="Pendentes" />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: 'hsl(var(--text-muted))', marginTop: '6px' }}>
+                <span>Verde = Resolvidas</span>
+                <span>Laranja = Não Resolvidas</span>
+              </div>
+            </div>
+
+          </div>
+        ) : (
+          <div style={{ color: 'hsl(var(--text-muted))', fontSize: '13px', textAlign: 'center', padding: '10px' }}>
+            Nenhum dado de conversação disponível para este filtro.
+          </div>
+        )}
       </div>
 
       {/* Daily Leads Timeline */}
