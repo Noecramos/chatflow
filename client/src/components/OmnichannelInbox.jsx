@@ -206,7 +206,9 @@ export default function OmnichannelInbox({ token, user }) {
           <div style={{ padding: '8px 14px', display: 'flex', gap: '4px', overflowX: 'auto', borderBottom: '1px solid hsl(var(--border) / 0.4)' }}>
             {['ALL', 'WHATSAPP', 'INSTAGRAM', 'MESSENGER', 'WIDGET'].map(ch => (
               <button key={ch} onClick={() => setChannelFilter(ch)}
-                style={{ background: channelFilter === ch ? 'hsl(var(--primary))' : 'hsl(var(--border) / 0.4)', color: channelFilter === ch ? '#fff' : 'hsl(var(--text-muted))', border: 'none', borderRadius: '14px', padding: '4px 12px', fontSize: '11px', fontWeight: '600', cursor: 'pointer', whiteSpace: 'nowrap' }}>{ch}</button>
+                style={{ background: channelFilter === ch ? 'hsl(var(--primary))' : 'hsl(var(--border) / 0.4)', color: channelFilter === ch ? '#fff' : 'hsl(var(--text-muted))', border: 'none', borderRadius: '14px', padding: '4px 12px', fontSize: '11px', fontWeight: '600', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                {ch === 'ALL' ? 'Todos' : ch === 'WHATSAPP' ? 'WhatsApp' : ch.charAt(0) + ch.slice(1).toLowerCase()}
+              </button>
             ))}
           </div>
 
