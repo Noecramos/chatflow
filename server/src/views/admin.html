@@ -528,7 +528,12 @@
     <div class="glass glowing-card auth-card">
       <div class="auth-header">
         <div class="logo-container pulse-glow">
-          <img src="/icon.png" alt="ChatFlow Logo" class="logo-img">
+          <svg class="logo-img" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 36px; height: 36px; color: var(--primary); filter: drop-shadow(0 0 8px var(--primary-glow));">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            <path d="M8 10h.01"></path>
+            <path d="M12 10h.01"></path>
+            <path d="M16 10h.01"></path>
+          </svg>
           <h2 style="font-size: 32px; letter-spacing: -0.04em; color: #fff;">ChatFlow</h2>
         </div>
         <p style="color: var(--text-muted); font-size: 13px; margin-top: 6px;">
@@ -561,7 +566,12 @@
     <header>
       <div class="header-left">
         <div style="display: flex; align-items: center; gap: 8px;">
-          <img src="/icon.png" alt="Icon" style="height: 22px; width: auto; border-radius: 4px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 22px; height: 22px; color: var(--primary); filter: drop-shadow(0 0 4px var(--primary-glow));">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            <path d="M8 10h.01"></path>
+            <path d="M12 10h.01"></path>
+            <path d="M16 10h.01"></path>
+          </svg>
           <span style="font-family: 'Outfit', sans-serif; font-size: 20px; font-weight: 800; letter-spacing: -0.03em;">chatflow</span>
         </div>
         <span style="color: var(--border-color); font-size: 16px;">|</span>
@@ -812,17 +822,22 @@
 
         if (data.success) {
           const userRole = data.user.role;
-          const userEmail = data.user.email;
+          const userEmail = data.user.email || '';
 
-          // Validate admin privileges
-          if (userRole === 'SUPERADMIN' || userRole === 'OWNER' || userEmail.startsWith('admin@') || userEmail === 'system@noviapp.ai') {
+          // STRICT ACCESS CONTROL (Matches Backend Middleware):
+          // Standard OWNER (registered SaaS user) is strictly denied access.
+          // Only explicit SUPERADMIN or specific admin emails are allowed.
+          const isAllowedEmail = ['admin@chatflow.com', 'system@noviapp.ai'].includes(userEmail.toLowerCase());
+          const isSuperAdmin = userRole === 'SUPERADMIN';
+
+          if (isSuperAdmin || isAllowedEmail) {
             masterToken = data.token;
             localStorage.setItem('chatflow_master_token', masterToken);
             authEmail.value = '';
             authPassword.value = '';
             showConsole();
           } else {
-            authAlert.textContent = "Acesso Negado: Apenas administradores do sistema possuem permissão para este console.";
+            authAlert.textContent = "Acesso Negado: Apenas o Administrador Master do sistema possui acesso a este painel.";
             authAlert.style.display = 'block';
           }
         } else {
