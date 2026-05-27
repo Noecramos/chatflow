@@ -1395,10 +1395,9 @@ export default function App() {
             <span>Bases de conhecimento</span>
           </div>
 
-          <div onClick={() => setActiveTab('ARTEFATOS')} className={`nav-item ${activeTab === 'ARTEFATOS' ? 'active' : ''}`} style={{ position: 'relative' }}>
+          <div onClick={() => setActiveTab('ARTEFATOS')} className={`nav-item ${activeTab === 'ARTEFATOS' ? 'active' : ''}`}>
             <FileText size={17} />
             <span>Artefatos</span>
-            <span className="badge" style={{ marginLeft: 'auto', background: 'linear-gradient(135deg, hsl(var(--primary)), #8a2be2)', color: '#fff', fontSize: '8px', padding: '2px 5px' }}>NEW</span>
           </div>
 
           <div onClick={() => { setActiveTab('DISPAROS'); fetchConversations(); }} className={`nav-item ${activeTab === 'DISPAROS' ? 'active' : ''}`}>
@@ -1420,7 +1419,6 @@ export default function App() {
           <div onClick={() => setActiveTab('HUB')} className={`nav-item ${activeTab === 'HUB' ? 'active' : ''}`}>
             <Globe size={17} />
             <span>Hub</span>
-            <span className="badge" style={{ marginLeft: 'auto', background: 'linear-gradient(135deg, hsl(var(--primary)), #8a2be2)', color: '#fff', fontSize: '8px', padding: '2px 5px' }}>NEW</span>
           </div>
 
           <div onClick={() => setActiveTab('CONFIGURACOES')} className={`nav-item ${activeTab === 'CONFIGURACOES' ? 'active' : ''}`}>
