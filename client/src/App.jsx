@@ -4,7 +4,7 @@ import {
   Sparkles, Database, LayoutDashboard, Cpu, 
   Layers, User, UserCheck, FileText, Megaphone, 
   FileCode, Globe, Bell, CheckCircle2, ChevronRight, 
-  Plus, Search, HelpCircle, ShieldAlert, Clock, ArrowRight,
+  Plus, Search, HelpCircle, ShieldAlert, Shield, Clock, ArrowRight,
   TrendingUp, BarChart3, AlertCircle, Copy, ToggleLeft, ToggleRight, Trash2, Edit, Sliders,
   Phone, Upload, Instagram, Facebook, Play, Save, FlaskConical, Terminal, Heart, Zap
 } from 'lucide-react';
@@ -69,6 +69,15 @@ export default function App() {
   const [agents, setAgents] = useState([]);
   const [crmPipeline, setCrmPipeline] = useState([]);
   const [newAgentEmail, setNewAgentEmail] = useState('');
+
+  // Master Admin States
+  const [subscribers, setSubscribers] = useState([]);
+  const [subscribersLoading, setSubscribersLoading] = useState(false);
+  const [editingSubscriber, setEditingSubscriber] = useState(null);
+  const [isEditLimitsOpen, setIsEditLimitsOpen] = useState(false);
+  const [newPlan, setNewPlan] = useState('FREE');
+  const [newMaxBots, setNewMaxBots] = useState(2);
+  const [newMaxMessages, setNewMaxMessages] = useState(1000);
   const [newAgentPassword, setNewAgentPassword] = useState('');
   const [newAgentFirstName, setNewAgentFirstName] = useState('');
   const [newAgentLastName, setNewAgentLastName] = useState('');
@@ -554,6 +563,104 @@ export default function App() {
       }
     } catch (e) {
       console.error("Failed to load agents list:", e);
+    }
+  };
+
+  const fetchSubscribersList = async () => {
+    if (!token) return;
+    setSubscribersLoading(true);
+    try {
+      const res = await fetch('/inbox/admin/subscribers', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSubscribers(data.subscribers);
+      } else {
+        console.error("Failed to load subscribers:", data.error);
+      }
+    } catch (e) {
+      console.error("Failed to load subscribers list:", e);
+    } finally {
+      setSubscribersLoading(false);
+    }
+  };
+
+  const handleUpdateSubscriberLimits = async (e) => {
+    e.preventDefault();
+    if (!editingSubscriber) return;
+
+    try {
+      const res = await fetch(`/inbox/admin/subscribers/${editingSubscriber.id}/limits`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          plan: newPlan,
+          maxBots: parseInt(newMaxBots),
+          maxMessagesPerMonth: parseInt(newMaxMessages)
+        })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        alert("Limites do assinante atualizados com sucesso!");
+        setIsEditLimitsOpen(false);
+        setEditingSubscriber(null);
+        fetchSubscribersList();
+      } else {
+        alert(data.error || "Erro ao atualizar limites.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Falha de conexão ao salvar novos limites.");
+    }
+  };
+
+  const handleDeleteSubscriber = async (subscriberId, subscriberName) => {
+    if (!confirm(`Tem certeza absoluta que deseja excluir o assinante "${subscriberName}"? Esta ação é irreversível e excluirá todos os bots, operadores, contatos e conversas associados.`)) return;
+
+    try {
+      const res = await fetch(`/inbox/admin/subscribers/${subscriberId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        alert("Assinante excluído com sucesso!");
+        fetchSubscribersList();
+      } else {
+        alert(data.error || "Erro ao excluir assinante.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao tentar excluir assinante.");
+    }
+  };
+
+  const handleSystemReset = async () => {
+    if (!confirm("🚨 ATENÇÃO: Esta ação irá apagar TODOS os usuários e organizações cadastrados no sistema (exceto a sua sessão ativa no momento da limpeza)! Você e os demais clientes precisarão se cadastrar do zero. Deseja continuar?")) return;
+    if (!confirm("🚨 SEGUNDA CONFIRMAÇÃO: Você tem certeza ABSOLUTA disso? Essa operação é destrutiva e apagará todo o banco de dados do ChatFlow.")) return;
+
+    try {
+      const res = await fetch('/inbox/admin/system-reset', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        alert("🎉 Limpeza concluída! Todos os usuários e dados do sistema foram excluídos com sucesso. Você será deslogado agora.");
+        handleLogout();
+      } else {
+        alert(data.error || "Erro ao tentar realizar a limpeza do sistema.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Falha de conexão ao redefinir banco de dados.");
     }
   };
 

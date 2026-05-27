@@ -3,9 +3,13 @@ const router = express.Router();
 const inboxController = require('../controllers/inbox.controller');
 const { verifyToken } = require('../middleware/auth.middleware');
 const authRoutes = require('./auth');
+const adminRoutes = require('./admin');
 
 // Mount Auth routes under the unified /inbox prefix
 router.use('/auth', authRoutes);
+
+// Mount Admin routes under /inbox/admin
+router.use('/admin', adminRoutes);
 
 
 router.get('/conversations', verifyToken, inboxController.getConversations);

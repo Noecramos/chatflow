@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChatFlow SaaS Preview</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-main: 240 16% 5%;
+      --bg-card: 240 14% 9%;
+      --bg-card-hover: 240 12% 14%;
+      --bg-glass: 240 16% 8% / 0.65;
+      --primary: 266 84% 65%;
+      --primary-glow: 266 84% 65% / 0.25;
+      --secondary: 184 90% 50%;
+      --secondary-glow: 184 90% 50% / 0.2;
+      --text-main: 0 0% 98%;
+      --text-muted: 240 5% 70%;
+      --border: 240 8% 18%;
+      --success: 142 71% 45%;
+      --warning: 38 92% 50%;
+      --danger: 350 89% 60%;
+    }
+
+    body {
+      background-color: #09090e;
+      color: #fafafa;
+      font-family: 'Inter', sans-serif;
+      overflow: hidden;
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(138, 43, 226, 0.15) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(0, 201, 83, 0.08) 0%, transparent 45%);
+      background-attachment: fixed;
+      width: 1920px;
+      height: 1080px;
+    }
+
+    .font-display {
+      font-family: 'Outfit', sans-serif;
+    }
+
+    .font-mono {
+      font-family: 'Fira Code', monospace;
+    }
+
+    .glass {
+      background: rgba(13, 13, 21, 0.7);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .glowing-card {
+      background: #0d0d15;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    .glowing-card:hover {
+      border-color: #a855f7;
+      box-shadow: 0 0 25px rgba(168, 85, 247, 0.25);
+    }
+
+    .glow-purple {
+      box-shadow: 0 0 20px rgba(168, 85, 247, 0.15);
+    }
+
+    .glow-cyan {
+      box-shadow: 0 0 20px rgba(6, 182, 212, 0.15);
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(168, 85, 247, 0.5);
+    }
+
+    .badge-whatsapp { background-color: rgba(37, 211, 102, 0.15); color: #25d366; border: 1px solid rgba(37, 211, 102, 0.3); }
+    .badge-instagram { background-color: rgba(225, 48, 108, 0.15); color: #E1306C; border: 1px solid rgba(225, 48, 108, 0.3); }
+    .badge-messenger { background-color: rgba(24, 119, 242, 0.15); color: #1877F2; border: 1px solid rgba(24, 119, 242, 0.3); }
+    .badge-widget { background-color: rgba(168, 85, 247, 0.15); color: #a855f7; border: 1px solid rgba(168, 85, 247, 0.3); }
+  </style>
+</head>
+<body>
+
+  <!-- Fullscreen Dashboard Layout -->
+  <div class="flex w-[1920px] h-[1080px] overflow-hidden select-none">
+    
+    <!-- Left Sidebar -->
+    <div class="w-[260px] h-full bg-[#0d0d15] border-r border-white/10 flex flex-col justify-between p-5 z-20 shrink-0">
+      <div class="flex flex-col gap-8">
+        <!-- Logo -->
+        <div class="flex items-center gap-3 pb-5 border-b border-white/10">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="text-purple-500 drop-shadow-[0_0_8px_rgba(168,85,247,0.5)]">
+            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="font-display font-extrabold text-2xl bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">ChatFlow</span>
+        </div>
+
+        <!-- Navigation Menu -->
+        <nav class="flex flex-col gap-1.5">
+          <div id="nav-inbox" class="nav-item flex items-center gap-3 px-4 py-3.5 rounded-xl cursor-pointer font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-all">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+            <span class="text-sm">Conversas (Omni)</span>
+          </div>
+
+          <div id="nav-ecommerce" class="nav-item flex items-center gap-3 px-4 py-3.5 rounded-xl cursor-pointer font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-all">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+            <span class="text-sm">E-commerce WA</span>
+          </div>
+
+          <div id="nav-crm" class="nav-item flex items-center gap-3 px-4 py-3.5 rounded-xl cursor-pointer font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-all">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+            <span class="text-sm">CRM & Métricas</span>
+          </div>
+
+          <div id="nav-agentes" class="nav-item flex items-center gap-3 px-4 py-3.5 rounded-xl cursor-pointer font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-all">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+            <span class="text-sm">Agentes AI & RAG</span>
+          </div>
+
+          <div id="nav-noviapi" class="nav-item flex items-center gap-3 px-4 py-3.5 rounded-xl cursor-pointer font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-all">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+            <span class="text-sm">NoviAPI Developer</span>
+          </div>
+        </nav>
+      </div>
+
+      <!-- Bottom Profile -->
+      <div class="flex items-center gap-3 pt-5 border-t border-white/10">
+        <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-500 to-cyan-400 flex items-center justify-center font-bold text-black">
+          GO
+        </div>
+        <div class="flex flex-col">
+          <span class="text-sm font-semibold">Gabriel Oliveira</span>
+          <span class="text-xs text-gray-400">Founder & CEO</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 h-full flex flex-col overflow-hidden bg-[#09090e]">
+      
+      <!-- Top Header -->
+      <header class="h-[75px] border-b border-white/10 flex items-center justify-between px-8 bg-[#0d0d15]/50 backdrop-blur-md z-10">
+        <div class="flex items-center gap-4">
+          <h1 id="header-title" class="font-display font-extrabold text-xl text-white">Painel Principal</h1>
+          <div class="bg-purple-500/10 border border-purple-500/30 text-purple-400 px-3 py-1 rounded-full text-xs font-semibold">
+            NoviApp Partner Plan
+          </div>
+        </div>
+        <div class="flex items-center gap-6">
+          <div class="flex items-center gap-2 bg-white/5 border border-white/10 px-3.5 py-1.5 rounded-xl text-sm font-semibold">
+            <span class="w-2.5 h-2.5 rounded-full bg-green-500 inline-block animate-pulse"></span>
+            WhatsApp API Conectado
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="text-sm text-gray-300">Organização: <strong>NoviApp.ai</strong></span>
+            <div class="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-sm font-bold">N</div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Dynamic Tab Wrapper -->
+      <div id="tab-content-wrapper" class="flex-1 w-full overflow-hidden">
+        
+        <!-- 1. OMNICHANNEL INBOX TAB -->
+        <div id="tab-inbox" class="tab-panel hidden h-full w-full flex overflow-hidden">
+          <!-- Chat Cards Column -->
+          <div class="w-[380px] h-full border-r border-white/10 flex flex-col bg-[#0b0b12]">
+            <!-- Sub-Tabs and Search -->
+            <div class="p-4 border-b border-white/10 flex flex-col gap-3">
+              <div class="flex gap-1.5 overflow-x-auto">
+                <button class="px-3.5 py-1.5 bg-purple-600 rounded-lg text-xs font-bold text-white shrink-0">Todos</button>
+                <button class="px-3.5 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-xs font-medium text-gray-400 shrink-0">Não Resolvidos (3)</button>
+                <button class="px-3.5 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-xs font-medium text-gray-400 shrink-0">Humano (1)</button>
+              </div>
+              <div class="relative">
+                <input type="text" placeholder="Buscar conversas..." class="w-full bg-white/5 border border-white/10 pl-9 pr-4 py-2 rounded-lg text-xs outline-none focus:border-purple-500/50">
+                <svg class="absolute left-3 top-2.5 text-gray-500" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+              </div>
+            </div>
+
+            <!-- List -->
+            <div class="flex-1 overflow-y-auto p-2.5 flex flex-col gap-2">
+              
+              <!-- Active Card -->
+              <div class="p-3.5 rounded-xl bg-purple-500/10 border border-purple-500/30 flex flex-col gap-2 cursor-pointer">
+                <div class="flex justify-between items-start">
+                  <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-full bg-gradient-to-br from-pink-500 to-red-500 flex items-center justify-center text-sm shadow-md">📸</div>
+                    <div>
+                      <div class="flex items-center gap-1.5">
+                        <span class="font-semibold text-xs text-white">Ana Laura Fachini</span>
+                        <span class="bg-red-500/10 text-red-400 border border-red-500/30 text-[9px] font-bold px-1.5 py-0.5 rounded">Humano Solicitado</span>
+                      </div>
+                      <span class="text-[10px] text-gray-400">Instagram · @analauraf</span>
+                    </div>
+                  </div>
+                  <span class="text-[9px] text-purple-400 font-semibold">há 2 min</span>
+                </div>
+                <p class="text-xs text-gray-300 truncate font-medium">"Qual o prazo de entrega para São Paulo? Gostaria de usar o cupom..."</p>
+                <div class="h-1 w-full bg-red-500 rounded-full opacity-60"></div>
+              </div>
+
+              <!-- Other Card -->
+              <div class="p-3.5 rounded-xl bg-white/5 border border-white/5 flex flex-col gap-2 cursor-pointer hover:bg-white/10 hover:border-white/10 transition-all">
+                <div class="flex justify-between items-start">
+                  <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center text-sm shadow-md">📱</div>
+                    <div>
+                      <div class="flex items-center gap-1.5">
+                        <span class="font-semibold text-xs text-gray-300">Gabriel Oliveira</span>
+                        <span class="bg-purple-500/10 text-purple-400 border border-purple-500/30 text-[9px] font-bold px-1.5 py-0.5 rounded">IA Ativa</span>
+                      </div>
+                      <span class="text-[10px] text-gray-400">WhatsApp · +55 81...</span>
+                    </div>
+                  </div>
+                  <span class="text-[9px] text-gray-500 font-semibold">há 12 min</span>
+                </div>
+                <p class="text-xs text-gray-400 truncate">Zimmy (IA): "Com certeza Gabriel! O frete para o seu CEP é grátis..."</p>
+                <div class="h-1 w-full bg-yellow-500 rounded-full opacity-35"></div>
+              </div>
+
+              <!-- Other Card -->
+              <div class="p-3.5 rounded-xl bg-white/5 border border-white/5 flex flex-col gap-2 cursor-pointer hover:bg-white/10 hover:border-white/10 transition-all opacity-85">
+                <div class="flex justify-between items-start">
+                  <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-sm shadow-md">🌐</div>
+                    <div>
+                      <div class="flex items-center gap-1.5">
+                        <span class="font-semibold text-xs text-gray-300">Suporte Técnico</span>
+                        <span class="bg-green-500/10 text-green-400 border border-green-500/30 text-[9px] font-bold px-1.5 py-0.5 rounded">Resolvida</span>
+                      </div>
+                      <span class="text-[10px] text-gray-400">Web Widget · ID: #401</span>
+                    </div>
+                  </div>
+                  <span class="text-[9px] text-gray-500 font-semibold">há 2 horas</span>
+                </div>
+                <p class="text-xs text-gray-400 truncate">Operador: "Sua chave de API sandbox foi regenerada. Qualquer dúvida..."</p>
+                <div class="h-1 w-full bg-green-500 rounded-full opacity-60"></div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Chat Window Column -->
+          <div class="flex-1 h-full flex flex-col bg-[#09090e]">
+            <!-- Chat Window Header -->
+            <div class="px-6 py-4 border-b border-white/10 flex justify-between items-center bg-[#0d0d15]/30">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="font-bold text-white text-base">Ana Laura Fachini</span>
+                  <span class="badge-instagram text-[10px] px-2 py-0.5 rounded font-semibold">Instagram</span>
+                  <span class="bg-red-500/10 text-red-400 border border-red-500/20 text-[9px] font-bold px-2 py-0.5 rounded">Humano Solicitado</span>
+                </div>
+                <p class="text-xs text-gray-400 mt-1">Plataforma ID: <code>analauraf</code> · Agente AI de Retaguarda: <strong>Zimmy Bot</strong></p>
+              </div>
+              <div class="flex gap-2">
+                <button class="flex items-center gap-2 px-3 py-1.5 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/40 rounded-xl text-purple-300 text-xs font-semibold transition-all">
+                  <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 21l5.096-.813a2 2 0 00.985-.512l7.632-7.632a2.795 2.795 0 10-3.953-3.953L10.325 15.4a2 2 0 00-.512.985z"></path></svg>
+                  Copiloto AI Ativo
+                </button>
+                <button class="flex items-center gap-2 px-3 py-1.5 bg-yellow-500 hover:bg-yellow-600 rounded-xl text-black text-xs font-bold transition-all">
+                  <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                  IA Silenciada / Intervenção
+                </button>
+              </div>
+            </div>
+
+            <!-- Smart AI Copilot Suggestion Box -->
+            <div class="mx-6 mt-4 p-4 rounded-xl bg-purple-500/10 border border-purple-500/30 glow-purple flex flex-col gap-2">
+              <div class="flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                  <span class="text-[10px] bg-purple-500 text-white font-bold px-2 py-0.5 rounded tracking-wider">SUGESTÃO CO-PILOTO AI</span>
+                  <span class="text-xs text-purple-300 font-medium">Análise semântica de intenção da cliente: <strong>Desejo de compra + Desconto</strong></span>
+                </div>
+                <span class="text-[10px] text-purple-400 font-medium font-mono">Confiança: 98% (Gemini 2.5)</span>
+              </div>
+              <p class="text-xs text-gray-200 italic font-medium">"Olá Ana Laura! Tudo bem? Fico muito feliz pelo seu interesse na Camiseta Cyber e no Boné Neon! Sim, o cupom <strong>RETAIL10</strong> está ativo e concede 10% de desconto. E para melhorar: seu frete para São Paulo é totalmente grátis! Criei um link de checkout seguro com seus itens já com o desconto aplicado: <strong>noviapp.ai/checkout/carrinho-ana</strong>. Posso te ajudar a finalizar hoje?"</p>
+              <div class="flex justify-end gap-2 mt-1">
+                <button class="px-3 py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-[10px] text-gray-300 font-semibold transition-all">Regerar</button>
+                <button class="px-4 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-[10px] font-bold shadow transition-all">Inserir no Chat (Enter)</button>
+              </div>
+            </div>
+
+            <!-- Messages Stream -->
+            <div class="flex-1 overflow-y-auto p-6 flex flex-col gap-4">
+              <!-- Customer message -->
+              <div class="flex flex-col items-start max-w-[70%]">
+                <span class="text-[9px] text-gray-400 mb-1.5 px-1 font-medium">Ana Laura Fachini · 22:35</span>
+                <div class="p-3.5 bg-white/5 border border-white/10 text-white rounded-2xl rounded-tl-sm text-sm leading-relaxed">
+                  Oi! Eu vi o anúncio da Camiseta Cyber e daquele Boné Neon no Instagram. Gostaria de saber se o cupom de desconto ainda está ativo e quanto fica o frete para São Paulo CEP 01310-100?
+                </div>
+              </div>
+
+              <!-- AI reply -->
+              <div class="flex flex-col items-end max-w-[70%] self-end">
+                <span class="text-[9px] text-purple-400 mb-1.5 px-1 font-semibold">Zimmy AI · 22:35</span>
+                <div class="p-3.5 bg-purple-600/35 border border-purple-500/30 text-white rounded-2xl rounded-tr-sm text-sm leading-relaxed">
+                  Olá Ana Laura! Sejam bem-vinda ao nosso atendimento inteligente! O cupom <strong>RETAIL10</strong> está ativo sim! Deixe-me consultar as opções de entrega para São Paulo com base em nosso catálogo integrado...
+                </div>
+              </div>
+
+              <!-- System event message -->
+              <div class="flex justify-center my-1.5">
+                <div class="bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 px-4 py-1 rounded-full text-[10px] font-bold flex items-center gap-1.5">
+                  <span class="w-1.5 h-1.5 rounded-full bg-yellow-500 inline-block animate-pulse"></span>
+                  Operador Técnico interveio no atendimento. IA colocada em modo copiloto de retaguarda.
+                </div>
+              </div>
+
+              <!-- Operator message -->
+              <div class="flex flex-col items-end max-w-[70%] self-end">
+                <span class="text-[9px] text-cyan-400 mb-1.5 px-1 font-semibold">Atendente (Gabriel Oliveira) · 22:38</span>
+                <div class="p-3.5 bg-cyan-600/20 border border-cyan-500/30 text-white rounded-2xl rounded-tr-sm text-sm leading-relaxed">
+                  Olá Ana Laura! Tudo bem? Estou assumindo o chat agora. Já estou verificando a promoção para você e gerando um link de pagamento Pix seguro com desconto! Um momento...
+                </div>
+              </div>
+            </div>
+
+            <!-- Composer Form -->
+            <div class="p-4 border-t border-white/10 bg-[#0d0d15]/30">
+              <div class="flex gap-2 bg-white/5 border border-white/10 p-2.5 rounded-xl focus-within:border-purple-500/50 transition-all">
+                <input type="text" value="Olá Ana Laura! Tudo bem? Fico muito feliz pelo seu interesse..." class="flex-1 bg-transparent border-none outline-none text-sm text-white px-2">
+                <button class="bg-gradient-to-tr from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-bold text-xs px-4 py-2 rounded-lg flex items-center gap-1.5 transition-all shadow-md">
+                  <span>Enviar</span>
+                  <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- CRM details sidepanel Column -->
+          <div class="w-[300px] h-full border-l border-white/10 bg-[#0b0b12] flex flex-col p-4 gap-5 overflow-y-auto">
+            <div class="border-b border-white/10 pb-3 flex justify-between items-center">
+              <span class="font-bold text-xs text-gray-400 uppercase tracking-wider">Perfil Conversacional & CRM</span>
+              <span class="text-[10px] text-gray-500">ID: c_49a18d</span>
+            </div>
+
+            <!-- Handover manual control -->
+            <button class="w-full py-2.5 bg-gradient-to-tr from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white text-xs font-bold rounded-lg shadow-md transition-all">
+              🖐 Liberar para Atendimento de IA
+            </button>
+
+            <!-- Tags -->
+            <div class="flex flex-col gap-2">
+              <h5 class="text-[10px] text-gray-400 uppercase font-semibold">Etiquetas CRM</h5>
+              <div class="flex flex-wrap gap-1.5">
+                <span class="bg-purple-500/20 text-purple-300 text-[10px] font-semibold px-2 py-0.5 rounded border border-purple-500/30 flex items-center gap-1">
+                  Lead Qualificado
+                  <span class="text-gray-500 cursor-pointer hover:text-white">×</span>
+                </span>
+                <span class="bg-cyan-500/20 text-cyan-300 text-[10px] font-semibold px-2 py-0.5 rounded border border-cyan-500/30 flex items-center gap-1">
+                  Instagram
+                  <span class="text-gray-500 cursor-pointer hover:text-white">×</span>
+                </span>
+                <button class="text-[9px] bg-white/5 border border-white/10 hover:bg-white/10 text-gray-400 px-2 py-0.5 rounded font-bold transition-all">+ Add</button>
+              </div>
+            </div>
+
+            <!-- Pipeline status controls -->
+            <div class="flex gap-3">
+              <div class="flex-1 flex flex-col gap-1.5">
+                <h5 class="text-[10px] text-gray-400 uppercase font-semibold">Status de Negócio</h5>
+                <select class="w-full bg-[#13131a] border border-white/10 text-yellow-500 text-xs font-semibold rounded-lg p-2 outline-none">
+                  <option class="text-white" value="OPEN">Não Resolvido</option>
+                  <option class="text-yellow-500" value="PENDING" selected>Pendente</option>
+                  <option class="text-green-500" value="CLOSED">Resolvido (Won)</option>
+                </select>
+              </div>
+              <div class="flex-1 flex flex-col gap-1.5">
+                <h5 class="text-[10px] text-gray-400 uppercase font-semibold">Prioridade</h5>
+                <select class="w-full bg-[#13131a] border border-white/10 text-red-400 text-xs font-semibold rounded-lg p-2 outline-none">
+                  <option class="text-gray-400" value="BAIXA">Baixa</option>
+                  <option class="text-yellow-500" value="MEDIA">Média</option>
+                  <option class="text-red-400" value="ALTA" selected>Alta</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- CRM details card -->
+            <div class="flex flex-col gap-2.5 p-3 rounded-xl bg-white/5 border border-white/10">
+              <h5 class="text-[10px] text-gray-400 uppercase font-semibold border-b border-white/5 pb-1">Campos do Negócio</h5>
+              <div class="text-xs flex flex-col gap-2 text-gray-300">
+                <div><strong>Nome Completo:</strong> Ana Laura Fachini</div>
+                <div><strong>Plataforma:</strong> Instagram DM</div>
+                <div><strong>Valor do Negócio:</strong> R$ 134,90</div>
+                <div><strong>Estágio Funil:</strong> Negociação</div>
+              </div>
+            </div>
+
+            <!-- Active Cart items -->
+            <div class="flex flex-col gap-2 p-3 rounded-xl bg-[#09090e] border border-purple-500/20">
+              <h5 class="text-[10px] text-purple-400 uppercase font-bold border-b border-purple-500/10 pb-1 flex items-center gap-1.5">
+                🛒 Carrinho Conversacional
+              </h5>
+              <div class="text-xs flex flex-col gap-2">
+                <div class="flex justify-between text-gray-300">
+                  <span>1 × Camiseta Cyber</span>
+                  <span class="text-purple-400 font-bold">R$ 89,90</span>
+                </div>
+                <div class="flex justify-between text-gray-300">
+                  <span>1 × Boné Neon</span>
+                  <span class="text-purple-400 font-bold">R$ 45,00</span>
+                </div>
+                <div class="flex justify-between border-t border-white/10 pt-2 font-bold text-white">
+                  <span>Total Pedido:</span>
+                  <span class="text-cyan-400">R$ 134,90</span>
+                </div>
+              </div>
+            </div>
+
+            <button class="w-full py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-lg shadow-md transition-all">
+              💾 Salvar Propriedades CRM
+            </button>
+          </div>
+        </div>
+
+
+        <!-- 2. E-COMMERCE TAB -->
+        <div id="tab-ecommerce" class="tab-panel hidden h-full w-full p-8 overflow-y-auto flex flex-col gap-8">
+          
+          <!-- Tab Header -->
+          <div class="flex justify-between items-center">
+            <div>
+              <h2 class="font-display font-extrabold text-3xl text-white">Vendas e Comércio Conversacional via WhatsApp</h2>
+              <p class="text-gray-400 text-sm mt-1">Configure o catálogo oficial da Meta, rastreie pedidos automatizados por IA e monitore a recuperação de carrinhos abandonados.</p>
+            </div>
+            <button class="px-5 py-2.5 bg-gradient-to-tr from-purple-500 to-cyan-400 hover:from-purple-600 hover:to-cyan-500 text-black font-extrabold text-sm rounded-xl shadow-md transition-all">
+              Sincronizar Conector de Vendas
+            </button>
+          </div>
+
+          <!-- Metrics KPI Row -->
+          <div class="grid grid-cols-4 gap-6">
+            
+            <div class="glowing-card rounded-2xl p-6 flex items-center gap-5 glow-purple">
+              <div class="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center text-2xl font-bold">
+                R$
+              </div>
+              <div>
+                <span class="text-xs text-gray-400 uppercase tracking-wider font-semibold">Faturamento Conversacional</span>
+                <h3 class="text-2xl font-extrabold text-white mt-1">R$ 145.890,00</h3>
+                <span class="text-[10px] text-green-500 font-semibold mt-0.5 block">▲ +32.4% este mês</span>
+              </div>
+            </div>
+
+            <div class="glowing-card rounded-2xl p-6 flex items-center gap-5">
+              <div class="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center text-2xl font-bold">
+                🛍
+              </div>
+              <div>
+                <span class="text-xs text-gray-400 uppercase tracking-wider font-semibold">Pedidos Fechados (Won)</span>
+                <h3 class="text-2xl font-extrabold text-white mt-1">3.420 Pedidos</h3>
+                <span class="text-[10px] text-purple-400 font-semibold mt-0.5 block">IA converteu 84% de forma autônoma</span>
+              </div>
+            </div>
+
+            <div class="glowing-card rounded-2xl p-6 flex items-center gap-5">
+              <div class="w-12 h-12 rounded-xl bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 flex items-center justify-center text-2xl font-bold">
+                ⏳
+              </div>
+              <div>
+                <span class="text-xs text-gray-400 uppercase tracking-wider font-semibold">Checkouts Pendentes / Pix</span>
+                <h3 class="text-2xl font-extrabold text-white mt-1">89 Aguardando</h3>
+                <span class="text-[10px] text-yellow-500 font-semibold mt-0.5 block">Disparos de lembretes ativos</span>
+              </div>
+            </div>
+
+            <div class="glowing-card rounded-2xl p-6 flex items-center gap-5">
+              <div class="w-12 h-12 rounded-xl bg-green-500/10 border border-green-500/20 text-green-400 flex items-center justify-center text-2xl font-bold">
+                📦
+              </div>
+              <div>
+                <span class="text-xs text-gray-400 uppercase tracking-wider font-semibold">Unidades Vendidas</span>
+                <h3 class="text-2xl font-extrabold text-white mt-1">4.921 Itens</h3>
+                <span class="text-[10px] text-gray-400 font-semibold mt-0.5 block">Integração ERP Sincronizada</span>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Split Panel View: Order Logs and ERP config -->
+          <div class="grid grid-cols-5 gap-8">
+            
+            <!-- Left Side: Table of Orders -->
+            <div class="col-span-3 glass rounded-2xl p-6 flex flex-col gap-4">
+              <h3 class="font-display font-extrabold text-lg text-white border-b border-white/10 pb-3 flex items-center gap-2">
+                <span class="text-purple-500">■</span> Logs de Pedidos em Tempo Real
+              </h3>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                  <thead>
+                    <tr class="text-gray-400 border-b border-white/10">
+                      <th class="py-3 px-2">Cliente / Canal</th>
+                      <th class="py-3 px-2">Itens Comprados</th>
+                      <th class="py-3 px-2">Valor Total</th>
+                      <th class="py-3 px-2">Status do Pedido</th>
+                      <th class="py-3 px-2 text-center">Simulador de Link</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="border-b border-white/5 hover:bg-white/5 transition-all">
+                      <td class="py-3.5 px-2">
+                        <div class="font-semibold text-white">Gabriel Oliveira</div>
+                        <div class="text-[10px] text-gray-400">WhatsApp · +55 81...</div>
+                      </td>
+                      <td class="py-3.5 px-2">
+                        <div>1x Camiseta Cyber</div>
+                        <div class="text-[10px] text-gray-400">1x Caneca Code</div>
+                      </td>
+                      <td class="py-3.5 px-2 font-bold text-cyan-400">R$ 159,90</td>
+                      <td class="py-3.5 px-2">
+                        <span class="bg-green-500/10 text-green-400 border border-green-500/30 px-2 py-0.5 rounded-full text-[9px] font-bold">PAGO (Won)</span>
+                      </td>
+                      <td class="py-3.5 px-2 text-center text-gray-400">PIX Processado</td>
+                    </tr>
+                    <tr class="border-b border-white/5 hover:bg-white/5 transition-all">
+                      <td class="py-3.5 px-2">
+                        <div class="font-semibold text-white">Ana Laura Fachini</div>
+                        <div class="text-[10px] text-gray-400">Instagram DM · @analauraf</div>
+                      </td>
+                      <td class="py-3.5 px-2">
+                        <div>1x Camiseta Cyber</div>
+                        <div class="text-[10px] text-gray-400">1x Boné Neon</div>
+                      </td>
+                      <td class="py-3.5 px-2 font-bold text-cyan-400">R$ 134,90</td>
+                      <td class="py-3.5 px-2">
+                        <span class="bg-yellow-500/10 text-yellow-400 border border-yellow-500/30 px-2 py-0.5 rounded-full text-[9px] font-bold">AGUARDANDO PIX</span>
+                      </td>
+                      <td class="py-3.5 px-2 text-center">
+                        <button class="px-2.5 py-1 bg-green-500 hover:bg-green-600 text-black font-bold text-[10px] rounded transition-all">Simular Pagamento</button>
+                      </td>
+                    </tr>
+                    <tr class="border-b border-white/5 hover:bg-white/5 transition-all">
+                      <td class="py-3.5 px-2">
+                        <div class="font-semibold text-white">Suporte Técnico (Teste)</div>
+                        <div class="text-[10px] text-gray-400">Web Widget · ID: #401</div>
+                      </td>
+                      <td class="py-3.5 px-2">
+                        <div>1x Licença Enterprise</div>
+                      </td>
+                      <td class="py-3.5 px-2 font-bold text-cyan-400">R$ 89,00</td>
+                      <td class="py-3.5 px-2">
+                        <span class="bg-green-500/10 text-green-400 border border-green-500/30 px-2 py-0.5 rounded-full text-[9px] font-bold">PAGO (Won)</span>
+                      </td>
+                      <td class="py-3.5 px-2 text-center text-gray-400">Cartão Confirmado</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Right Side: Meta Catalog integration & ERP Connector Configs -->
+            <div class="col-span-2 flex flex-col gap-6">
+              
+              <!-- Catalog Config -->
+              <div class="glass rounded-2xl p-6 flex flex-col gap-4">
+                <h3 class="font-display font-extrabold text-base text-white border-b border-white/10 pb-3 flex items-center gap-2">
+                  <span class="text-cyan-500">■</span> Conectores do Catálogo da Meta
+                </h3>
+                <div class="flex flex-col gap-3.5">
+                  <div>
+                    <label class="text-[10px] text-gray-400 uppercase font-bold block mb-1.5">Meta Catalog ID</label>
+                    <input type="text" value="meta_catalog_101" readonly class="w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-xs text-white outline-none font-mono">
+                  </div>
+                  <div>
+                    <label class="text-[10px] text-gray-400 uppercase font-bold block mb-1.5">Status de Sincronização Meta</label>
+                    <div class="p-2.5 bg-green-500/10 border border-green-500/20 rounded-lg text-xs text-green-400 font-semibold flex items-center gap-2">
+                      <span class="w-2 h-2 bg-green-500 rounded-full inline-block animate-ping"></span>
+                      145 Produtos Sincronizados com WhatsApp
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ERP Connector -->
+              <div class="glass rounded-2xl p-6 flex flex-col gap-4">
+                <h3 class="font-display font-extrabold text-base text-white border-b border-white/10 pb-3 flex items-center gap-2">
+                  <span class="text-purple-500">■</span> Conector ERP / Inventário HTTP
+                </h3>
+                <div class="flex flex-col gap-3">
+                  <div>
+                    <label class="text-[10px] text-gray-400 uppercase font-bold block mb-1.5">Endpoint API do Inventário</label>
+                    <input type="text" value="http://localhost:5000/ecommerce/connector/inventory" readonly class="w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-xs text-gray-400 outline-none font-mono truncate">
+                  </div>
+                  <div class="flex gap-2">
+                    <div class="flex-1">
+                      <label class="text-[10px] text-gray-400 uppercase font-bold block mb-1.5">Método</label>
+                      <input type="text" value="POST (JSON)" readonly class="w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-xs text-center text-white outline-none">
+                    </div>
+                    <div class="flex-1 flex items-end">
+                      <button class="w-full py-2.5 bg-purple-600/35 hover:bg-purple-600/50 border border-purple-500/40 text-purple-300 text-xs font-bold rounded-lg transition-all">
+                        Testar Handshake
+                      </button>
+                    </div>
+                  </div>
+                  <div class="p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg flex gap-2.5 mt-2">
+                    <svg class="text-purple-400 shrink-0 mt-0.5" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                    <p class="text-[10px] text-gray-300 leading-normal font-medium"><strong>Criptografia Ativada</strong>: O header da requisição contém chaves criptográficas RSA exclusivas do tenant para validação segura de dados.</p>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- 3. CRM & METRICS TAB -->
+        <div id="tab-crm" class="tab-panel hidden h-full w-full p-8 overflow-y-auto flex flex-col gap-8">
+          <!-- Tab Header -->
+          <div class="flex justify-between items-center">
+            <div>
+              <h2 class="font-display font-extrabold text-3xl text-white">📊 Painel CRM & Métricas Omnichannel</h2>
+              <p class="text-gray-400 text-sm mt-1">Analise seu funil de vendas integrado de ponta a ponta, taxas de conversão de leads e desempenho da automação inteligente.</p>
+            </div>
+            <button class="px-5 py-2.5 bg-[#0d0d15] border border-white/10 text-white rounded-xl text-sm font-semibold flex items-center gap-2 hover:bg-white/5 transition-all">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18"></path></svg>
+              Atualizar Dados CRM
+            </button>
+          </div>
+
+          <!-- KPI Cards Row -->
+          <div class="grid grid-cols-6 gap-4">
+            <div class="glowing-card rounded-xl p-4 flex items-center gap-3.5">
+              <div class="w-10 h-10 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center text-xl">👥</div>
+              <div>
+                <span class="text-[10px] text-gray-400 uppercase font-semibold">Total de Leads</span>
+                <h4 class="text-lg font-extrabold text-white mt-0.5">105 Leads</h4>
+              </div>
+            </div>
+
+            <div class="glowing-card rounded-xl p-4 flex items-center gap-3.5 glow-purple">
+              <div class="w-10 h-10 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400 flex items-center justify-center text-xl">💰</div>
+              <div>
+                <span class="text-[10px] text-gray-400 uppercase font-semibold">Valor Pipeline</span>
+                <h4 class="text-lg font-extrabold text-green-400 mt-0.5">R$ 83.000,00</h4>
+              </div>
+            </div>
+
+            <div class="glowing-card rounded-xl p-4 flex items-center gap-3.5">
+              <div class="w-10 h-10 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center text-xl">📈</div>
+              <div>
+                <span class="text-[10px] text-gray-400 uppercase font-semibold">Conversão Funil</span>
+                <h4 class="text-lg font-extrabold text-blue-400 mt-0.5">28.4%</h4>
+              </div>
+            </div>
+
+            <div class="glowing-card rounded-xl p-4 flex items-center gap-3.5">
+              <div class="w-10 h-10 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 flex items-center justify-center text-xl">🕒</div>
+              <div>
+                <span class="text-[10px] text-gray-400 uppercase font-semibold">Tempo de Fechamento</span>
+                <h4 class="text-lg font-extrabold text-white mt-0.5">2.5 Dias</h4>
+              </div>
+            </div>
+
+            <div class="glowing-card rounded-xl p-4 flex items-center gap-3.5">
+              <div class="w-10 h-10 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 flex items-center justify-center text-xl">🎯</div>
+              <div>
+                <span class="text-[10px] text-gray-400 uppercase font-semibold">Negócios Ativos</span>
+                <h4 class="text-lg font-extrabold text-white mt-0.5">38 Negócios</h4>
+              </div>
+            </div>
+
+            <div class="glowing-card rounded-xl p-4 flex items-center gap-3.5">
+              <div class="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl">🏆</div>
+              <div>
+                <span class="text-[10px] text-gray-400 uppercase font-semibold">Negócios Ganhos</span>
+                <h4 class="text-lg font-extrabold text-green-400 mt-0.5">67 Won</h4>
+              </div>
+            </div>
+          </div>
+
+          <!-- Charts Grid Row -->
+          <div class="grid grid-cols-2 gap-8">
+            
+            <!-- Funnel chart visual representation -->
+            <div class="glass rounded-2xl p-6 flex flex-col gap-6">
+              <h3 class="font-display font-extrabold text-lg text-white flex items-center gap-2 border-b border-white/10 pb-3">
+                <span>■</span> Visualização Realista do Funil de Vendas (CRM)
+              </h3>
+              <div class="flex flex-col gap-4">
+                
+                <!-- Stage 1 -->
+                <div class="flex items-center gap-4">
+                  <span class="text-xs font-semibold text-purple-400 w-[110px] text-right">Contatos Iniciais:</span>
+                  <div class="flex-1 bg-white/5 h-8 rounded-lg overflow-hidden relative">
+                    <div class="h-full bg-gradient-to-r from-purple-600 to-purple-400 w-full flex items-center pl-3">
+                      <span class="text-xs font-extrabold text-white drop-shadow">45 Leads (R$ 12.000,00)</span>
+                    </div>
+                  </div>
+                  <span class="text-xs text-gray-400 w-[50px]">100%</span>
+                </div>
+
+                <!-- Stage 2 -->
+                <div class="flex items-center gap-4">
+                  <span class="text-xs font-semibold text-blue-400 w-[110px] text-right">Contatos Qualificados:</span>
+                  <div class="flex-1 bg-white/5 h-8 rounded-lg overflow-hidden relative">
+                    <div class="h-full bg-gradient-to-r from-blue-600 to-blue-400 w-[70%] flex items-center pl-3">
+                      <span class="text-xs font-extrabold text-white drop-shadow">30 Leads (R$ 15.000,00)</span>
+                    </div>
+                  </div>
+                  <span class="text-xs text-gray-400 w-[50px]">67.6%</span>
+                </div>
+
+                <!-- Stage 3 -->
+                <div class="flex items-center gap-4">
+                  <span class="text-xs font-semibold text-yellow-400 w-[110px] text-right">Em Negociação:</span>
+                  <div class="flex-1 bg-white/5 h-8 rounded-lg overflow-hidden relative">
+                    <div class="h-full bg-gradient-to-r from-yellow-600 to-yellow-400 w-[40%] flex items-center pl-3">
+                      <span class="text-xs font-extrabold text-white drop-shadow">18 Leads (R$ 22.000,00)</span>
+                    </div>
+                  </div>
+                  <span class="text-xs text-gray-400 w-[50px]">40.0%</span>
+                </div>
+
+                <!-- Stage 4 -->
+                <div class="flex items-center gap-4">
+                  <span class="text-xs font-semibold text-green-400 w-[110px] text-right">Fechado Ganhos (Won):</span>
+                  <div class="flex-1 bg-white/5 h-8 rounded-lg overflow-hidden relative">
+                    <div class="h-full bg-gradient-to-r from-green-600 to-green-400 w-[27%] flex items-center pl-3">
+                      <span class="text-xs font-extrabold text-white drop-shadow">12 Ganhos (R$ 34.000,00)</span>
+                    </div>
+                  </div>
+                  <span class="text-xs text-gray-400 w-[50px]">26.7%</span>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- Leads por Canal chart visual representation -->
+            <div class="glass rounded-2xl p-6 flex flex-col gap-6">
+              <h3 class="font-display font-extrabold text-lg text-white flex items-center gap-2 border-b border-white/10 pb-3">
+                <span>■</span> Origem dos Leads Omnichannel (Conversas Unificadas)
+              </h3>
+              <div class="flex flex-col gap-4">
+                
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-xl bg-green-500/10 text-green-400 border border-green-500/20 flex items-center justify-center font-bold text-lg shrink-0">📱</div>
+                  <div class="flex-1">
+                    <div class="flex justify-between text-xs font-semibold mb-1">
+                      <span>WhatsApp API</span>
+                      <span>60 Leads (57.1%)</span>
+                    </div>
+                    <div class="w-full bg-white/5 h-2.5 rounded-full overflow-hidden">
+                      <div class="h-full bg-green-500 rounded-full" style="width: 57%"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-xl bg-pink-500/10 text-pink-400 border border-pink-500/20 flex items-center justify-center font-bold text-lg shrink-0">📸</div>
+                  <div class="flex-1">
+                    <div class="flex justify-between text-xs font-semibold mb-1">
+                      <span>Instagram Direct</span>
+                      <span>25 Leads (23.8%)</span>
+                    </div>
+                    <div class="w-full bg-white/5 h-2.5 rounded-full overflow-hidden">
+                      <div class="h-full bg-pink-500 rounded-full" style="width: 24%"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center font-bold text-lg shrink-0">🌐</div>
+                  <div class="flex-1">
+                    <div class="flex justify-between text-xs font-semibold mb-1">
+                      <span>Web Chat Widget</span>
+                      <span>15 Leads (14.3%)</span>
+                    </div>
+                    <div class="w-full bg-white/5 h-2.5 rounded-full overflow-hidden">
+                      <div class="h-full bg-purple-500 rounded-full" style="width: 14%"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center font-bold text-lg shrink-0">💬</div>
+                  <div class="flex-1">
+                    <div class="flex justify-between text-xs font-semibold mb-1">
+                      <span>Facebook Messenger</span>
+                      <span>5 Leads (4.8%)</span>
+                    </div>
+                    <div class="w-full bg-white/5 h-2.5 rounded-full overflow-hidden">
+                      <div class="h-full bg-blue-500 rounded-full" style="width: 5%"></div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Bottom statistics detailed analytics -->
+          <div class="glass rounded-2xl p-6 flex flex-col gap-4">
+            <h3 class="font-display font-extrabold text-lg text-white border-b border-white/10 pb-3 flex items-center gap-2">
+              <span>■</span> Análise Comparativa de Resolução: Automático (IA) vs Operador Humano
+            </h3>
+            <div class="grid grid-cols-3 gap-6 pt-3">
+              
+              <div class="bg-white/5 border border-white/10 rounded-xl p-5 flex flex-col gap-2">
+                <span class="text-xs text-gray-400 uppercase font-semibold">Total de Conversas Processadas</span>
+                <h3 class="text-3xl font-extrabold text-white">4.890 Sessões</h3>
+                <span class="text-[10px] text-gray-500">Livre de filas de espera</span>
+              </div>
+
+              <div class="bg-purple-500/5 border border-purple-500/20 rounded-xl p-5 flex flex-col gap-2">
+                <div class="flex justify-between items-center">
+                  <span class="text-xs text-purple-300 uppercase font-semibold">Resolução Autônoma por IA</span>
+                  <span class="text-[9px] bg-purple-500 text-white font-bold px-1.5 py-0.5 rounded">Zimmy Bot</span>
+                </div>
+                <h3 class="text-3xl font-extrabold text-purple-400">4.108 Conversas</h3>
+                <div class="w-full bg-white/5 h-1.5 rounded-full overflow-hidden mt-1">
+                  <div class="h-full bg-purple-500 rounded-full" style="width: 84%"></div>
+                </div>
+                <span class="text-[10px] text-purple-300">84% resolvidas sem intervenção humana</span>
+              </div>
+
+              <div class="bg-cyan-500/5 border border-cyan-500/20 rounded-xl p-5 flex flex-col gap-2">
+                <div class="flex justify-between items-center">
+                  <span class="text-xs text-cyan-300 uppercase font-semibold">Resolução via Atendente Humano</span>
+                  <span class="text-[9px] bg-cyan-500 text-black font-bold px-1.5 py-0.5 rounded">Intervenção</span>
+                </div>
+                <h3 class="text-3xl font-extrabold text-cyan-400">782 Conversas</h3>
+                <div class="w-full bg-white/5 h-1.5 rounded-full overflow-hidden mt-1">
+                  <div class="h-full bg-cyan-500 rounded-full" style="width: 16%"></div>
+                </div>
+                <span class="text-[10px] text-cyan-300">16% necessitaram de intervenção manual</span>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+
+
+        <!-- 4. AI AGENT & RAG CONFIG TAB -->
+        <div id="tab-agentes" class="tab-panel hidden h-full w-full p-8 overflow-y-auto flex flex-col gap-8">
+          <!-- Tab Header -->
+          <div class="flex justify-between items-center">
+            <div>
+              <h2 class="font-display font-extrabold text-3xl text-white">🤖 Agentes de IA Inteligentes & Base de Conhecimento RAG</h2>
+              <p class="text-gray-400 text-sm mt-1">Personalize os prompts do assistente comercial, selecione modelos Gemini e carregue arquivos da empresa para indexação semântica (RAG).</p>
+            </div>
+            <button class="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-bold text-sm rounded-xl shadow-md transition-all">
+              Criar Novo Agente AI
+            </button>
+          </div>
+
+          <!-- Configuration Panels Grid -->
+          <div class="grid grid-cols-5 gap-8">
+            
+            <!-- Left Side: Bot Properties & Prompt Editor -->
+            <div class="col-span-3 glass rounded-2xl p-6 flex flex-col gap-5">
+              <h3 class="font-display font-extrabold text-lg text-white border-b border-white/10 pb-3 flex items-center gap-2">
+                <span>■</span> Configurações Gerais do Agente Comercial
+              </h3>
+
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="text-[10px] text-gray-400 uppercase font-bold block mb-1.5">Nome do Agente AI</label>
+                  <input type="text" value="Zimmy - Assistente Comercial" class="w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-xs text-white outline-none">
+                </div>
+                <div>
+                  <label class="text-[10px] text-gray-400 uppercase font-bold block mb-1.5">Modelo Cognitivo de IA</label>
+                  <select class="w-full bg-[#13131a] border border-white/10 text-white text-xs font-semibold rounded-lg p-2.5 outline-none">
+                    <option value="gemini-2.5-flash" selected>gemini-2.5-flash (Altamente Recomendado)</option>
+                    <option value="gemini-2.5-pro">gemini-2.5-pro (Raciocínio Avançado)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label class="text-[10px] text-gray-400 uppercase font-bold block mb-1.5">Temperatura (Nível de Criatividade)</label>
+                <div class="flex items-center gap-4">
+                  <input type="range" min="0" max="1" step="0.1" value="0.4" class="flex-1 accent-purple-500">
+                  <span class="text-xs font-mono bg-white/5 border border-white/10 px-2.5 py-1 rounded-lg">0.4</span>
+                </div>
+              </div>
+
+              <div>
+                <label class="text-[10px] text-gray-400 uppercase font-bold block mb-1.5">Mensagem de Boas-Vindas Automatizada</label>
+                <input type="text" value="Olá! Sou o Zimmy, assistente virtual oficial da NoviApp. Como posso te ajudar hoje?" class="w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-xs text-white outline-none">
+              </div>
+
+              <div>
+                <label class="text-[10px] text-gray-400 uppercase font-bold block mb-1.5">Instrução de Comportamento (System Prompt)</label>
+                <textarea rows="8" class="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-xs text-white font-mono leading-relaxed outline-none focus:border-purple-500/50">Você é o Zimmy, o assistente de vendas e suporte oficial da NoviApp.ai.
+Seu objetivo é ajudar os clientes a entenderem nossos produtos e fechar vendas de forma autônoma.
+Seja muito educado, utilize emojis moderadamente para manter a simpatia, e seja direto nas respostas sobre preços.
+
+REGRAS CRÍTICAS:
+1. Sempre consulte a Base de Conhecimento RAG para verificar preços oficiais e estoques de produtos.
+2. Caso o cliente demonstre desejo explícito de compra, recomende gerar o link de checkout seguro.
+3. Se o cliente solicitar atendimento humano ou se houver dúvida técnica complexa, emita o comando interno de Handover.</textarea>
+              </div>
+
+              <div class="flex justify-end gap-3 border-t border-white/10 pt-4">
+                <button class="px-5 py-2.5 bg-white/5 border border-white/10 hover:bg-white/10 text-gray-300 text-xs font-bold rounded-lg transition-all">Excluir Agente</button>
+                <button class="px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-lg shadow transition-all">Salvar Configurações</button>
+              </div>
+            </div>
+
+            <!-- Right Side: RAG Knowledge Base and Indexing logs -->
+            <div class="col-span-2 flex flex-col gap-6">
+              
+              <!-- Knowledge Base RAG Upload -->
+              <div class="glass rounded-2xl p-6 flex flex-col gap-4">
+                <h3 class="font-display font-extrabold text-base text-white border-b border-white/10 pb-3 flex items-center gap-2">
+                  <span class="text-cyan-500">■</span> Base de Conhecimento RAG
+                </h3>
+                <div class="flex flex-col gap-3.5">
+                  <div>
+                    <label class="text-[10px] text-gray-400 uppercase font-bold block mb-1.5">Nome do Documento / Origem</label>
+                    <input type="text" value="FAQ_Precos_e_Produtos_Varejo.txt" class="w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-xs text-white outline-none">
+                  </div>
+                  <div>
+                    <label class="text-[10px] text-gray-400 uppercase font-bold block mb-1.5">Conteúdo do Documento (Texto Plano)</label>
+                    <textarea rows="6" class="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-xs text-white outline-none" placeholder="Cole aqui os dados de produtos, fretes, políticas de trocas..."></textarea>
+                  </div>
+                  <button class="w-full py-2.5 bg-gradient-to-tr from-purple-500 to-cyan-400 hover:from-purple-600 hover:to-cyan-500 text-black font-extrabold text-xs rounded-lg shadow transition-all">
+                    Indexar Documento Semântico
+                  </button>
+                </div>
+              </div>
+
+              <!-- Indexing Info Logs -->
+              <div class="glass rounded-2xl p-6 flex flex-col gap-4">
+                <h3 class="font-display font-extrabold text-base text-white border-b border-white/10 pb-3 flex items-center gap-2">
+                  <span class="text-purple-500">■</span> Status do RAG no Banco SQLite
+                </h3>
+                <div class="flex flex-col gap-3 text-xs">
+                  <div class="flex justify-between items-center bg-white/5 p-2.5 rounded-lg border border-white/5">
+                    <span class="text-gray-400">Total de Chunks Indexados:</span>
+                    <span class="font-bold text-white">34 Chunks Vetoriais</span>
+                  </div>
+                  <div class="flex justify-between items-center bg-white/5 p-2.5 rounded-lg border border-white/5">
+                    <span class="text-gray-400">Dimensão do Vetor:</span>
+                    <span class="font-bold text-purple-400">768 floats (Gemini Embeddings)</span>
+                  </div>
+                  <div class="flex justify-between items-center bg-white/5 p-2.5 rounded-lg border border-white/5">
+                    <span class="text-gray-400">Métrica de Distância:</span>
+                    <span class="font-bold text-cyan-400">Cosseno (Cosine Similarity)</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+
+
+        <!-- 5. NOVIAPI DEVELOPER TAB -->
+        <div id="tab-noviapi" class="tab-panel hidden h-full w-full p-8 overflow-y-auto flex flex-col gap-6">
+          <!-- Tab Header -->
+          <div class="flex justify-between items-center shrink-0">
+            <div>
+              <h2 class="font-display font-extrabold text-3xl text-white">🧪 NoviAPI Developer Sandbox (JavaScript VM)</h2>
+              <p class="text-gray-400 text-sm mt-1">Crie ações, hooks e rotinas de middleware dinâmicas em JavaScript rodando em ambiente isolado de alto desempenho (Node VM).</p>
+            </div>
+            <div class="flex gap-3">
+              <button class="px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-gray-300 text-xs font-semibold rounded-xl transition-all">
+                Criar Nova Ação
+              </button>
+              <button class="px-5 py-2 bg-gradient-to-tr from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all">
+                Salvar Script em Produção
+              </button>
+            </div>
+          </div>
+
+          <!-- Developer Sandbox Split Panel -->
+          <div class="grid grid-cols-4 gap-8 flex-1 overflow-hidden h-[780px]">
+            
+            <!-- Left Side: List of custom scripts -->
+            <div class="col-span-1 glass rounded-2xl p-4 flex flex-col gap-3 overflow-y-auto">
+              <h4 class="text-[10px] text-gray-400 uppercase font-bold border-b border-white/10 pb-2">Lista de Ações Dinâmicas</h4>
+              
+              <!-- Script selected -->
+              <div class="p-3 bg-purple-500/10 border border-purple-500/30 rounded-xl flex flex-col gap-1 cursor-pointer">
+                <span class="font-semibold text-xs text-white">consultar_correios.js</span>
+                <span class="text-[10px] text-purple-400">Ativa · Trigger: Entrada de CEP</span>
+              </div>
+
+              <!-- Script other -->
+              <div class="p-3 bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10 rounded-xl flex flex-col gap-1 cursor-pointer transition-all">
+                <span class="font-semibold text-xs text-gray-300">atualizar_estoque_erp.js</span>
+                <span class="text-[10px] text-gray-500">Ativa · Trigger: Pedido Pago</span>
+              </div>
+
+              <!-- Script other -->
+              <div class="p-3 bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10 rounded-xl flex flex-col gap-1 cursor-pointer transition-all">
+                <span class="font-semibold text-xs text-gray-300">enviar_relatorio_salesforce.js</span>
+                <span class="text-[10px] text-gray-500">Inativa · Trigger: Manual</span>
+              </div>
+            </div>
+
+            <!-- Center: Code Editor (IDE visual) -->
+            <div class="col-span-2 glass rounded-2xl flex flex-col overflow-hidden border border-white/10">
+              <!-- IDE Tabs -->
+              <div class="bg-[#0b0b12] border-b border-white/10 px-4 py-2 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="w-3 h-3 rounded-full bg-red-500 inline-block"></span>
+                  <span class="w-3 h-3 rounded-full bg-yellow-500 inline-block"></span>
+                  <span class="w-3 h-3 rounded-full bg-green-500 inline-block"></span>
+                  <span class="text-xs font-mono text-gray-400 ml-3">consultar_correios.js</span>
+                </div>
+                <span class="text-[10px] text-purple-400 font-bold font-mono">JS Sandbox NodeJS VM</span>
+              </div>
+
+              <!-- Code Area -->
+              <div class="flex-1 bg-[#09090e] p-6 overflow-y-auto font-mono text-xs text-gray-300 leading-relaxed">
+                <pre><span class="text-purple-400">async</span> (input) => {
+  <span class="text-gray-500">// O input contém o payload enviado pelo bot do ChatFlow</span>
+  <span class="text-purple-400">const</span> cepDestino = input.cep;
+  <span class="text-purple-400">const</span> pesoTotal = input.peso || 1.0;
+
+  <span class="text-cyan-400">console</span>.log(<span class="text-green-400">`[INFO] Iniciando consulta de frete via Correios API para o CEP: ${cepDestino}`</span>);
+
+  <span class="text-purple-400">try</span> {
+    <span class="text-purple-400">const</span> response = <span class="text-purple-400">await</span> axios.get(<span class="text-green-400">`https://viacep.com.br/ws/${cepDestino}/json/`</span>);
+    
+    <span class="text-purple-400">if</span> (response.data.erro) {
+      <span class="text-purple-400">return</span> { success: <span class="text-purple-400">false</span>, error: <span class="text-green-400">"CEP inválido ou inexistente."</span> };
+    }
+
+    <span class="text-gray-500">// Simulação de integração logística com valor fixado corporativo</span>
+    <span class="text-purple-400">const</span> valorFrete = 18.50;
+    <span class="text-purple-400">const</span> prazoDias = 3;
+
+    <span class="text-cyan-400">console</span>.log(<span class="text-green-400">`[INFO] Logística calculada com sucesso: R$ ${valorFrete} com prazo de ${prazoDias} dias.`</span>);
+
+    <span class="text-purple-400">return</span> {
+      success: <span class="text-purple-400">true</span>,
+      uf: response.data.uf,
+      localidade: response.data.localidade,
+      frete: valorFrete,
+      prazo: prazoDias
+    };
+  } <span class="text-purple-400">catch</span> (error) {
+    <span class="text-cyan-400">console</span>.error(<span class="text-green-400">`[ERRO] Falha de comunicação na API externa: ${error.message}`</span>);
+    <span class="text-purple-400">return</span> { success: <span class="text-purple-400">false</span>, error: <span class="text-green-400">"Falha de rede na API logística."</span> };
+  }
+}</pre>
+              </div>
+            </div>
+
+            <!-- Right Side: Executer Test -->
+            <div class="col-span-1 flex flex-col gap-6 overflow-y-auto">
+              
+              <!-- Payload Test Input -->
+              <div class="glass rounded-2xl p-5 flex flex-col gap-3">
+                <h4 class="text-[10px] text-gray-400 uppercase font-bold border-b border-white/10 pb-2">Payload JSON de Entrada</h4>
+                <textarea rows="4" class="w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-xs text-white font-mono outline-none focus:border-purple-500/50">{
+  "cep": "01310-100",
+  "weight": 1.2
+}</textarea>
+                <button class="w-full py-2 bg-gradient-to-tr from-purple-500 to-cyan-400 hover:from-purple-600 hover:to-cyan-500 text-black font-extrabold text-xs rounded-lg shadow transition-all">
+                  ⚡ Executar Script Sandbox
+                </button>
+              </div>
+
+              <!-- Console output logs -->
+              <div class="glass rounded-2xl p-5 flex flex-col gap-3 flex-1">
+                <h4 class="text-[10px] text-gray-400 uppercase font-bold border-b border-white/10 pb-2">Console Logs e Saída</h4>
+                
+                <!-- Output json -->
+                <div class="flex flex-col gap-2">
+                  <span class="text-[9px] text-purple-400 font-bold uppercase font-mono">Resultado JSON</span>
+                  <pre class="bg-black/40 border border-white/5 p-2 rounded-lg text-[10px] font-mono text-green-400">{
+  "success": true,
+  "uf": "SP",
+  "localidade": "São Paulo",
+  "frete": 18.50,
+  "prazo": 3
+}</pre>
+                </div>
+
+                <!-- Debug logs stack -->
+                <div class="flex flex-col gap-1.5 mt-2">
+                  <span class="text-[9px] text-cyan-400 font-bold uppercase font-mono">Logs de Depuração</span>
+                  <div class="text-[9px] font-mono text-gray-400 flex flex-col gap-1 bg-black/20 p-2 rounded-lg border border-white/5 overflow-y-auto max-h-[160px]">
+                    <div class="text-blue-400">[INFO] Iniciando sandbox de execução do Node VM...</div>
+                    <div class="text-blue-400">[INFO] Conectando ao sandbox servidor...</div>
+                    <div class="text-blue-400">[INFO] Consultando frete via Correios API para o CEP: 01310-100</div>
+                    <div class="text-blue-400">[INFO] Logística calculada com sucesso: R$ 18.50 com prazo de 3 dias.</div>
+                    <div class="text-green-500">[SUCESSO] Código finalizado com sucesso.</div>
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    // Tab switching engine based on URL parameters to facilitate automated screenshots
+    function activateTabFromUrl() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const tab = urlParams.get('tab') || 'inbox'; // Default tab is inbox
+
+      // Hide all panels
+      document.querySelectorAll('.tab-panel').forEach(panel => {
+        panel.classList.add('hidden');
+      });
+
+      // Deactivate all nav-items
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active', 'bg-white/5', 'text-white');
+        item.classList.add('text-gray-400');
+        item.style.borderLeft = 'none';
+        item.style.boxShadow = 'none';
+      });
+
+      // Map tab name to IDs
+      const tabId = 'tab-' + tab;
+      const navId = 'nav-' + tab;
+
+      const targetPanel = document.getElementById(tabId);
+      const targetNav = document.getElementById(navId);
+      const headerTitle = document.getElementById('header-title');
+
+      if (targetPanel) {
+        targetPanel.classList.remove('hidden');
+      }
+
+      if (targetNav) {
+        targetNav.classList.add('active', 'bg-white/5', 'text-white');
+        targetNav.classList.remove('text-gray-400');
+        targetNav.style.borderLeft = '3px solid #a855f7';
+        targetNav.style.boxShadow = 'inset 5px 0 10px rgba(168, 85, 247, 0.15)';
+      }
+
+      // Dynamic header title update
+      if (headerTitle) {
+        if (tab === 'inbox') headerTitle.innerText = 'Atendimento Omnichannel & Caixa de Entrada Unificada';
+        else if (tab === 'ecommerce') headerTitle.innerText = 'WhatsApp Conversational Commerce & Catálogos';
+        else if (tab === 'crm') headerTitle.innerText = 'CRM de Vendas, Funil e Conversões de IA';
+        else if (tab === 'agentes') headerTitle.innerText = 'Agente AI Assistente & Base Cognitiva RAG';
+        else if (tab === 'noviapi') headerTitle.innerText = 'NoviAPI JavaScript Execution Sandbox';
+      }
+    }
+
+    // Run tab activation on load
+    window.onload = activateTabFromUrl;
+  </script>
+</body>
+</html>

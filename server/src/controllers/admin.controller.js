@@ -1,0 +1,150 @@
+/**
+ * Admin Controller: Handles Master Admin System Operations
+ * Provides subscriber management, plan modification, and system-wide database resets.
+ */
+const prisma = require('../db');
+
+module.exports = {
+  /**
+   * List all subscribers (Organizations) and their resource usage
+   */
+  async listSubscribers(req, res) {
+    try {
+      // Fetch all organizations, including their owner users, bots, and channels
+      const subscribers = await prisma.organization.findMany({
+        include: {
+          users: {
+            select: {
+              id: true,
+              email: true,
+              firstName: true,
+              lastName: true,
+              role: true,
+              createdAt: true
+            }
+          },
+          _count: {
+            select: {
+              bots: true,
+              channels: true,
+              conversations: true,
+              contacts: true
+            }
+          }
+        },
+        orderBy: {
+          createdAt: 'desc'
+        }
+      });
+
+      return res.status(200).json({
+        success: true,
+        subscribers: subscribers.map(org => {
+          const owner = org.users.find(u => u.role === 'OWNER') || org.users[0] || null;
+          return {
+            id: org.id,
+            name: org.name,
+            slug: org.slug,
+            plan: org.plan,
+            maxBots: org.maxBots,
+            maxMessagesPerMonth: org.maxMessagesPerMonth,
+            apiUsageThisMonth: org.apiUsageThisMonth,
+            createdAt: org.createdAt,
+            ownerEmail: owner ? owner.email : 'N/A',
+            ownerName: owner ? `${owner.firstName} ${owner.lastName}` : 'N/A',
+            botsCount: org._count.bots,
+            channelsCount: org._count.channels,
+            conversationsCount: org._count.conversations,
+            contactsCount: org._count.contacts
+          };
+        })
+      });
+    } catch (error) {
+      console.error("[Admin Controller] Error listing subscribers:", error);
+      return res.status(500).json({ success: false, error: "Internal Server Error" });
+    }
+  },
+
+  /**
+   * Update a subscriber's plan and resource limits
+   */
+  async updateSubscriberLimits(req, res) {
+    const { id } = req.params;
+    const { plan, maxBots, maxMessagesPerMonth, apiUsageThisMonth } = req.body;
+
+    try {
+      const org = await prisma.organization.findUnique({ where: { id } });
+      if (!org) {
+        return res.status(404).json({ success: false, error: "Subscriber not found." });
+      }
+
+      const updatedOrg = await prisma.organization.update({
+        where: { id },
+        data: {
+          plan: plan !== undefined ? plan : org.plan,
+          maxBots: maxBots !== undefined ? parseInt(maxBots) : org.maxBots,
+          maxMessagesPerMonth: maxMessagesPerMonth !== undefined ? parseInt(maxMessagesPerMonth) : org.maxMessagesPerMonth,
+          apiUsageThisMonth: apiUsageThisMonth !== undefined ? parseInt(apiUsageThisMonth) : org.apiUsageThisMonth
+        }
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: "Subscriber limits updated successfully.",
+        organization: updatedOrg
+      });
+    } catch (error) {
+      console.error("[Admin Controller] Error updating limits:", error);
+      return res.status(500).json({ success: false, error: "Internal Server Error" });
+    }
+  },
+
+  /**
+   * Delete a subscriber (Organization) and all its cascaded child data
+   */
+  async deleteSubscriber(req, res) {
+    const { id } = req.params;
+
+    try {
+      const org = await prisma.organization.findUnique({ where: { id } });
+      if (!org) {
+        return res.status(404).json({ success: false, error: "Subscriber not found." });
+      }
+
+      // Deleting organization cascades and deletes all bots, channels, users, etc.
+      await prisma.organization.delete({ where: { id } });
+
+      return res.status(200).json({
+        success: true,
+        message: "Subscriber and all associated data deleted successfully."
+      });
+    } catch (error) {
+      console.error("[Admin Controller] Error deleting subscriber:", error);
+      return res.status(500).json({ success: false, error: "Internal Server Error" });
+    }
+  },
+
+  /**
+   * Global system-wide reset (Excludes all registered organizations/users)
+   */
+  async systemReset(req, res) {
+    try {
+      console.log("[Admin System Reset] Executing full wipe...");
+      
+      const userResult = await prisma.user.deleteMany({});
+      const orgResult = await prisma.organization.deleteMany({});
+
+      return res.status(200).json({
+        success: true,
+        message: "System database fully reset. All subscribers and users have been excluded.",
+        deleted: {
+          users: userResult.count,
+          organizations: orgResult.count
+        }
+      });
+    } catch (error) {
+      console.error("[Admin System Reset] Error executing full reset:", error);
+      return res.status(500).json({ success: false, error: "Internal Server Error during system reset." });
+    }
+  }
+};

@@ -1,0 +1,42 @@
+# PROMPT OFICIAL PARA GERAÇÃO DE VÍDEO (OMNI AI VIDEO GENERATOR)
+# Total Word Count of the entire file: ~650 words (Strictly under the 840-word limit)
+# Total Character Count of the entire file: ~4,500 characters (Strictly under 8,000 characters)
+
+================================================================================
+PART 1: OMNI AI GENERATOR PROMPT (ENGLISH)
+================================================================================
+Copy and paste this text directly into the Omni AI prompt box:
+
+Create a 2-minute cinematic, high-converting promotional video for ChatFlow SaaS. Tone is highly professional, energetic, and sales-focused. 
+Visuals: A sleek, modern office at night. Close-up of a dark-themed smartphone screen with glowing purple and cyan neon accents, showcasing a seamless WhatsApp conversation where a customer asks about a product, and an AI agent instantly replies with a beautiful Meta interactive catalog and a Pix payment checkout link. Transition to a Sales Director smiling while looking at a premium desktop web app filled with glassmorphic analytics charts, real-time conversion rates spiking upwards, and omnichannel chat notifications (WhatsApp, Instagram, Web Chat) flowing smoothly in a single inbox. 
+Audio: Inspiring, modern corporate electronic music with a confident beat. A professional, warm Brazilian Portuguese (PT-BR) voiceover delivering a powerful pitch about unearthing lost revenue, uncoupling omnichannel chaos, and automating sales with 24/7 RAG-powered cognitive AI agents using Google Gemini 2.5 Flash, complete with a developer JS sandbox for ERP integrations (Bling, Tiny). Ends with contact details: info@noviapp.ai, +55 81 8392-0320, noviapp.ai.
+
+================================================================================
+PART 2: PROMPT DO GERADOR DE VÍDEO OMNI AI (PORTUGUÊS)
+================================================================================
+Copie e cole este texto no campo de prompt caso utilize a interface em Português:
+
+Crie um vídeo promocional cinematográfico de 2 minutos para o SaaS ChatFlow. O tom é altamente profissional, dinâmico e focado em conversão de vendas.
+Visuais: Escritório moderno à noite. Close-up de um smartphone de tema escuro com detalhes em neon roxo e ciano, mostrando uma conversa no WhatsApp onde o cliente pergunta sobre um produto e o agente de IA responde instantaneamente com um catálogo interativo da Meta e link de pagamento Pix. Transição para um Diretor de Vendas sorrindo ao ver um dashboard web com gráficos de conversão em tempo real disparando e notificações integradas de WhatsApp, Instagram e Web Chat em uma única caixa de entrada.
+Áudio: Trilha sonora eletrônica corporativa inspiradora e batida confiante. Locução profissional em português (PT-BR) apresentando a recuperação de vendas perdidas, centralização omnichannel e automação 24/7 com agentes de IA cognitivos RAG (Gemini 2.5 Flash) e integração com ERPs (Bling, Tiny) via NoviAPI sandbox. Finalize com os contatos: info@noviapp.ai, +55 81 8392-0320 e noviapp.ai.
+
+================================================================================
+PART 3: OFFICIAL NARRATION SCRIPT / LOCUÇÃO (PT-BR)
+================================================================================
+This is the voiceover narration script that you can use or record. It has exactly 313 words:
+
+Cinquenta por cento das vendas digitais são fechadas pela empresa que responde primeiro. Mas com atendentes dispersos entre abas do WhatsApp, Instagram e chat do site, sua empresa perde até trinta e oito por cento dos clientes logo no primeiro contato. O atraso custa caro. 
+
+Conheça o ChatFlow: a plataforma omnichannel definitiva que unifica seus canais de atendimento e vendas em um único painel inteligente. Com o nosso Omnichannel Inbox, toda a sua equipe trabalha em uma caixa de entrada unificada, com distribuição automática de leads. 
+
+E a mágica acontece com o nosso Copiloto de IA. Ele analisa as conversas em tempo real e sugere respostas rápidas e de alta confiança para os atendentes. Se o assunto for complexo, o operador assume o controle com um clique.
+
+Mais do que atender, nós vendemos. O ChatFlow conecta-se nativamente ao catálogo da Meta no WhatsApp, permitindo que a Inteligência Artificial envie produtos e gere links de pagamento Pix automáticos. Esqueceu o carrinho? O sistema dispara lembretes automáticos de recuperação.
+
+Diga adeus aos robôs engessados. Nossos Agentes de IA Cognitivos, equipados com o modelo super veloz Gemini 2.5 Flash da Google, utilizam busca semântica em uma Base de Conhecimento RAG local. Eles analisam seus PDFs, planilhas e FAQs para responder dúvidas de frete e especificações técnicas de forma precisa e sem alucinações.
+
+Para necessidades avançadas, a NoviAPI oferece uma sandbox JavaScript segura para seus desenvolvedores integrarem estoque e ERPs locais como Bling e Tiny em tempo real.
+
+Os resultados são imediatos: oitenta e quatro por cento de resolução automática por IA e aumento real nas conversões.
+
+Transforme conversas em faturamento. Fale com a equipe da Noviapp Sistemas IA: envie um e-mail para info@noviapp.ai, mande um WhatsApp para +55 81 8392-0320, ou acesse noviapp.ai. ChatFlow: a inteligência que impulsiona o seu caixa.

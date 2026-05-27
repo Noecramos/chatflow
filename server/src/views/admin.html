@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChatFlow — Master Admin System Console</title>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  
+  <!-- Modern Typography & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    :root {
+      --bg-primary: #08080c;
+      --bg-secondary: #12121a;
+      --bg-card: rgba(255, 255, 255, 0.02);
+      --border-color: rgba(255, 255, 255, 0.06);
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --primary: #8a2be2;
+      --primary-glow: rgba(138, 43, 226, 0.4);
+      --secondary: #00e5ff;
+      --secondary-glow: rgba(0, 229, 255, 0.4);
+      --danger: #ef4444;
+      --danger-glow: rgba(239, 68, 68, 0.4);
+      --success: #10b981;
+      --warning: #fbbf24;
+      --radius: 12px;
+      --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: radial-gradient(circle at center, #14141d 0%, var(--bg-primary) 100%);
+      color: var(--text-main);
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.5;
+    }
+
+    h1, h2, h3, h4, .font-display {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+    }
+
+    /* Glassmorphism Styles */
+    .glass {
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      transition: var(--transition);
+    }
+
+    .glass:hover {
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .glowing-card {
+      position: relative;
+    }
+
+    .glowing-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: var(--radius);
+      padding: 1px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+      opacity: 0.15;
+      transition: var(--transition);
+    }
+
+    .glowing-card:hover::before {
+      opacity: 0.4;
+    }
+
+    /* Auth screen container */
+    #auth-screen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .auth-card {
+      width: 440px;
+      padding: 40px;
+      position: relative;
+    }
+
+    .auth-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .logo-container {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--primary);
+      margin-bottom: 12px;
+    }
+
+    .logo-img {
+      height: 36px;
+      width: auto;
+      border-radius: 6px;
+      filter: drop-shadow(0 0 8px var(--primary-glow));
+    }
+
+    /* Form Fields */
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .form-input {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-color);
+      padding: 12px 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #fff;
+      transition: var(--transition);
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 12px var(--primary-glow);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: var(--transition);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary) 0%, #701ab8 100%);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(138, 43, 226, 0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(138, 43, 226, 0.5);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text-main);
+      border-color: var(--border-color);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, var(--danger) 0%, #b91c1c 100%);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(239, 68, 68, 0.25);
+    }
+
+    .btn-danger:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(239, 68, 68, 0.45);
+    }
+
+    .alert {
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-bottom: 20px;
+      border: 1px solid transparent;
+    }
+
+    .alert-danger {
+      background: rgba(239, 68, 68, 0.15);
+      border-color: rgba(239, 68, 68, 0.3);
+      color: var(--danger);
+    }
+
+    .alert-success {
+      background: rgba(16, 185, 129, 0.15);
+      border-color: rgba(16, 185, 129, 0.3);
+      color: var(--success);
+    }
+
+    /* Main Console Layout */
+    #console-screen {
+      display: none;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    header {
+      height: 70px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+      background: rgba(8, 8, 12, 0.5);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .status-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--success);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--success);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--success);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    main {
+      flex: 1;
+      padding: 40px;
+      max-width: 1300px;
+      width: 100%;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+    }
+
+    /* KPI Grid */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+    }
+
+    .kpi-card {
+      padding: 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .kpi-icon-wrapper {
+      width: 48px;
+      height: 48px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .kpi-title {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+
+    .kpi-value {
+      font-size: 24px;
+      font-weight: 800;
+      color: #fff;
+      margin-top: 2px;
+    }
+
+    /* Table styles */
+    .table-container {
+      padding: 24px;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      text-align: left;
+    }
+
+    th {
+      padding: 14px 12px;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.05em;
+    }
+
+    td {
+      padding: 16px 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .org-title {
+      font-weight: 700;
+      color: #fff;
+      font-size: 14px;
+    }
+
+    .org-subtitle {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Progress bar */
+    .usage-wrapper {
+      width: 200px;
+    }
+
+    .usage-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      margin-bottom: 4px;
+    }
+
+    .usage-bar {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .usage-progress {
+      height: 100%;
+      border-radius: 4px;
+      background: var(--secondary);
+    }
+
+    /* Plan Badges */
+    .badge {
+      font-size: 10px;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border: 1px solid transparent;
+    }
+
+    .badge-free {
+      background: rgba(255, 255, 255, 0.05);
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .badge-pro {
+      background: rgba(138, 43, 226, 0.15);
+      color: #a855f7;
+      border-color: rgba(138, 43, 226, 0.3);
+    }
+
+    .badge-enterprise {
+      background: rgba(249, 212, 35, 0.12);
+      color: var(--warning);
+      border-color: rgba(249, 212, 35, 0.3);
+    }
+
+    /* Modals */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+
+    .modal {
+      width: 460px;
+      padding: 30px;
+      position: relative;
+    }
+
+    .modal-header {
+      margin-bottom: 20px;
+    }
+
+    .modal-title {
+      font-size: 18px;
+      color: #fff;
+    }
+
+    .modal-subtitle {
+      color: var(--text-muted);
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    /* Global Danger Zone Banner */
+    .danger-zone {
+      padding: 24px;
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      background: rgba(239, 68, 68, 0.02);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .danger-left {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .danger-icon-wrapper {
+      width: 44px;
+      height: 44px;
+      border-radius: 8px;
+      background: rgba(239, 68, 68, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--danger);
+    }
+
+    .danger-title {
+      font-size: 15px;
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .danger-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Micro Animations */
+    .pulse-glow {
+      animation: glowPulse 2s infinite;
+    }
+
+    @keyframes glowPulse {
+      0% { filter: drop-shadow(0 0 2px var(--primary-glow)); }
+      50% { filter: drop-shadow(0 0 10px var(--primary-glow)); }
+      100% { filter: drop-shadow(0 0 2px var(--primary-glow)); }
+    }
+
+    .table-row-hover:hover {
+      background: rgba(255, 255, 255, 0.01);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ========================================================================
+       SCREEN 1: AUTHENTICATION SCREEN
+       ======================================================================== -->
+  <section id="auth-screen">
+    <div class="glass glowing-card auth-card">
+      <div class="auth-header">
+        <div class="logo-container pulse-glow">
+          <img src="/icon.png" alt="ChatFlow Logo" class="logo-img">
+          <h2 style="font-size: 32px; letter-spacing: -0.04em; color: #fff;">ChatFlow</h2>
+        </div>
+        <p style="color: var(--text-muted); font-size: 13px; margin-top: 6px;">
+          Painel de Controle Master / subscriber Management Console
+        </p>
+      </div>
+
+      <div id="auth-alert" class="alert alert-danger" style="display: none;"></div>
+
+      <form id="auth-form">
+        <div class="form-group">
+          <label class="form-label" for="auth-email">E-mail Administrativo</label>
+          <input type="email" id="auth-email" class="form-input" required placeholder="admin@chatflow.com">
+        </div>
+        <div class="form-group" style="margin-bottom: 25px;">
+          <label class="form-label" for="auth-password">Senha Secreta</label>
+          <input type="password" id="auth-password" class="form-input" required placeholder="••••••••">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%; font-size: 14px; font-weight: 700; height: 46px;">
+          Desbloquear Console Master
+        </button>
+      </form>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       SCREEN 2: MASTER ADMIN CONSOLE SCREEN
+       ======================================================================== -->
+  <section id="console-screen">
+    <header>
+      <div class="header-left">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <img src="/icon.png" alt="Icon" style="height: 22px; width: auto; border-radius: 4px;">
+          <span style="font-family: 'Outfit', sans-serif; font-size: 20px; font-weight: 800; letter-spacing: -0.03em;">chatflow</span>
+        </div>
+        <span style="color: var(--border-color); font-size: 16px;">|</span>
+        <div class="status-indicator">
+          <div class="status-dot"></div>
+          <span>Sistema Ativo</span>
+        </div>
+      </div>
+      
+      <div style="display: flex; align-items: center; gap: 20px;">
+        <span id="admin-user-email" style="font-size: 12px; color: var(--text-muted); font-weight: 600;">admin@chatflow.com</span>
+        <button id="logout-btn" class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px; font-weight: 700;">
+          Sair da Sessão
+        </button>
+      </div>
+    </header>
+
+    <main>
+      
+      <!-- Top Title and refresh -->
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h2 style="font-size: 26px; font-weight: 900; letter-spacing: -0.02em;">Gerenciamento de Assinaturas</h2>
+          <p style="color: var(--text-muted); font-size: 13px; margin-top: 2px;">
+            Monitore tenants ativos, ajuste capacidades operacionais de robôs AI e limpe bases sob demanda.
+          </p>
+        </div>
+        <button id="refresh-btn" class="btn btn-secondary" style="padding: 8px 16px; font-size: 12px; display: inline-flex; align-items: center; gap: 6px;">
+          <i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i> Sincronizar Dados
+        </button>
+      </div>
+
+      <!-- Global Danger Zone factory reset banner -->
+      <div class="glass glowing-card danger-zone">
+        <div class="danger-left">
+          <div class="danger-icon-wrapper">
+            <i data-lucide="shield-alert" style="width: 22px; height: 22px;"></i>
+          </div>
+          <div>
+            <h4 class="danger-title">Limpeza Geral (Reiniciar do Zero)</h4>
+            <p class="danger-desc">
+              Esta ação excluirá permanentemente todas as organizações e operadores criados, permitindo que novos clientes comecem o registro de forma limpa.
+            </p>
+          </div>
+        </div>
+        <button id="system-reset-btn" class="btn btn-danger" style="padding: 10px 18px; font-size: 13px; font-weight: 700;">
+          Redefinir Todo o Banco
+        </button>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="kpi-grid">
+        <div class="glass kpi-card">
+          <div class="kpi-icon-wrapper" style="background: rgba(138, 43, 226, 0.1); color: var(--primary);">
+            <i data-lucide="layers" style="width: 20px; height: 20px;"></i>
+          </div>
+          <div>
+            <div class="kpi-title">Organizações</div>
+            <div id="stats-orgs" class="kpi-value">0</div>
+          </div>
+        </div>
+
+        <div class="glass kpi-card">
+          <div class="kpi-icon-wrapper" style="background: rgba(0, 229, 255, 0.1); color: var(--secondary);">
+            <i data-lucide="cpu" style="width: 20px; height: 20px;"></i>
+          </div>
+          <div>
+            <div class="kpi-title">Agentes AI Ativos</div>
+            <div id="stats-bots" class="kpi-value">0</div>
+          </div>
+        </div>
+
+        <div class="glass kpi-card">
+          <div class="kpi-icon-wrapper" style="background: rgba(16, 185, 129, 0.1); color: var(--success);">
+            <i data-lucide="message-square" style="width: 20px; height: 20px;"></i>
+          </div>
+          <div>
+            <div class="kpi-title">Mensagens Enviadas</div>
+            <div id="stats-messages" class="kpi-value">0</div>
+          </div>
+        </div>
+
+        <div class="glass kpi-card">
+          <div class="kpi-icon-wrapper" style="background: rgba(251, 191, 36, 0.1); color: var(--warning);">
+            <i data-lucide="globe" style="width: 20px; height: 20px;"></i>
+          </div>
+          <div>
+            <div class="kpi-title">Canais Omnichannel</div>
+            <div id="stats-channels" class="kpi-value">0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Subscribers Table Card -->
+      <div class="glass table-container">
+        <h3 style="font-size: 16px; margin-bottom: 16px; font-weight: 800;">Subscribers & Tenant Isolation Slices</h3>
+        <table id="subscribers-table">
+          <thead>
+            <tr>
+              <th>Organização</th>
+              <th>Responsável / E-mail</th>
+              <th>Plano</th>
+              <th>Consumo de Mensagens</th>
+              <th style="text-align: center;">Robôs AI</th>
+              <th>Cadastrado Em</th>
+              <th style="text-align: center;">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="subscribers-list">
+            <tr>
+              <td colspan="7" style="padding: 40px; text-align: center; color: var(--text-muted);">
+                Consultando banco de dados...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </main>
+  </section>
+
+  <!-- ========================================================================
+       MODAL: EDIT LIMITS MODAL DIALOG
+       ======================================================================== -->
+  <div id="limits-modal" class="modal-backdrop">
+    <div class="glass modal">
+      <div class="modal-header">
+        <h4 class="modal-title font-display">Ajustar Recursos do Assinante</h4>
+        <p class="modal-subtitle">Configure limites de volume e planos operacionais.</p>
+      </div>
+
+      <form id="limits-form">
+        <input type="hidden" id="edit-sub-id">
+        
+        <div class="form-group">
+          <label class="form-label" for="edit-plan">Plano Ativo</label>
+          <select id="edit-plan" class="form-input" style="background: var(--bg-primary); color: #fff;">
+            <option value="FREE">FREE</option>
+            <option value="PRO">PRO</option>
+            <option value="ENTERPRISE">ENTERPRISE</option>
+          </select>
+        </div>
+
+        <div style="display: flex; gap: 14px; margin-bottom: 20px;">
+          <div class="form-group" style="flex: 1; margin-bottom: 0;">
+            <label class="form-label" for="edit-max-bots">Máximo de Bots AI</label>
+            <input type="number" id="edit-max-bots" class="form-input" required min="1">
+          </div>
+          <div class="form-group" style="flex: 1; margin-bottom: 0;">
+            <label class="form-label" for="edit-max-msgs">Mensagens / Mês</label>
+            <input type="number" id="edit-max-msgs" class="form-input" required min="100">
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px;">
+          <button type="button" id="close-modal-btn" class="btn btn-secondary" style="padding: 8px 16px;">
+            Cancelar
+          </button>
+          <button type="submit" class="btn btn-primary" style="padding: 8px 20px; font-weight: 700;">
+            Salvar Alterações
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MASTER JAVASCRIPT LOGIC
+       ======================================================================== -->
+  <script>
+    // System Configurations
+    const API_BASE = window.location.origin;
+    let masterToken = localStorage.getItem('chatflow_master_token') || '';
+
+    // Element bindings
+    const authScreen = document.getElementById('auth-screen');
+    const consoleScreen = document.getElementById('console-screen');
+    const authForm = document.getElementById('auth-form');
+    const authEmail = document.getElementById('auth-email');
+    const authPassword = document.getElementById('auth-password');
+    const authAlert = document.getElementById('auth-alert');
+    const logoutBtn = document.getElementById('logout-btn');
+    const refreshBtn = document.getElementById('refresh-btn');
+    const adminEmailDisplay = document.getElementById('admin-user-email');
+    const statsOrgs = document.getElementById('stats-orgs');
+    const statsBots = document.getElementById('stats-bots');
+    const statsMessages = document.getElementById('stats-messages');
+    const statsChannels = document.getElementById('stats-channels');
+    const subscribersList = document.getElementById('subscribers-list');
+    const systemResetBtn = document.getElementById('system-reset-btn');
+
+    // Modal bindings
+    const limitsModal = document.getElementById('limits-modal');
+    const limitsForm = document.getElementById('limits-form');
+    const editSubId = document.getElementById('edit-sub-id');
+    const editPlan = document.getElementById('edit-plan');
+    const editMaxBots = document.getElementById('edit-max-bots');
+    const editMaxMsgs = document.getElementById('edit-max-msgs');
+    const closeModalBtn = document.getElementById('close-modal-btn');
+
+    // Bootstrap
+    window.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      if (masterToken) {
+        showConsole();
+      } else {
+        showAuth();
+      }
+    });
+
+    // Handle Authentication view toggle
+    function showAuth() {
+      authScreen.style.display = 'flex';
+      consoleScreen.style.display = 'none';
+      localStorage.removeItem('chatflow_master_token');
+      masterToken = '';
+    }
+
+    function showConsole() {
+      authScreen.style.display = 'none';
+      consoleScreen.style.display = 'flex';
+      // Load current admin email payload from JWT if possible
+      try {
+        const payload = JSON.parse(atob(masterToken.split('.')[1]));
+        adminEmailDisplay.textContent = payload.email || 'System Master Admin';
+      } catch (e) {
+        adminEmailDisplay.textContent = 'Master Administrator';
+      }
+      fetchSubscribers();
+    }
+
+    // Authenticate submission
+    authForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      authAlert.style.display = 'none';
+
+      try {
+        const res = await fetch(`${API_BASE}/inbox/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: authEmail.value,
+            password: authPassword.value
+          })
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          const userRole = data.user.role;
+          const userEmail = data.user.email;
+
+          // Validate admin privileges
+          if (userRole === 'SUPERADMIN' || userRole === 'OWNER' || userEmail.startsWith('admin@') || userEmail === 'system@noviapp.ai') {
+            masterToken = data.token;
+            localStorage.setItem('chatflow_master_token', masterToken);
+            authEmail.value = '';
+            authPassword.value = '';
+            showConsole();
+          } else {
+            authAlert.textContent = "Acesso Negado: Apenas administradores do sistema possuem permissão para este console.";
+            authAlert.style.display = 'block';
+          }
+        } else {
+          authAlert.textContent = data.error || "Credenciais administrativas inválidas.";
+          authAlert.style.display = 'block';
+        }
+      } catch (err) {
+        console.error(err);
+        authAlert.textContent = "Falha de rede ao conectar com o servidor central.";
+        authAlert.style.display = 'block';
+      }
+    });
+
+    // Logout
+    logoutBtn.addEventListener('click', () => {
+      showAuth();
+    });
+
+    // Refresh Subscribers List
+    refreshBtn.addEventListener('click', () => {
+      fetchSubscribers();
+    });
+
+    // Fetch subscribers
+    async function fetchSubscribers() {
+      subscribersList.innerHTML = `
+        <tr>
+          <td colspan="7" style="padding: 40px; text-align: center; color: var(--text-muted);">
+            Sincronizando tabelas em tempo real...
+          </td>
+        </tr>
+      `;
+
+      try {
+        const res = await fetch(`${API_BASE}/inbox/admin/subscribers`, {
+          headers: { 'Authorization': `Bearer ${masterToken}` }
+        });
+
+        if (res.status === 401 || res.status === 403) {
+          showAuth();
+          return;
+        }
+
+        const data = await res.json();
+        if (data.success) {
+          renderDashboard(data.subscribers);
+        } else {
+          alert(`Erro ao carregar assinantes: ${data.error}`);
+        }
+      } catch (err) {
+        console.error(err);
+        subscribersList.innerHTML = `
+          <tr>
+            <td colspan="7" style="padding: 40px; text-align: center; color: var(--danger); font-weight: 600;">
+              Falha na conexão de rede com as APIs administrativas.
+            </td>
+          </tr>
+        `;
+      }
+    }
+
+    // Render metrics and list
+    function renderDashboard(subscribers) {
+      // Calculate Aggregates
+      const totalOrgs = subscribers.length;
+      const totalBots = subscribers.reduce((acc, curr) => acc + (curr.botsCount || 0), 0);
+      const totalMessages = subscribers.reduce((acc, curr) => acc + (curr.apiUsageThisMonth || 0), 0);
+      const totalChannels = subscribers.reduce((acc, curr) => acc + (curr.channelsCount || 0), 0);
+
+      // Render KPIs
+      statsOrgs.textContent = totalOrgs;
+      statsBots.textContent = totalBots;
+      statsMessages.textContent = totalMessages;
+      statsChannels.textContent = totalChannels;
+
+      // Render Table List
+      if (totalOrgs === 0) {
+        subscribersList.innerHTML = `
+          <tr>
+            <td colspan="7" style="padding: 40px; text-align: center; color: var(--text-muted);">
+              Nenhuma organização ou usuário cadastrado no banco de dados ainda.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      subscribersList.innerHTML = '';
+      subscribers.forEach(sub => {
+        const percentage = Math.min(100, Math.round((sub.apiUsageThisMonth / sub.maxMessagesPerMonth) * 100)) || 0;
+        
+        let badgeClass = 'badge-free';
+        if (sub.plan === 'PRO') badgeClass = 'badge-pro';
+        if (sub.plan === 'ENTERPRISE') badgeClass = 'badge-enterprise';
+
+        const row = document.createElement('tr');
+        row.className = 'table-row-hover';
+        row.innerHTML = `
+          <td>
+            <div class="org-title">${escapeHTML(sub.name)}</div>
+            <div class="org-subtitle">Slug: ${escapeHTML(sub.slug)}</div>
+          </td>
+          <td>
+            <div style="font-weight: 600; color: #fff;">${escapeHTML(sub.ownerName)}</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">${escapeHTML(sub.ownerEmail)}</div>
+          </td>
+          <td>
+            <span class="badge ${badgeClass}">${sub.plan}</span>
+          </td>
+          <td>
+            <div class="usage-wrapper">
+              <div class="usage-meta">
+                <span>${sub.apiUsageThisMonth} / ${sub.maxMessagesPerMonth} msgs</span>
+                <strong>${percentage}%</strong>
+              </div>
+              <div class="usage-bar">
+                <div class="usage-progress" style="width: ${percentage}%; background: ${percentage > 90 ? 'var(--danger)' : percentage > 70 ? 'var(--warning)' : 'var(--secondary)'}"></div>
+              </div>
+            </div>
+          </td>
+          <td style="text-align: center; font-weight: 700; color: #fff;">
+            ${sub.botsCount} / ${sub.maxBots}
+          </td>
+          <td style="color: var(--text-muted);">
+            ${new Date(sub.createdAt).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short', year: 'numeric' })}
+          </td>
+          <td>
+            <div style="display: flex; gap: 8px; justify-content: center;">
+              <button class="btn btn-secondary edit-limits-btn" data-id="${sub.id}" data-name="${sub.name}" data-plan="${sub.plan}" data-bots="${sub.maxBots}" data-msgs="${sub.maxMessagesPerMonth}" style="padding: 4px 8px; font-size: 11px;">
+                Limites
+              </button>
+              <button class="btn btn-secondary delete-sub-btn" data-id="${sub.id}" data-name="${sub.name}" style="padding: 4px 8px; font-size: 11px; color: var(--danger); border-color: rgba(239,68,68,0.15); background: rgba(239,68,68,0.01);">
+                Excluir
+              </button>
+            </div>
+          </td>
+        `;
+        subscribersList.appendChild(row);
+      });
+
+      // Bind dynamic buttons actions
+      document.querySelectorAll('.edit-limits-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const ds = e.currentTarget.dataset;
+          editSubId.value = ds.id;
+          editPlan.value = ds.plan;
+          editMaxBots.value = ds.bots;
+          editMaxMsgs.value = ds.msgs;
+          limitsModal.style.display = 'flex';
+        });
+      });
+
+      document.querySelectorAll('.delete-sub-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const { id, name } = e.currentTarget.dataset;
+          if (!confirm(`Tem certeza absoluta que deseja excluir o assinante "${name}"? Esta ação é irreversível e apagará todos os bots, operadores, contatos e conversas associados.`)) return;
+
+          try {
+            const res = await fetch(`${API_BASE}/inbox/admin/subscribers/${id}`, {
+              method: 'DELETE',
+              headers: { 'Authorization': `Bearer ${masterToken}` }
+            });
+            const data = await res.json();
+            if (data.success) {
+              alert("Assinante excluído com sucesso!");
+              fetchSubscribers();
+            } else {
+              alert(`Erro: ${data.error}`);
+            }
+          } catch (err) {
+            console.error(err);
+            alert("Erro de conexão ao tentar deletar o assinante.");
+          }
+        });
+      });
+    }
+
+    // Modal forms submission
+    limitsForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = editSubId.value;
+
+      try {
+        const res = await fetch(`${API_BASE}/inbox/admin/subscribers/${id}/limits`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${masterToken}`
+          },
+          body: JSON.stringify({
+            plan: editPlan.value,
+            maxBots: parseInt(editMaxBots.value),
+            maxMessagesPerMonth: parseInt(editMaxMsgs.value)
+          })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          alert("Limites operacionais ajustados com sucesso!");
+          limitsModal.style.display = 'none';
+          fetchSubscribers();
+        } else {
+          alert(`Erro: ${data.error}`);
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Falha de conexão com o servidor ao salvar novos limites.");
+      }
+    });
+
+    closeModalBtn.addEventListener('click', () => {
+      limitsModal.style.display = 'none';
+    });
+
+    // Global Factory Reset
+    systemResetBtn.addEventListener('click', async () => {
+      if (!confirm("🚨 PERIGO EXTREMO: Esta ação apagará TODOS os usuários, bots, canais e mensagens do sistema! Todo o banco de dados do ChatFlow será resetado. Deseja continuar?")) return;
+      if (!confirm("🚨 SEGUNDA CONFIRMAÇÃO OBRIGATÓRIA: Tem certeza absoluta? Essa ação é totalmente destrutiva e irreversível.")) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/inbox/admin/system-reset`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${masterToken}` }
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          alert("🎉 Database resetado com sucesso! Todos os usuários foram excluídos. Você será deslogado agora.");
+          showAuth();
+        } else {
+          alert(`Erro de reset: ${data.error}`);
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Falha crítica de conexão ao solicitar redefinição global do sistema.");
+      }
+    });
+
+    // Helper functions
+    function escapeHTML(str) {
+      return str.replace(/[&<>'"]/g, 
+        tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+      );
+    }
+  </script>
+</body>
+</html>

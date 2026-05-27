@@ -175,6 +175,39 @@ module.exports = {
   },
 
   /**
+   * Database Reset / Clear Users and Organizations
+   */
+  async clearDb(req, res) {
+    const { secret } = req.query;
+    const expectedSecret = process.env.JWT_SECRET || 'chatvolt-super-secret-key-change-in-production';
+    
+    if (secret !== expectedSecret) {
+      return res.status(403).json({ success: false, error: "Unauthorized reset request." });
+    }
+
+    try {
+      console.log("[DB Reset] Starting deletion of registered users, organizations, and all cascaded data...");
+      
+      const userResult = await prisma.user.deleteMany({});
+      const orgResult = await prisma.organization.deleteMany({});
+      
+      console.log(`[DB Reset] Successfully deleted ${userResult.count} users and ${orgResult.count} organizations.`);
+      
+      return res.status(200).json({
+        success: true,
+        message: "Database cleaned successfully. All users and organizations have been excluded.",
+        deleted: {
+          users: userResult.count,
+          organizations: orgResult.count
+        }
+      });
+    } catch (error) {
+      console.error("[DB Reset] Error during database cleanup:", error);
+      return res.status(500).json({ success: false, error: "Internal Server Error during database cleanup." });
+    }
+  },
+
+  /**
    * Helper Middleware to Verify Tenant Limits (Usage Limits per Organization)
    */
   async checkTenantLimits(req, res, next) {

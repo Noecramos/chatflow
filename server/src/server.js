@@ -32,6 +32,11 @@ app.use(express.urlencoded({ extended: true }));
 const path = require('path');
 app.use('/widget', express.static(path.join(__dirname, '../../widget')));
 
+// Standalone Master Admin System Console
+app.get('/master-admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views/admin.html'));
+});
+
 // Register refined Core routes prefixes
 app.use('/inbox', inboxRoutes);
 app.use('/channels', channelsRoutes);
@@ -50,7 +55,8 @@ app.get('*', (req, res, next) => {
   if (req.path.startsWith('/inbox') || req.path.startsWith('/channels') || 
       req.path.startsWith('/ecommerce') || req.path.startsWith('/webhooks') || 
       req.path.startsWith('/crm') || req.path.startsWith('/health') ||
-      req.path.startsWith('/socket.io') || req.path.startsWith('/widget')) {
+      req.path.startsWith('/socket.io') || req.path.startsWith('/widget') ||
+      req.path.startsWith('/master-admin')) {
     return next();
   }
   res.sendFile(path.join(clientDistPath, 'index.html'));

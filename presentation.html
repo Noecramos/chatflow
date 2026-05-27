@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Apresentação Comercial ChatFlow SaaS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <style>
+    /* Baseline font size set to 28px (+12 points from default browser 16px) for massive print clarity */
+    html {
+      font-size: 28px;
+    }
+
+    :root {
+      --primary: 266 84% 65%;
+      --secondary: 184 90% 50%;
+      --bg-light: 240 15% 98%;
+      --border: 240 6% 90%;
+    }
+
+    body {
+      background-color: #ffffff;
+      color: #1e293b; /* Slate-800 contrast color */
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    .font-display {
+      font-family: 'Outfit', sans-serif;
+    }
+
+    .gradient-text {
+      background: linear-gradient(135deg, #7c3aed 0%, #0891b2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Print styles forcing exact landscape slide pages in A4 / 16:9 format */
+    @page {
+      size: 1920px 1080px;
+      margin: 0;
+    }
+
+    @media print {
+      body {
+        background-color: #ffffff;
+        -webkit-print-color-adjust: exact;
+      }
+      .slide {
+        page-break-after: always;
+        width: 1920px;
+        height: 1080px;
+        box-sizing: border-box;
+        overflow: hidden;
+      }
+    }
+
+    /* Adjusted padding to prevent text overflow at larger font sizes */
+    .slide {
+      width: 1920px;
+      height: 1080px;
+      position: relative;
+      overflow: hidden;
+      box-sizing: border-box;
+      background-color: #ffffff;
+      background-image: 
+        radial-gradient(circle at 5% 10%, rgba(124, 58, 237, 0.04) 0%, transparent 40%),
+        radial-gradient(circle at 95% 90%, rgba(8, 145, 178, 0.03) 0%, transparent 40%);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 45px 75px;
+    }
+
+    .glass-card {
+      background: rgba(248, 250, 252, 0.95);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.03);
+    }
+
+    /* Force the card body descriptions to exactly 10pt for clean print layouts */
+    .glass-card p {
+      font-size: 10pt !important;
+      line-height: 1.5 !important;
+      color: #475569 !important; /* slate-600 */
+    }
+
+    /* Force card titles to exactly 12.5pt for perfect visual hierarchy */
+    .glass-card h4 {
+      font-size: 12.5pt !important;
+      color: #0f172a !important; /* slate-900 */
+      margin-bottom: 4px !important;
+    }
+
+    /* Adjust utility text styles inside cards for alignment */
+    .glass-card span.text-\[0.45rem\], .glass-card span.text-\[0.5rem\] {
+      font-size: 8.5pt !important;
+    }
+
+    .glass-card span.text-xs {
+      font-size: 11pt !important;
+    }
+
+    .glow-border {
+      border: 1px solid rgba(124, 58, 237, 0.15);
+      box-shadow: 0 8px 25px rgba(124, 58, 237, 0.03);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ================= SLIDE 1: CAPA ================= -->
+  <div class="slide">
+    <!-- Top info -->
+    <div class="flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <img src="icon.png" alt="NoviApp Icon" class="h-10 w-10 object-contain rounded-xl">
+        <span class="font-display font-black text-lg tracking-wider text-slate-900">CHATFLOW</span>
+      </div>
+      <span class="text-[0.55rem] text-slate-500 font-semibold tracking-widest uppercase">PITCH COMERCIAL v4.5</span>
+    </div>
+
+    <!-- Main Content -->
+    <div class="my-auto flex flex-col gap-5 max-w-[1400px]">
+      <div class="bg-purple-100 border border-purple-200 text-purple-700 font-extrabold text-[0.5rem] px-4 py-1.5 rounded-full w-fit tracking-wider uppercase">
+        🚀 CONVERSAS EM RECEITA E ATENDIMENTO AUTÔNOMO
+      </div>
+      <h1 class="font-display font-black text-5xl leading-[1.1] text-slate-900">
+        A Revolução das Vendas e da <br>
+        <span class="gradient-text">Comunicação Omnichannel com IA</span>
+      </h1>
+      <p class="text-slate-600 text-base leading-relaxed max-w-[1100px]">
+        Centralize WhatsApp, Instagram, Messenger e Web Chat em um só lugar. Automatize seu atendimento de forma autônoma e inteligente utilizando modelos cognitivos de IA integrados à base de conhecimento da sua empresa.
+      </p>
+    </div>
+
+    <!-- Footer -->
+    <div class="flex justify-between items-center border-t border-slate-200 pt-4">
+      <div class="flex flex-col">
+        <span class="text-[0.5rem] text-slate-500 uppercase tracking-widest font-bold">Parceiro Oficial</span>
+        <img src="barra_logos.png" alt="NoviApp Logos" class="h-10 object-contain mt-1 self-start">
+      </div>
+      <div class="flex gap-12">
+        <div class="flex flex-col">
+          <span class="text-[0.5rem] text-slate-500 uppercase tracking-widest font-bold">Apresentado por</span>
+          <span class="text-xs font-semibold text-slate-900">Noviapp Sistemas IA</span>
+        </div>
+        <div class="flex flex-col">
+          <span class="text-[0.5rem] text-slate-500 uppercase tracking-widest font-bold">Contato</span>
+          <span class="text-xs font-semibold text-cyan-600">info@noviapp.ai</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ================= SLIDE 2: O DESAFIO ================= -->
+  <div class="slide">
+    <div class="flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <img src="icon.png" alt="NoviApp Icon" class="h-10 w-10 object-contain rounded-xl">
+        <span class="font-display font-black text-lg tracking-wider text-slate-900">CHATFLOW</span>
+      </div>
+      <span class="text-[0.55rem] text-red-655 font-semibold tracking-widest uppercase">O DESAFIO ATUAL DO MERCADO</span>
+    </div>
+
+    <div class="my-auto grid grid-cols-12 gap-6 items-center">
+      <div class="col-span-5 flex flex-col gap-4">
+        <h2 class="font-display font-extrabold text-3xl leading-tight text-slate-900">
+          O Custo Invisível da <br>
+          <span class="text-red-600">Fragmentação e Atraso</span>
+        </h2>
+        <p class="text-slate-600 text-sm leading-relaxed">
+          As empresas modernas perdem mais de 38% dos seus potenciais clientes no atendimento inicial. A lentidão e a incapacidade de gerenciar múltiplos canais de comunicação geram perdas financeiras milionárias e insatisfação no consumidor.
+        </p>
+        <div class="p-4 bg-red-50 border border-red-200 rounded-xl flex gap-3 mt-1">
+          <div class="text-2xl text-red-500">⚠️</div>
+          <p class="text-[0.55rem] text-slate-700 leading-normal">
+            <strong>Fato Estatístico</strong>: 50% dos clientes escolhem comprar da empresa que responde <strong>primeiro</strong>. Em canais como WhatsApp, atrasos de mais de 5 minutos reduzem as chances de conversão em até 80%.
+          </p>
+        </div>
+      </div>
+
+      <!-- Problem cards grid -->
+      <div class="col-span-7 grid grid-cols-2 gap-4">
+        
+        <div class="glass-card rounded-xl p-5 flex flex-col gap-2">
+          <span class="text-xl">📱</span>
+          <h4 class="font-display font-bold text-slate-900 text-sm">Canais Desconectados</h4>
+          <p class="text-[0.55rem] text-slate-600 leading-relaxed">
+            Atendentes pulando constantemente entre telas de WhatsApp, Direct do Instagram e chat do site, gerando atrasos, confusões e dados soltos.
+          </p>
+        </div>
+
+        <div class="glass-card rounded-xl p-5 flex flex-col gap-2">
+          <span class="text-xl">⏳</span>
+          <h4 class="font-display font-bold text-slate-900 text-sm">Filas de Espera Longas</h4>
+          <p class="text-[0.55rem] text-slate-600 leading-relaxed">
+            Clientes aguardando horas para tirar dúvidas simples de estoque ou frete, abandonando o contato e comprando na concorrência rápida.
+          </p>
+        </div>
+
+        <div class="glass-card rounded-xl p-5 flex flex-col gap-2">
+          <span class="text-xl">🛒</span>
+          <h4 class="font-display font-bold text-slate-900 text-sm">Carrinhos Abandonados</h4>
+          <p class="text-[0.55rem] text-slate-600 leading-relaxed">
+            Falta de lembretes automáticos e links de checkout rápido via Pix ou cartão, resultando em carrinhos esquecidos sem acompanhamento.
+          </p>
+        </div>
+
+        <div class="glass-card rounded-xl p-5 flex flex-col gap-2">
+          <span class="text-xl">🤖</span>
+          <h4 class="font-display font-bold text-slate-900 text-sm">Agentes baseados em Regras Rígidos</h4>
+          <p class="text-[0.55rem] text-slate-600 leading-relaxed">
+            Agentes baseados em regras engessadas ("digite 1 para tal...") que irritam o consumidor e falham ao tentar resolver dúvidas contextuais.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="border-t border-slate-200 pt-4 flex justify-between items-center text-[0.55rem] text-slate-400">
+      <span>ChatFlow SaaS Pitch Deck</span>
+      <span>Página 02</span>
+    </div>
+  </div>
+
+
+  <!-- ================= SLIDE 3: A SOLUÇÃO ================= -->
+  <div class="slide">
+    <div class="flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <img src="icon.png" alt="NoviApp Icon" class="h-10 w-10 object-contain rounded-xl">
+        <span class="font-display font-black text-lg tracking-wider text-slate-900">CHATFLOW</span>
+      </div>
+      <span class="text-[0.55rem] text-cyan-605 tracking-widest uppercase">A SOLUÇÃO INTELIGENTE</span>
+    </div>
+
+    <div class="my-auto flex flex-col gap-6">
+      <div class="text-center max-w-[1000px] mx-auto flex flex-col gap-2">
+        <h2 class="font-display font-extrabold text-3xl text-slate-900">
+          A Plataforma <span class="gradient-text">ChatFlow</span>
+        </h2>
+        <p class="text-slate-600 text-xs leading-relaxed">
+          Uma suíte de comércio conversacional e atendimento omnichannel desenvolvida para unificar a comunicação da sua empresa, automatizar processos repetitivos com inteligência cognitiva avançada e impulsionar suas taxas de conversão de leads.
+        </p>
+      </div>
+
+      <!-- 4 Pillars of Chatflow -->
+      <div class="grid grid-cols-4 gap-4">
+        
+        <div class="glass-card rounded-xl p-5 flex flex-col gap-3 border-l-4 border-purple-500">
+          <div class="text-2xl">📬</div>
+          <h4 class="font-display font-bold text-slate-900 text-sm">Caixa Omnichannel</h4>
+          <p class="text-[0.55rem] text-slate-600 leading-relaxed">
+            Caixa de entrada unificada para todos os canais com distribuição automatizada, marcas de leitura e intervenção humana facilitada.
+          </p>
+        </div>
+
+        <div class="glass-card rounded-xl p-5 flex flex-col gap-3 border-l-4 border-cyan-500">
+          <div class="text-2xl">🛒</div>
+          <h4 class="font-display font-bold text-slate-900 text-sm">Conversational Commerce</h4>
+          <p class="text-[0.55rem] text-slate-600 leading-relaxed">
+            Envio de produtos do catálogo Meta diretamente no chat, criação automática de carrinho de compras e links de checkout Pix.
+          </p>
+        </div>
+
+        <div class="glass-card rounded-xl p-5 flex flex-col gap-3 border-l-4 border-green-500">
+          <div class="text-2xl">🤖</div>
+          <h4 class="font-display font-bold text-slate-900 text-sm">Agentes de IA & RAG</h4>
+          <p class="text-[0.55rem] text-slate-600 leading-relaxed">
+            Agentes equipados com Gemini que consultam documentos, catálogos e regras da empresa (RAG) para responder com total precisão.
+          </p>
+        </div>
+
+        <div class="glass-card rounded-xl p-5 flex flex-col gap-3 border-l-4 border-yellow-500">
+          <div class="text-2xl">🧪</div>
+          <h4 class="font-display font-bold text-slate-900 text-sm">Conector ERP & NoviAPI</h4>
+          <p class="text-[0.55rem] text-slate-600 leading-relaxed">
+            Sandbox JavaScript seguro para desenvolvedores criarem fluxos customizados de consulta logística, ERPs e integrações complexas.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="border-t border-slate-200 pt-4 flex justify-between items-center text-[0.55rem] text-slate-400">
+      <span>ChatFlow SaaS Pitch Deck</span>
+      <span>Página 03</span>
+    </div>
+  </div>
+
+
+  <!-- ================= SLIDE 4: OMNICHANNEL INBOX ================= -->
+  <div class="slide">
+    <div class="flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <img src="icon.png" alt="NoviApp Icon" class="h-10 w-10 object-contain rounded-xl">
+        <span class="font-display font-black text-lg tracking-wider text-slate-900">CHATFLOW</span>
+      </div>
+      <span class="text-[0.55rem] text-purple-600 font-semibold tracking-widest uppercase">MÓDULO DE ATENDIMENTO</span>
+    </div>
+
+    <div class="my-auto grid grid-cols-12 gap-8 items-center">
+      
+      <!-- Text description -->
+      <div class="col-span-5 flex flex-col gap-4">
+        <div class="flex items-center gap-2 text-purple-600 text-[0.55rem] font-bold uppercase">
+          <span>📬</span> Caixa de Entrada Omnichannel Unificada
+        </div>
+        <h2 class="font-display font-extrabold text-3xl leading-tight text-slate-900">
+          A Central da <br>
+          <span class="gradient-text">Comunicação Unificada</span>
+        </h2>
+        <p class="text-slate-600 text-xs leading-relaxed">
+          Pare de pular de aba em aba. O ChatFlow centraliza todas as interações de clientes — seja via WhatsApp, Direct do Instagram, Facebook Messenger ou Web Chat widget — em um único painel de alta performance.
+        </p>
+        <ul class="flex flex-col gap-2.5 text-[0.55rem] text-slate-700">
+          <li class="flex items-start gap-2">
+            <span class="text-purple-600 font-bold">✔</span>
+            <span><strong>Intervenção Humana Instantânea (Handover)</strong>: O atendente pode pausar a IA com um único clique para assumir a conversa quando necessário.</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-purple-600 font-bold">✔</span>
+            <span><strong>Copiloto AI em Tempo Real</strong>: A IA analisa a conversa e sugere respostas prontas de alta confiança baseadas na base de dados para o atendente usar.</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-purple-600 font-bold">✔</span>
+            <span><strong>Propriedades CRM Integradas</strong>: Controle etiquetas, valores, prioridades e carrinhos conversacionais diretamente no painel lateral do chat.</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Screenshot container -->
+      <div class="col-span-7">
+        <div class="glass-card rounded-xl p-2 glow-border relative">
+          <img src="screenshot_inbox.png" alt="Omnichannel Inbox Screenshot" class="rounded-lg w-full object-cover">
+          <div class="absolute bottom-4 right-4 bg-slate-900/90 px-3 py-1 text-[0.45rem] text-gray-300 border border-white/10 rounded-lg">
+            Interface Real do ChatFlow Omnichannel Inbox
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="border-t border-slate-200 pt-4 flex justify-between items-center text-[0.55rem] text-slate-400">
+      <span>ChatFlow SaaS Pitch Deck</span>
+      <span>Página 04</span>
+    </div>
+  </div>
+
+
+  <!-- ================= SLIDE 5: E-COMMERCE CONVERSACIONAL ================= -->
+  <div class="slide">
+    <div class="flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <img src="icon.png" alt="NoviApp Icon" class="h-10 w-10 object-contain rounded-xl">
+        <span class="font-display font-black text-lg tracking-wider text-slate-900">CHATFLOW</span>
+      </div>
+      <span class="text-[0.55rem] text-cyan-600 font-semibold tracking-widest uppercase">MÓDULO TRANSACIONAL</span>
+    </div>
+
+    <div class="my-auto grid grid-cols-12 gap-8 items-center">
+      
+      <!-- Screenshot container -->
+      <div class="col-span-7">
+        <div class="glass-card rounded-xl p-2 glow-border relative">
+          <img src="screenshot_ecommerce.png" alt="Ecommerce Dashboard Screenshot" class="rounded-lg w-full object-cover">
+          <div class="absolute bottom-4 right-4 bg-slate-900/90 px-3 py-1 text-[0.45rem] text-gray-300 border border-white/10 rounded-lg">
+            Interface Real do Painel E-commerce & Conectores ERP
+          </div>
+        </div>
+      </div>
+
+      <!-- Text description -->
+      <div class="col-span-5 flex flex-col gap-4">
+        <div class="flex items-center gap-2 text-cyan-600 text-[0.55rem] font-bold uppercase">
+          <span>🛒</span> Comércio Conversacional via WhatsApp
+        </div>
+        <h2 class="font-display font-extrabold text-3xl leading-tight text-slate-900">
+          Transforme Conversas <br>
+          <span class="gradient-text">em Vendas Diretas</span>
+        </h2>
+        <p class="text-slate-600 text-xs leading-relaxed">
+          Leve seus produtos até onde seus clientes já estão. O ChatFlow integra-se nativamente com a API do Catálogo da Meta, permitindo que a IA envie cards interativos de produtos e crie carrinhos de compras diretamente no WhatsApp.
+        </p>
+        <ul class="flex flex-col gap-2.5 text-[0.55rem] text-slate-700">
+          <li class="flex items-start gap-2">
+            <span class="text-cyan-600 font-bold">✔</span>
+            <span><strong>Checkouts com Pix Automáticos</strong>: Geração e acompanhamento dinâmico de links de pagamento Pix e cartões para fechamento imediato no chat.</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-cyan-600 font-bold">✔</span>
+            <span><strong>Recuperação de Carrinhos</strong>: Lembretes amigáveis e cupons de desconto disparados automaticamente pela IA em caso de abandono de checkout.</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-cyan-600 font-bold">✔</span>
+            <span><strong>Conector HTTP de Inventário ERP</strong>: Sincronização em tempo real de produtos, estoques e preços com seus sistemas de ERP tradicionais.</span>
+          </li>
+        </ul>
+      </div>
+
+    </div>
+
+    <div class="border-t border-slate-200 pt-4 flex justify-between items-center text-[0.55rem] text-slate-400">
+      <span>ChatFlow SaaS Pitch Deck</span>
+      <span>Página 05</span>
+    </div>
+  </div>
+
+
+  <!-- ================= SLIDE 6: CRM & METRICAS ================= -->
+  <div class="slide">
+    <div class="flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <img src="icon.png" alt="NoviApp Icon" class="h-10 w-10 object-contain rounded-xl">
+        <span class="font-display font-black text-lg tracking-wider text-slate-900">CHATFLOW</span>
+      </div>
+      <span class="text-[0.55rem] text-green-600 font-semibold tracking-widest uppercase">MÓDULO DE ANALYTICS</span>
+    </div>
+
+    <div class="my-auto grid grid-cols-12 gap-8 items-center">
+      
+      <!-- Text description -->
+      <div class="col-span-5 flex flex-col gap-4">
+        <div class="flex items-center gap-2 text-green-600 text-[0.55rem] font-bold uppercase">
+          <span>📊</span> Painel CRM e Métricas de Conversão
+        </div>
+        <h2 class="font-display font-extrabold text-3xl leading-tight text-slate-900">
+          Decisões Baseadas <br>
+          <span class="gradient-text">em Dados Reais</span>
+        </h2>
+        <p class="text-slate-600 text-xs leading-relaxed">
+          Tenha total visibilidade do desempenho de vendas e suporte do seu negócio. Nosso painel CRM consolida as métricas omnichannel para que o Sales Director acompanhe a jornada completa do cliente.
+        </p>
+        <ul class="flex flex-col gap-2.5 text-[0.55rem] text-slate-700">
+          <li class="flex items-start gap-2">
+            <span class="text-green-600 font-bold">✔</span>
+            <span><strong>Funil de Vendas Visual Automático</strong>: Rastreie o volume e o valor total de leads em cada estágio (Contato, Qualificado, Negociação, Won).</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-green-600 font-bold">✔</span>
+            <span><strong>Origem de Leads Omnichannel</strong>: Compare instantaneamente quais redes sociais (WhatsApp, Instagram, Web) geram mais receita para o caixa.</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-green-600 font-bold">✔</span>
+            <span><strong>Eficiência do Agente</strong>: Monitore a taxa de resolução autônoma da IA vs humana e meça o impacto na redução de filas e tempo médio de fechamento.</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Screenshot container -->
+      <div class="col-span-7">
+        <div class="glass-card rounded-xl p-2 glow-border relative">
+          <img src="screenshot_crm.png" alt="CRM Dashboard Screenshot" class="rounded-lg w-full object-cover">
+          <div class="absolute bottom-4 right-4 bg-slate-900/90 px-3 py-1 text-[0.45rem] text-gray-300 border border-white/10 rounded-lg">
+            Interface Real do Painel de Analytics & CRM
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="border-t border-slate-200 pt-4 flex justify-between items-center text-[0.55rem] text-slate-400">
+      <span>ChatFlow SaaS Pitch Deck</span>
+      <span>Página 06</span>
+    </div>
+  </div>
+
+
+  <!-- ================= SLIDE 7: AGENTES AI & RAG ================= -->
+  <div class="slide">
+    <div class="flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <img src="icon.png" alt="NoviApp Icon" class="h-10 w-10 object-contain rounded-xl">
+        <span class="font-display font-black text-lg tracking-wider text-slate-900">CHATFLOW</span>
+      </div>
+      <span class="text-[0.55rem] text-purple-600 font-semibold tracking-widest uppercase">MÓDULO DE INTELIGÊNCIA</span>
+    </div>
+
+    <div class="my-auto grid grid-cols-12 gap-8 items-center">
+      
+      <!-- Screenshot container -->
+      <div class="col-span-7">
+        <div class="glass-card rounded-xl p-2 glow-border relative">
+          <img src="screenshot_agentes.png" alt="AI Agent Config Screenshot" class="rounded-lg w-full object-cover">
+          <div class="absolute bottom-4 right-4 bg-slate-900/90 px-3 py-1 text-[0.45rem] text-gray-300 border border-white/10 rounded-lg">
+            Interface Real do Configuração de Agente AI & RAG
+          </div>
+        </div>
+      </div>
+
+      <!-- Text description -->
+      <div class="col-span-5 flex flex-col gap-4">
+        <div class="flex items-center gap-2 text-purple-600 text-[0.55rem] font-bold uppercase">
+          <span>🤖</span> Agentes AI Personalizados com RAG
+        </div>
+        <h2 class="font-display font-extrabold text-3xl leading-tight text-slate-900">
+          IA Corporativa Própria <br>
+          <span class="gradient-text">e Livre de Alucinações</span>
+        </h2>
+        <p class="text-slate-600 text-xs leading-relaxed">
+          Nossos agentes não apenas conversam, eles entendem o seu negócio. Utilizando tecnologia de RAG (Retrieval-Augmented Generation), o ChatFlow capacita a IA com a base de conhecimento e políticas específicas da sua própria empresa.
+        </p>
+        <ul class="flex flex-col gap-2.5 text-[0.55rem] text-slate-700">
+          <li class="flex items-start gap-2">
+            <span class="text-purple-600 font-bold">✔</span>
+            <span><strong>Modelos de Última Geração (Gemini)</strong>: Conectado nativamente ao modelo super veloz <strong>gemini-2.5-flash</strong> da Google, garantindo tempos de resposta na casa de milissegundos.</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-purple-600 font-bold">✔</span>
+            <span><strong>Indexação Semântica Local (RAG)</strong>: Carregue documentos de FAQs, preços e inventários que são convertidos em vetores no SQLite para consulta rápida.</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-purple-600 font-bold">✔</span>
+            <span><strong>Instruções de Marca (System Prompt)</strong>: Defina com total facilidade o tom de voz, regras críticas, limites de atuação e diretrizes de marca do agente.</span>
+          </li>
+        </ul>
+      </div>
+
+    </div>
+
+    <div class="border-t border-slate-200 pt-4 flex justify-between items-center text-[0.55rem] text-slate-400">
+      <span>ChatFlow SaaS Pitch Deck</span>
+      <span>Página 07</span>
+    </div>
+  </div>
+
+
+  <!-- ================= SLIDE 8: NOVIAPI DEVELOPER ================= -->
+  <div class="slide">
+    <div class="flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <img src="icon.png" alt="NoviApp Icon" class="h-10 w-10 object-contain rounded-xl">
+        <span class="font-display font-black text-lg tracking-wider text-slate-900">CHATFLOW</span>
+      </div>
+      <span class="text-[0.55rem] text-yellow-600 font-semibold tracking-widest uppercase">MÓDULO DE INTEGRAÇÃO</span>
+    </div>
+
+    <div class="my-auto grid grid-cols-12 gap-8 items-center">
+      
+      <!-- Text description -->
+      <div class="col-span-5 flex flex-col gap-4">
+        <div class="flex items-center gap-2 text-yellow-600 text-[0.55rem] font-bold uppercase">
+          <span>🧪</span> NoviAPI: JavaScript Sandbox para Devs
+        </div>
+        <h2 class="font-display font-extrabold text-3xl leading-tight text-slate-900">
+          Possibilidades Infinitas <br>
+          <span class="gradient-text">e Integrações Livres</span>
+        </h2>
+        <p class="text-slate-600 text-xs leading-relaxed">
+          Para necessidades complexas, oferecemos controle total para os seus desenvolvedores. A NoviAPI disponibiliza um sandbox Javascript (Node VM) performático rodando em tempo real direto na plataforma.
+        </p>
+        <ul class="flex flex-col gap-2.5 text-[0.55rem] text-slate-700">
+          <li class="flex items-start gap-2">
+            <span class="text-yellow-500 font-bold">✔</span>
+            <span><strong>JavaScript em Tempo Real</strong>: Escreva, teste e execute scripts JavaScript assíncronos no painel da web para criar integrações logísticas complexas com Correios ou ERPs locais.</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-yellow-500 font-bold">✔</span>
+            <span><strong>Console Sandbox & Testes Rápidos</strong>: Execute blocos de código enviando payloads de teste em formato JSON e inspecione as respostas e os logs de depuração instantaneamente.</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-yellow-500 font-bold">✔</span>
+            <span><strong>Execução Segura Isolada</strong>: As ações de backend rodam sob ambiente sandbox criptografado, protegendo a segurança das chaves do seu banco de dados e APIs externas.</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Screenshot container -->
+      <div class="col-span-7">
+        <div class="glass-card rounded-xl p-2 glow-border relative">
+          <img src="screenshot_noviapi.png" alt="NoviAPI Sandbox Screenshot" class="rounded-lg w-full object-cover">
+          <div class="absolute bottom-4 right-4 bg-slate-900/90 px-3 py-1 text-[0.45rem] text-gray-300 border border-white/10 rounded-lg">
+            Interface Real do NoviAPI Developer Script Sandbox
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="border-t border-slate-200 pt-4 flex justify-between items-center text-[0.55rem] text-slate-400">
+      <span>ChatFlow SaaS Pitch Deck</span>
+      <span>Página 08</span>
+    </div>
+  </div>
+
+
+  <!-- ================= SLIDE 9: ROI & FECHAMENTO ================= -->
+  <div class="slide">
+    <div class="flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <img src="icon.png" alt="NoviApp Icon" class="h-10 w-10 object-contain rounded-xl">
+        <span class="font-display font-black text-lg tracking-wider text-slate-900">CHATFLOW</span>
+      </div>
+      <span class="text-[0.55rem] text-green-600 font-semibold tracking-widest uppercase">PROPOSTA DE VALOR & ROI</span>
+    </div>
+
+    <!-- Main Content split -->
+    <div class="my-auto grid grid-cols-12 gap-8 items-center">
+      
+      <!-- Left metrics blocks -->
+      <div class="col-span-6 flex flex-col gap-5">
+        <div class="flex flex-col gap-1">
+          <span class="bg-green-100 border border-green-200 text-green-700 font-extrabold text-[0.5rem] px-4 py-1.5 rounded-full w-fit tracking-wider uppercase">
+            📊 RETORNO SOBRE INVESTIMENTO (ROI) PROVADO
+          </span>
+          <h2 class="font-display font-black text-3xl leading-tight text-slate-900">
+            Resultados que Impactam <br>
+            <span class="gradient-text">o Seu Caixa Direto</span>
+          </h2>
+        </div>
+        
+        <div class="grid grid-cols-2 gap-4">
+          <div class="glass-card rounded-xl p-4 border-b-4 border-purple-500 flex flex-col gap-1">
+            <span class="text-3xl font-display font-black text-purple-650">84%</span>
+            <span class="text-xs font-semibold text-slate-900">Resolução Automática</span>
+            <p class="text-[0.45rem] text-slate-655 leading-relaxed">De todas as dúvidas recorrentes tratadas e finalizadas com sucesso pela IA de forma independente.</p>
+          </div>
+
+          <div class="glass-card rounded-xl p-4 border-b-4 border-cyan-500 flex flex-col gap-1">
+            <span class="text-3xl font-display font-black text-cyan-650">+32%</span>
+            <span class="text-xs font-semibold text-slate-900">Taxa de Conversão</span>
+            <p class="text-[0.45rem] text-slate-655 leading-relaxed">De aumento em vendas no e-commerce graças à geração rápida de checkout no chat e recuperação de pix.</p>
+          </div>
+
+          <div class="glass-card rounded-xl p-4 border-b-4 border-green-500 flex flex-col gap-1">
+            <span class="text-3xl font-display font-black text-green-650">&lt; 3s</span>
+            <span class="text-xs font-semibold text-slate-900">Tempo de Resposta</span>
+            <p class="text-[0.45rem] text-slate-655 leading-relaxed">Em todos os canais de atendimento, eliminando qualquer fila de espera inicial de cliente de varejo.</p>
+          </div>
+
+          <div class="glass-card rounded-xl p-4 border-b-4 border-yellow-500 flex flex-col gap-1">
+            <span class="text-3xl font-display font-black text-yellow-600">2.5 dias</span>
+            <span class="text-xs font-semibold text-slate-900">Ciclo de Vendas Médio</span>
+            <p class="text-[0.45rem] text-slate-655 leading-relaxed">Redução drástica no tempo de decisão de compras graças aos links e cards de produtos de Meta catalog.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right CTA Card -->
+      <div class="col-span-6">
+        <div class="glass-card rounded-2xl p-6 glow-border flex flex-col gap-4 relative">
+          <div class="absolute -top-3 right-6 bg-gradient-to-r from-purple-600 to-cyan-600 text-white font-extrabold text-[0.5rem] px-4 py-1.5 rounded-full shadow">
+            CONTATO NOVIAPP SISTEMAS IA
+          </div>
+          <h3 class="font-display font-extrabold text-2xl text-slate-900">Pronto para Transformar seu Atendimento?</h3>
+          <p class="text-slate-600 text-xs leading-relaxed">
+            Fale diretamente com nossa equipe e inicie um projeto piloto integrado com o seu catálogo de produtos e ERP oficial.
+          </p>
+
+          <hr class="border-slate-200 my-0.5">
+
+          <div class="flex flex-col gap-2.5">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg bg-purple-100 text-purple-600 border border-purple-200 flex items-center justify-center text-base">📧</div>
+              <div class="flex flex-col">
+                <span class="text-[0.45rem] text-slate-500 uppercase tracking-widest font-bold">E-mail Corporativo</span>
+                <span class="text-xs font-semibold text-slate-900">info@noviapp.ai</span>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg bg-cyan-100 text-cyan-600 border border-cyan-200 flex items-center justify-center text-base">📱</div>
+              <div class="flex flex-col">
+                <span class="text-[0.45rem] text-slate-500 uppercase tracking-widest font-bold">WhatsApp / Telefone</span>
+                <span class="text-xs font-semibold text-slate-900">+55 81 8392-0320</span>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg bg-green-100 text-green-600 border border-green-200 flex items-center justify-center text-base">🌐</div>
+              <div class="flex flex-col">
+                <span class="text-[0.45rem] text-slate-500 uppercase tracking-widest font-bold">Portal Web Oficial</span>
+                <span class="text-xs font-semibold text-cyan-600">noviapp.ai</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="border-t border-slate-200 pt-4 flex justify-between items-center text-[0.55rem] text-slate-400">
+      <span class="font-bold text-slate-500">© 2026 ChatFlow SaaS / NoviApp.ai</span>
+      <span>Página 09</span>
+    </div>
+  </div>
+
+</body>
+</html>
