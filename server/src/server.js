@@ -178,6 +178,27 @@ async function bootstrap() {
       console.log(`[Seed] Default Master Admin seeded successfully: ${adminEmail}`);
     }
 
+    // Automatically migrate any legacy "Volt Assistant" or "Volt AI Bot" in the database to "Agente IA"
+    try {
+      const migrated = await db.bot.updateMany({
+        where: {
+          name: {
+            in: ["Volt Assistant", "Volt AI Bot"]
+          }
+        },
+        data: {
+          name: "Agente IA",
+          systemPrompt: "Você é o Agente IA, um assistente virtual inteligente. Você ajuda os clientes tirando dúvidas, dando suporte e fornecendo informações sobre a empresa de forma prestativa e profissional.",
+          greetingMessage: "Olá! Seja bem-vindo. Como posso te ajudar hoje?"
+        }
+      });
+      if (migrated.count > 0) {
+        console.log(`[Seed] Automatically migrated ${migrated.count} existing legacy Volt bots to Agente IA.`);
+      }
+    } catch (migError) {
+      console.warn('[Seed] Warning: Failed to migrate legacy bots:', migError.message);
+    }
+
     server.listen(PORT, () => {
       console.log(`================================================================`);
       console.log(` CHATFLOW ENTERPRISE SAAS BOOTED SUCCESSFULLY`);
