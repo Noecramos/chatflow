@@ -137,6 +137,47 @@ async function bootstrap() {
     await db.$connect();
     console.log('[Prisma Client] DB Connection Verified.');
 
+    // Ensure Master Admin System Account exists on startup
+    const bcrypt = require('bcryptjs');
+    const adminEmail = 'admin@chatflow.com';
+    const adminPassword = process.env.MASTER_ADMIN_PASSWORD || 'admin123456';
+
+    let adminOrg = await db.organization.findUnique({
+      where: { slug: 'system-admin' }
+    });
+
+    if (!adminOrg) {
+      adminOrg = await db.organization.create({
+        data: {
+          name: "System Administration",
+          slug: "system-admin",
+          plan: "ENTERPRISE",
+          maxBots: 999,
+          maxMessagesPerMonth: 999999
+        }
+      });
+      console.log('[Seed] Default admin organization created.');
+    }
+
+    const existingAdmin = await db.user.findUnique({
+      where: { email: adminEmail }
+    });
+
+    if (!existingAdmin) {
+      const hashedPassword = await bcrypt.hash(adminPassword, 10);
+      await db.user.create({
+        data: {
+          email: adminEmail,
+          password: hashedPassword,
+          firstName: "System",
+          lastName: "Admin",
+          role: "SUPERADMIN",
+          organizationId: adminOrg.id
+        }
+      });
+      console.log(`[Seed] Default Master Admin seeded successfully: ${adminEmail}`);
+    }
+
     server.listen(PORT, () => {
       console.log(`================================================================`);
       console.log(` CHATFLOW ENTERPRISE SAAS BOOTED SUCCESSFULLY`);

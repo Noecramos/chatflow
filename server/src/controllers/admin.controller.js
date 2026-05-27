@@ -134,9 +134,36 @@ module.exports = {
       const userResult = await prisma.user.deleteMany({});
       const orgResult = await prisma.organization.deleteMany({});
 
+      // Re-seed Master Admin immediately so they are never locked out from the session/subsequent log ins
+      const bcrypt = require('bcryptjs');
+      const adminEmail = 'admin@chatflow.com';
+      const adminPassword = process.env.MASTER_ADMIN_PASSWORD || 'admin123456';
+
+      const adminOrg = await prisma.organization.create({
+        data: {
+          name: "System Administration",
+          slug: "system-admin",
+          plan: "ENTERPRISE",
+          maxBots: 999,
+          maxMessagesPerMonth: 999999
+        }
+      });
+
+      const hashedPassword = await bcrypt.hash(adminPassword, 10);
+      await prisma.user.create({
+        data: {
+          email: adminEmail,
+          password: hashedPassword,
+          firstName: "System",
+          lastName: "Admin",
+          role: "SUPERADMIN",
+          organizationId: adminOrg.id
+        }
+      });
+
       return res.status(200).json({
         success: true,
-        message: "System database fully reset. All subscribers and users have been excluded.",
+        message: "System database fully reset. All subscribers and users have been excluded, and default Master Admin re-seeded.",
         deleted: {
           users: userResult.count,
           organizations: orgResult.count
