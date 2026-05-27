@@ -64,9 +64,9 @@ module.exports = {
         await tx.bot.create({
           data: {
             organizationId: organization.id,
-            name: "Volt Assistant",
-            systemPrompt: "You are Volt Assistant, a conversational sales rep. You help customers search the catalog and place orders.",
-            greetingMessage: "Hello! Welcome to our store. Feel free to browse our items!"
+            name: "Agente IA",
+            systemPrompt: "Você é o Agente IA, um assistente virtual inteligente. Você ajuda os clientes tirando dúvidas, dando suporte e fornecendo informações sobre a empresa de forma prestativa e profissional.",
+            greetingMessage: "Olá! Seja bem-vindo. Como posso te ajudar hoje?"
           }
         });
 

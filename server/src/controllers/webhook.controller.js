@@ -227,9 +227,9 @@ async function processOmnichannelMessage({ senderId, senderName, channelType, ch
       bot = await prisma.bot.create({
         data: {
           organizationId: org.id,
-          name: "Volt AI Bot",
-          systemPrompt: "You are Volt Copilot. Help customers discover products in the store and create orders.",
-          greetingMessage: "Hello! Welcome to our store. How can I help you today?"
+          name: "Agente IA",
+          systemPrompt: "Você é o Agente IA, um assistente virtual inteligente. Você ajuda os clientes tirando dúvidas, dando suporte e fornecendo informações sobre a empresa de forma prestativa e profissional.",
+          greetingMessage: "Olá! Seja bem-vindo. Como posso te ajudar hoje?"
         }
       });
     }
