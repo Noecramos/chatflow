@@ -1604,7 +1604,7 @@ export default function App() {
             <span>Documentação</span>
           </div>
 
-          {(user?.role === 'SUPERADMIN' || user?.role === 'SUPER_ADMIN') && (
+          {(user?.role === 'SUPERADMIN' || user?.role === 'SUPER_ADMIN') && !user?.isImpersonated && (
             <div 
               onClick={() => { setActiveTab('MASTER'); fetchSubscribersList(); }} 
               className={`nav-item ${activeTab === 'MASTER' ? 'active' : ''}`} 
