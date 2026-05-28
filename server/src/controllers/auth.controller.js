@@ -215,7 +215,7 @@ module.exports = {
    * Super Admin: List all organizations in ChatFlow
    */
   async listOrganizations(req, res) {
-    if (req.user.role !== 'SUPER_ADMIN') {
+    if (req.user.role !== 'SUPERADMIN' && req.user.role !== 'SUPER_ADMIN') {
       return res.status(403).json({ success: false, error: "Access Denied. Super Admin authorization required." });
     }
 
@@ -243,7 +243,7 @@ module.exports = {
    * Super Admin: Update organization limits and plan details
    */
   async updateOrganization(req, res) {
-    if (req.user.role !== 'SUPER_ADMIN') {
+    if (req.user.role !== 'SUPERADMIN' && req.user.role !== 'SUPER_ADMIN') {
       return res.status(403).json({ success: false, error: "Access Denied. Super Admin authorization required." });
     }
 
@@ -274,7 +274,7 @@ module.exports = {
     const { targetOrganizationId } = req.body;
     const currentUser = req.user;
 
-    if (currentUser.role !== 'SUPER_ADMIN') {
+    if (currentUser.role !== 'SUPERADMIN' && currentUser.role !== 'SUPER_ADMIN') {
       return res.status(403).json({ success: false, error: "Access Denied. Super Admin authorization required." });
     }
 
@@ -293,7 +293,7 @@ module.exports = {
         {
           userId: currentUser.userId,
           organizationId: targetOrganizationId,
-          role: "SUPER_ADMIN", // Preserves master admin role
+          role: currentUser.role, // Preserves master admin role dynamically (SUPERADMIN or SUPER_ADMIN)
           isImpersonated: !isReturning,
           originalOrganizationId: isReturning ? null : (currentUser.originalOrganizationId || currentUser.organizationId)
         },

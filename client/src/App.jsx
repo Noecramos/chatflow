@@ -1490,7 +1490,7 @@ export default function App() {
             <span>Documentação</span>
           </div>
 
-          {user?.role === 'SUPER_ADMIN' && (
+          {(user?.role === 'SUPERADMIN' || user?.role === 'SUPER_ADMIN') && (
             <div 
               onClick={() => { setActiveTab('MASTER'); fetchSubscribersList(); }} 
               className={`nav-item ${activeTab === 'MASTER' ? 'active' : ''}`} 
