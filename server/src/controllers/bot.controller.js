@@ -269,6 +269,52 @@ module.exports = {
   },
 
   /**
+   * Get Decrypted Channel Integrations for a specific Bot
+   */
+  async getChannelIntegrations(req, res) {
+    const { id } = req.params; // botId
+    const { organizationId } = req.user;
+
+    try {
+      const bot = await prisma.bot.findFirst({ where: { id, organizationId } });
+      if (!bot) {
+        return res.status(404).json({ success: false, error: "Bot not found." });
+      }
+
+      const channels = await prisma.channel.findMany({
+        where: { botId: id }
+      });
+
+      const crypto = require('../utils/crypto');
+
+      const integrations = channels.map(chan => {
+        let decryptedCreds = {};
+        if (chan.credentials) {
+          try {
+            const decryptedStr = crypto.decrypt(chan.credentials, organizationId);
+            decryptedCreds = JSON.parse(decryptedStr);
+          } catch (e) {
+            console.error(`Failed to decrypt credentials for channel ${chan.id}:`, e.message);
+          }
+        }
+
+        return {
+          id: chan.id,
+          type: chan.type,
+          provider: chan.provider,
+          isActive: chan.isActive,
+          credentials: decryptedCreds
+        };
+      });
+
+      return res.status(200).json({ success: true, integrations });
+    } catch (e) {
+      console.error(e);
+      return res.status(500).json({ success: false, error: e.message });
+    }
+  },
+
+  /**
    * Encrypt and store Organization settings (Gemini API Key, OpenAI API Key) securely per Organization
    */
   async updateOrganizationSettings(req, res) {

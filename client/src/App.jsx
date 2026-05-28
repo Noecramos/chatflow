@@ -732,6 +732,12 @@ export default function App() {
     }
   }, [token]);
 
+  useEffect(() => {
+    if (activeTab === 'HUB' && selectedBot && token) {
+      fetchChannelIntegrations(selectedBot.id);
+    }
+  }, [activeTab, selectedBot, token]);
+
   // Sync Quick Replies with localStorage
   useEffect(() => {
     localStorage.setItem('chatflow_quick_replies', JSON.stringify(quickReplies));
@@ -745,6 +751,7 @@ export default function App() {
     setAgentModel(bot.model || 'gemini-2.5-flash');
     setAgentTemperature(bot.temperature || 0.7);
     setAgentGreeting(bot.greetingMessage || '');
+    fetchChannelIntegrations(bot.id);
   };
 
   const handleCreateBot = async (e) => {
@@ -1166,6 +1173,48 @@ export default function App() {
     alert("Publicação enviada com sucesso!");
   };
 
+  const fetchChannelIntegrations = async (botId) => {
+    if (!botId || !token) return;
+    try {
+      const res = await fetch(`/channels/bots/${botId}/integrations`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success && data.integrations) {
+        const waba = data.integrations.find(c => c.type === 'WHATSAPP');
+        if (waba && waba.credentials) {
+          setWabaAccessToken(waba.credentials.accessToken || '');
+          setWabaPhoneNumberId(waba.credentials.phoneNumberId || '');
+          setWabaBusinessId(waba.credentials.businessAccountId || '');
+        } else {
+          setWabaAccessToken('');
+          setWabaPhoneNumberId('');
+          setWabaBusinessId('');
+        }
+
+        const ig = data.integrations.find(c => c.type === 'INSTAGRAM');
+        if (ig && ig.credentials) {
+          setIgAccessToken(ig.credentials.accessToken || '');
+          setIgPageId(ig.credentials.pageId || '');
+        } else {
+          setIgAccessToken('');
+          setIgPageId('');
+        }
+
+        const fb = data.integrations.find(c => c.type === 'MESSENGER');
+        if (fb && fb.credentials) {
+          setFbAccessToken(fb.credentials.accessToken || '');
+          setFbPageId(fb.credentials.pageId || '');
+        } else {
+          setFbAccessToken('');
+          setFbPageId('');
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch integrations:", err);
+    }
+  };
+
   const handleSaveWabaCredentials = async () => {
     if (!wabaAccessToken.trim() || !wabaPhoneNumberId.trim()) {
       alert('Preencha o Access Token e o Phone Number ID.');
@@ -1197,9 +1246,7 @@ export default function App() {
       const data = await res.json();
       if (data.success) {
         alert('Credenciais do WhatsApp Business salvas com sucesso!');
-        setWabaAccessToken('');
-        setWabaPhoneNumberId('');
-        setWabaBusinessId('');
+        fetchChannelIntegrations(botId);
       } else {
         alert(data.error || 'Erro ao salvar credenciais.');
       }
@@ -1235,7 +1282,7 @@ export default function App() {
       const data = await res.json();
       if (data.success) {
         alert('Credenciais do Instagram salvas com sucesso!');
-        setIgAccessToken(''); setIgPageId('');
+        fetchChannelIntegrations(botId);
       } else { alert(data.error || 'Erro ao salvar credenciais.'); }
     } catch (err) { console.error(err); alert('Falha de conexão.'); }
     finally { setSavingIg(false); }
@@ -1265,7 +1312,7 @@ export default function App() {
       const data = await res.json();
       if (data.success) {
         alert('Credenciais do Facebook Messenger salvas com sucesso!');
-        setFbAccessToken(''); setFbPageId('');
+        fetchChannelIntegrations(botId);
       } else { alert(data.error || 'Erro ao salvar credenciais.'); }
     } catch (err) { console.error(err); alert('Falha de conexão.'); }
     finally { setSavingFb(false); }
