@@ -219,8 +219,16 @@ async function processOmnichannelMessage({ senderId, senderName, channelType, ch
   for (const chan of channels) {
     if (chan.credentials) {
       try {
-        const decryptedStr = crypto.decrypt(chan.credentials, chan.organizationId);
-        const creds = JSON.parse(decryptedStr);
+        let creds = {};
+        const rawCreds = chan.credentials;
+        try {
+          // 1. Try to parse directly in case of raw sandbox JSON
+          creds = JSON.parse(rawCreds);
+        } catch (e) {
+          // 2. Not plain JSON, attempt safe decryption
+          const decryptedStr = crypto.decrypt(rawCreds, chan.organizationId);
+          creds = decryptedStr ? JSON.parse(decryptedStr) : {};
+        }
 
         if (channelType === 'WHATSAPP') {
           // Match by WhatsApp Phone Number ID

@@ -9,7 +9,19 @@ function getChannelCredentials(channel) {
     const rawCreds = channel.credentials;
     if (!rawCreds) return {};
     
+    // First, try to parse rawCreds directly as JSON in case it is stored unencrypted (sandbox fallback)
+    try {
+      if (typeof rawCreds === 'object') return rawCreds;
+      return JSON.parse(rawCreds);
+    } catch (e) {
+      // Not plain JSON, continue to decrypt
+    }
+    
     const decrypted = crypto.decrypt(rawCreds, channel.organizationId);
+    if (!decrypted) {
+      console.warn(`[getChannelCredentials] Decryption returned empty for channel ${channel.id}. Key mismatch?`);
+      return {};
+    }
     return typeof decrypted === 'string' ? JSON.parse(decrypted) : decrypted || {};
   } catch (e) {
     console.error("Meta credentials decryption error:", e.message);

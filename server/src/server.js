@@ -279,10 +279,42 @@ async function bootstrap() {
 
     // Automatically seed/configure Lalelilo WABA, Instagram & Gemini settings if org exists
     try {
-      const org = await db.organization.findUnique({ where: { slug: 'lalelilo' } });
+      let org = await db.organization.findUnique({ where: { slug: 'lalelilo' } });
+      if (!org) {
+        org = await db.organization.create({
+          data: {
+            name: "Lalelilo Kids",
+            slug: "lalelilo",
+            plan: "ENTERPRISE",
+            maxBots: 10,
+            maxMessagesPerMonth: 100000
+          }
+        });
+        console.log('[Seed] Automatically created Lalelilo organization.');
+      }
+
       if (org) {
         console.log('[Seed] Lalelilo organization found. Ensuring active Meta integrations are configured...');
         const crypto = require('./utils/crypto');
+
+        // Ensure default Lalelilo Owner account exists
+        const existingUser = await db.user.findFirst({
+          where: { organizationId: org.id }
+        });
+        if (!existingUser) {
+          const hashedPassword = await bcrypt.hash('lalelilo123', 10);
+          await db.user.create({
+            data: {
+              email: 'contato@lalelilo.com.br',
+              password: hashedPassword,
+              firstName: "Lalelilo",
+              lastName: "Kids",
+              role: "OWNER",
+              organizationId: org.id
+            }
+          });
+          console.log('[Seed] Default Lalelilo owner user seeded: contato@lalelilo.com.br');
+        }
 
         // 1. Encrypt and save Gemini key for Lalelilo
         const activeGeminiKey = process.env.LALELILO_GEMINI_API_KEY;

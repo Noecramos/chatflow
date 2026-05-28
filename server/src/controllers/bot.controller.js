@@ -291,10 +291,14 @@ module.exports = {
         let decryptedCreds = {};
         if (chan.credentials) {
           try {
-            const decryptedStr = crypto.decrypt(chan.credentials, organizationId);
-            decryptedCreds = JSON.parse(decryptedStr);
+            decryptedCreds = JSON.parse(chan.credentials);
           } catch (e) {
-            console.error(`Failed to decrypt credentials for channel ${chan.id}:`, e.message);
+            try {
+              const decryptedStr = crypto.decrypt(chan.credentials, organizationId);
+              decryptedCreds = decryptedStr ? JSON.parse(decryptedStr) : {};
+            } catch (decErr) {
+              console.error(`Failed to decrypt credentials for channel ${chan.id}:`, decErr.message);
+            }
           }
         }
 
