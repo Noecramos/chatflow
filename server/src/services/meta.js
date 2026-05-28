@@ -38,7 +38,7 @@ async function sendWhatsApp(creds, recipientId, payload) {
     throw new Error("Missing WhatsApp accessToken or phoneNumberId in channel credentials.");
   }
 
-  const url = `https://graph.facebook.com/v19.0/${phoneNumberId}/messages`;
+  const url = `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`;
   const response = await axios.post(url, {
     messaging_product: "whatsapp",
     recipient_type: "individual",
@@ -62,7 +62,7 @@ async function sendInstagram(creds, recipientId, payload) {
     throw new Error("Missing Instagram Page Access Token in channel credentials.");
   }
 
-  const url = `https://graph.facebook.com/v19.0/me/messages?access_token=${accessToken}`;
+  const url = `https://graph.facebook.com/v21.0/me/messages?access_token=${accessToken}`;
   const response = await axios.post(url, {
     recipient: { id: recipientId },
     ...payload
@@ -79,7 +79,7 @@ async function sendMessenger(creds, recipientId, payload) {
     throw new Error("Missing Facebook Page Access Token in channel credentials.");
   }
 
-  const url = `https://graph.facebook.com/v19.0/me/messages?access_token=${accessToken}`;
+  const url = `https://graph.facebook.com/v21.0/me/messages?access_token=${accessToken}`;
   const response = await axios.post(url, {
     recipient: { id: recipientId },
     ...payload
