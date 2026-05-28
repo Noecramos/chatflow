@@ -206,11 +206,45 @@ module.exports = {
 async function processOmnichannelMessage({ senderId, senderName, channelType, channelIdentifier, content, metadata }) {
   console.log(`[Omni Webhook Processor] Msg from ${senderId} via ${channelType}`);
 
-  // 1. Locate channel integration
-  let channel = await prisma.channel.findFirst({
+  // 1. Locate channel integration by matching decrypted credentials (tenant isolation)
+  const channels = await prisma.channel.findMany({
     where: { type: channelType, isActive: true },
     include: { bot: true }
   });
+
+  const crypto = require('../utils/crypto');
+  let channel = null;
+
+  for (const chan of channels) {
+    if (chan.credentials) {
+      try {
+        const decryptedStr = crypto.decrypt(chan.credentials, chan.organizationId);
+        const creds = JSON.parse(decryptedStr);
+
+        if (channelType === 'WHATSAPP') {
+          // Match by WhatsApp Phone Number ID
+          if (creds.phoneNumberId === channelIdentifier) {
+            channel = chan;
+            break;
+          }
+        } else {
+          // Match by Facebook/Instagram Page ID
+          if (creds.pageId === channelIdentifier) {
+            channel = chan;
+            break;
+          }
+        }
+      } catch (e) {
+        console.error(`[Webhook Route] Failed to decrypt/parse credentials for channel ${chan.id}:`, e.message);
+      }
+    }
+  }
+
+  // Fallback to first active channel if no exact match (retains local/sandbox compatibility)
+  if (!channel && channels.length > 0) {
+    console.log(`[Webhook Route] No exact credential match found for ${channelType} ID: ${channelIdentifier}. Falling back to default channel.`);
+    channel = channels[0];
+  }
 
   if (!channel) {
     console.warn(`No active ${channelType} channel configuration found. Bootstrapping sandbox.`);
