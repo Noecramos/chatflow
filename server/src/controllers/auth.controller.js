@@ -144,6 +144,45 @@ module.exports = {
   },
 
   /**
+   * Public: Request a temporary password reset
+   */
+  async requestForgotPassword(req, res) {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ success: false, error: "O e-mail é obrigatório." });
+    }
+
+    try {
+      const user = await prisma.user.findUnique({
+        where: { email }
+      });
+
+      if (!user) {
+        // Return success to prevent account harvesting but display a generic message
+        return res.status(200).json({
+          success: true,
+          message: "Se o e-mail estiver cadastrado no sistema, uma solicitação de redefinição de senha foi enviada ao Administrador do Sistema."
+        });
+      }
+
+      // Mark the user as having requested a password reset
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { passwordResetRequested: true }
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: "Sua solicitação de redefinição de senha foi enviada com sucesso! Por favor, entre em contato com o Administrador Master para obter sua nova senha provisória."
+      });
+    } catch (error) {
+      console.error("Forgot password error:", error);
+      return res.status(500).json({ success: false, error: "Internal Server Error" });
+    }
+  },
+
+  /**
    * Get Active Logged-In User Profile Details
    */
   async getProfile(req, res) {

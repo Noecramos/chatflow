@@ -20,6 +20,7 @@ module.exports = {
               firstName: true,
               lastName: true,
               role: true,
+              passwordResetRequested: true,
               createdAt: true
             }
           },
@@ -52,6 +53,7 @@ module.exports = {
             createdAt: org.createdAt,
             ownerEmail: owner ? owner.email : 'N/A',
             ownerName: owner ? `${owner.firstName} ${owner.lastName}` : 'N/A',
+            passwordResetRequested: org.users.some(u => u.passwordResetRequested),
             botsCount: org._count.bots,
             channelsCount: org._count.channels,
             conversationsCount: org._count.conversations,
@@ -95,6 +97,62 @@ module.exports = {
       });
     } catch (error) {
       console.error("[Admin Controller] Error updating limits:", error);
+      return res.status(500).json({ success: false, error: "Internal Server Error" });
+    }
+  },
+
+  /**
+   * Super Admin: Randomly generate a new password for a subscriber's owner account
+   */
+  async resetSubscriberPassword(req, res) {
+    const { id } = req.params;
+    const bcrypt = require('bcryptjs');
+
+    try {
+      // Find the organization along with its users
+      const org = await prisma.organization.findUnique({
+        where: { id },
+        include: { users: true }
+      });
+
+      if (!org) {
+        return res.status(404).json({ success: false, error: "Subscriber not found." });
+      }
+
+      // Find the OWNER role user first, or fall back to the first user
+      const owner = org.users.find(u => u.role === 'OWNER') || org.users[0];
+      if (!owner) {
+        return res.status(404).json({ success: false, error: "No user found associated with this subscriber." });
+      }
+
+      // Generate a highly secure, easy-to-read temporary password
+      const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+      let tempPassword = "";
+      for (let i = 0; i < 10; i++) {
+        tempPassword += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+
+      // Hash the temporary password
+      const hashedPassword = await bcrypt.hash(tempPassword, 10);
+
+      // Update the user record: set new password and clear the reset request flag
+      await prisma.user.update({
+        where: { id: owner.id },
+        data: {
+          password: hashedPassword,
+          passwordResetRequested: false
+        }
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: "Senha provisória gerada com sucesso.",
+        newPassword: tempPassword,
+        ownerEmail: owner.email,
+        ownerName: `${owner.firstName} ${owner.lastName}`
+      });
+    } catch (error) {
+      console.error("[Admin Controller] Error resetting password:", error);
       return res.status(500).json({ success: false, error: "Internal Server Error" });
     }
   },

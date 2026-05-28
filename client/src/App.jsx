@@ -21,6 +21,7 @@ export default function App() {
 
   // Auth form states
   const [isRegister, setIsRegister] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
@@ -243,6 +244,33 @@ export default function App() {
       }
     } catch (err) {
       console.error("Auth error:", err);
+      setAuthError("Erro de conexão com o servidor backend.");
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleForgotPasswordSubmit = async (e) => {
+    e.preventDefault();
+    setAuthLoading(true);
+    setAuthError('');
+    setAuthSuccess('');
+
+    try {
+      const res = await fetch('/inbox/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setAuthSuccess(data.message || "Sua solicitação de redefinição foi registrada com sucesso! Por favor, chame o Administrador Master para obter sua nova senha provisória.");
+        setEmail('');
+      } else {
+        setAuthError(data.error || "Ocorreu um erro ao processar a solicitação.");
+      }
+    } catch (err) {
+      console.error("Forgot password submit error:", err);
       setAuthError("Erro de conexão com o servidor backend.");
     } finally {
       setAuthLoading(false);
@@ -1353,9 +1381,11 @@ export default function App() {
               <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: '28px', letterSpacing: '-0.03em', color: '#fff' }}>ChatFlow</h2>
             </div>
             <p style={{ color: 'hsl(var(--text-muted))', fontSize: '13px', marginTop: '4px' }}>
-              {isRegister 
-                ? "Registre uma nova organização para construir robôs omnichannel de IA."
-                : "Entre com suas credenciais para gerenciar conversas, CRM e checkout."}
+              {isForgotPassword
+                ? "Recupere o seu acesso ao painel ChatFlow."
+                : isRegister 
+                  ? "Registre uma nova organização para construir robôs omnichannel de IA."
+                  : "Entre com suas credenciais para gerenciar conversas, CRM e checkout."}
             </p>
           </div>
 
@@ -1371,89 +1401,115 @@ export default function App() {
             </div>
           )}
 
-          <form onSubmit={handleAuthSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            {isRegister && (
-              <>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px', fontWeight: '600' }}>Nome</label>
-                    <input 
-                      type="text" 
-                      required 
-                      value={firstName} 
-                      onChange={(e) => setFirstName(e.target.value)}
-                      style={{ width: '100%', background: 'hsl(var(--border) / 0.4)', border: '1px solid hsl(var(--border))', padding: '10px 12px', borderRadius: '6px', fontSize: '13px' }}
-                    />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px', fontWeight: '600' }}>Sobrenome</label>
-                    <input 
-                      type="text" 
-                      required 
-                      value={lastName} 
-                      onChange={(e) => setLastName(e.target.value)}
-                      style={{ width: '100%', background: 'hsl(var(--border) / 0.4)', border: '1px solid hsl(var(--border))', padding: '10px 12px', borderRadius: '6px', fontSize: '13px' }}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px', fontWeight: '600' }}>Nome da Organização</label>
-                  <input 
-                    type="text" 
-                    required 
-                    placeholder="Ex: Noviapp"
-                    value={orgName} 
-                    onChange={(e) => setOrgName(e.target.value)}
-                    style={{ width: '100%', background: 'hsl(var(--border) / 0.4)', border: '1px solid hsl(var(--border))', padding: '10px 12px', borderRadius: '6px', fontSize: '13px' }}
-                  />
-                </div>
-              </>
-            )}
-
-            <div>
-              <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px', fontWeight: '600' }}>Endereço de E-mail</label>
-              <input 
-                type="email" 
-                required 
-                placeholder="exemplo@empresa.com"
-                value={email} 
-                onChange={(e) => setEmail(e.target.value)}
-                style={{ width: '100%', background: 'hsl(var(--border) / 0.4)', border: '1px solid hsl(var(--border))', padding: '10px 12px', borderRadius: '6px', fontSize: '13px' }}
-              />
-            </div>
-
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', fontWeight: '600', margin: 0 }}>Senha</label>
-                {!isRegister && (
-                  <button 
-                    type="button"
-                    onClick={() => alert("Para recuperar ou redefinir a sua senha de acesso, entre em contato com o Administrador do Sistema através do e-mail suporte@noviapp.ai ou chame nosso canal de suporte oficial no WhatsApp.")}
-                    style={{ background: 'transparent', border: 'none', color: 'hsl(var(--secondary))', fontSize: '11px', cursor: 'pointer', padding: 0, fontWeight: '600' }}
-                  >
-                    Esqueceu sua senha?
-                  </button>
-                )}
+          {isForgotPassword ? (
+            <form onSubmit={handleForgotPasswordSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div>
+                <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px', fontWeight: '600' }}>Endereço de E-mail</label>
+                <input 
+                  type="email" 
+                  required 
+                  placeholder="exemplo@empresa.com"
+                  value={email} 
+                  onChange={(e) => setEmail(e.target.value)}
+                  style={{ width: '100%', background: 'hsl(var(--border) / 0.4)', border: '1px solid hsl(var(--border))', padding: '10px 12px', borderRadius: '6px', fontSize: '13px' }}
+                />
               </div>
-              <input 
-                type="password" 
-                required 
-                placeholder="••••••••"
-                value={password} 
-                onChange={(e) => setPassword(e.target.value)}
-                style={{ width: '100%', background: 'hsl(var(--border) / 0.4)', border: '1px solid hsl(var(--border))', padding: '10px 12px', borderRadius: '6px', fontSize: '13px' }}
-              />
-            </div>
 
-            <button type="submit" disabled={authLoading} className="btn-primary" style={{ width: '100%', padding: '12px', marginTop: '6px', fontSize: '14px', fontWeight: '700' }}>
-              {authLoading ? "Autenticando..." : (isRegister ? "Registrar Organização" : "Entrar no Painel")}
-            </button>
-          </form>
+              <button type="submit" disabled={authLoading} className="btn-primary" style={{ width: '100%', padding: '12px', marginTop: '6px', fontSize: '14px', fontWeight: '700' }}>
+                {authLoading ? "Solicitando..." : "Solicitar Nova Senha"}
+              </button>
+
+              <button type="button" onClick={() => { setIsForgotPassword(false); setAuthError(''); setAuthSuccess(''); }} className="btn-secondary" style={{ width: '100%', padding: '10px', fontSize: '13px', fontWeight: '600' }}>
+                Voltar para o Login
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleAuthSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              {isRegister && (
+                <>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <div style={{ flex: 1 }}>
+                      <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px', fontWeight: '600' }}>Nome</label>
+                      <input 
+                        type="text" 
+                        required 
+                        value={firstName} 
+                        onChange={(e) => setFirstName(e.target.value)}
+                        style={{ width: '100%', background: 'hsl(var(--border) / 0.4)', border: '1px solid hsl(var(--border))', padding: '10px 12px', borderRadius: '6px', fontSize: '13px' }}
+                      />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px', fontWeight: '600' }}>Sobrenome</label>
+                      <input 
+                        type="text" 
+                        required 
+                        value={lastName} 
+                        onChange={(e) => setLastName(e.target.value)}
+                        style={{ width: '100%', background: 'hsl(var(--border) / 0.4)', border: '1px solid hsl(var(--border))', padding: '10px 12px', borderRadius: '6px', fontSize: '13px' }}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px', fontWeight: '600' }}>Nome da Organização</label>
+                    <input 
+                      type="text" 
+                      required 
+                      placeholder="Ex: Noviapp"
+                      value={orgName} 
+                      onChange={(e) => setOrgName(e.target.value)}
+                      style={{ width: '100%', background: 'hsl(var(--border) / 0.4)', border: '1px solid hsl(var(--border))', padding: '10px 12px', borderRadius: '6px', fontSize: '13px' }}
+                    />
+                  </div>
+                </>
+              )}
+
+              <div>
+                <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px', fontWeight: '600' }}>Endereço de E-mail</label>
+                <input 
+                  type="email" 
+                  required 
+                  placeholder="exemplo@empresa.com"
+                  value={email} 
+                  onChange={(e) => setEmail(e.target.value)}
+                  style={{ width: '100%', background: 'hsl(var(--border) / 0.4)', border: '1px solid hsl(var(--border))', padding: '10px 12px', borderRadius: '6px', fontSize: '13px' }}
+                />
+              </div>
+
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                  <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', fontWeight: '600', margin: 0 }}>Senha</label>
+                  {!isRegister && (
+                    <button 
+                      type="button"
+                      onClick={() => { setIsForgotPassword(true); setAuthError(''); setAuthSuccess(''); }}
+                      style={{ background: 'transparent', border: 'none', color: 'hsl(var(--secondary))', fontSize: '11px', cursor: 'pointer', padding: 0, fontWeight: '600' }}
+                    >
+                      Esqueceu sua senha?
+                    </button>
+                  )}
+                </div>
+                <input 
+                  type="password" 
+                  required 
+                  placeholder="••••••••"
+                  value={password} 
+                  onChange={(e) => setPassword(e.target.value)}
+                  style={{ width: '100%', background: 'hsl(var(--border) / 0.4)', border: '1px solid hsl(var(--border))', padding: '10px 12px', borderRadius: '6px', fontSize: '13px' }}
+                />
+              </div>
+
+              <button type="submit" disabled={authLoading} className="btn-primary" style={{ width: '100%', padding: '12px', marginTop: '6px', fontSize: '14px', fontWeight: '700' }}>
+                {authLoading ? "Autenticando..." : (isRegister ? "Registrar Organização" : "Entrar no Painel")}
+              </button>
+            </form>
+          )}
 
           <hr style={{ border: 'none', borderTop: '1px solid hsl(var(--border))', margin: '10px 0 0 0' }} />
 
           <div style={{ textAlign: 'center', fontSize: '12px', color: 'hsl(var(--text-muted))' }}>
-            {isRegister ? (
+            {isForgotPassword ? (
+              <span>Lembrou de sua senha? <button onClick={() => { setIsForgotPassword(false); setAuthError(''); setAuthSuccess(''); }} style={{ background: 'transparent', border: 'none', color: 'hsl(var(--secondary))', cursor: 'pointer', padding: 0, fontWeight: '600' }}>Faça login aqui</button></span>
+            ) : isRegister ? (
               <span>Já possui uma conta? <button onClick={() => { setIsRegister(false); setAuthError(''); setAuthSuccess(''); }} style={{ background: 'transparent', border: 'none', color: 'hsl(var(--secondary))', cursor: 'pointer', padding: 0, fontWeight: '600' }}>Faça login aqui</button></span>
             ) : (
               <span>Novo no ChatFlow? <button onClick={() => { setIsRegister(true); setAuthError(''); setAuthSuccess(''); }} style={{ background: 'transparent', border: 'none', color: 'hsl(var(--secondary))', cursor: 'pointer', padding: 0, fontWeight: '600' }}>Registrar organização</button></span>

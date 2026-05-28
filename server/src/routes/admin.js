@@ -49,6 +49,7 @@ const verifyAdminAccess = async (req, res, next) => {
 // Mount endpoints under `/inbox/admin`
 router.get('/subscribers', verifyToken, verifyAdminAccess, adminController.listSubscribers);
 router.put('/subscribers/:id/limits', verifyToken, verifyAdminAccess, adminController.updateSubscriberLimits);
+router.post('/subscribers/:id/reset-password', verifyToken, verifyAdminAccess, adminController.resetSubscriberPassword);
 router.delete('/subscribers/:id', verifyToken, verifyAdminAccess, adminController.deleteSubscriber);
 router.post('/system-reset', verifyToken, verifyAdminAccess, adminController.systemReset);
 
