@@ -969,6 +969,9 @@
               <button class="btn btn-secondary edit-limits-btn" data-id="${sub.id}" data-name="${sub.name}" data-plan="${sub.plan}" data-bots="${sub.maxBots}" data-msgs="${sub.maxMessagesPerMonth}" style="padding: 4px 8px; font-size: 11px;">
                 Limites
               </button>
+              <button class="btn impersonate-btn" data-id="${sub.id}" data-name="${sub.name}" style="padding: 4px 8px; font-size: 11px; background: linear-gradient(135deg, var(--secondary) 0%, #00b8cc 100%); color: #000; border: none; font-weight: 700;">
+                Acessar
+              </button>
               <button class="btn btn-secondary delete-sub-btn" data-id="${sub.id}" data-name="${sub.name}" style="padding: 4px 8px; font-size: 11px; color: var(--danger); border-color: rgba(239,68,68,0.15); background: rgba(239,68,68,0.01);">
                 Excluir
               </button>
@@ -987,6 +990,33 @@
           editMaxBots.value = ds.bots;
           editMaxMsgs.value = ds.msgs;
           limitsModal.style.display = 'flex';
+        });
+      });
+
+      document.querySelectorAll('.impersonate-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const { id, name } = e.currentTarget.dataset;
+          try {
+            const res = await fetch(`${API_BASE}/inbox/auth/switch-tenant`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${masterToken}`
+              },
+              body: JSON.stringify({ targetOrganizationId: id })
+            });
+            const data = await res.json();
+            if (data.success) {
+              localStorage.setItem('token', data.token);
+              alert(`Sessão alterada com sucesso! Você será redirecionado para a dashboard da empresa "${name}".`);
+              window.location.href = '/';
+            } else {
+              alert(`Erro: ${data.error}`);
+            }
+          } catch (err) {
+            console.error(err);
+            alert("Erro de conexão ao tentar impersonar o inquilino.");
+          }
         });
       });
 
