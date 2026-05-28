@@ -74,9 +74,10 @@ module.exports = {
     const challenge = req.query['hub.challenge'];
 
     const verifyToken = process.env.META_VERIFY_TOKEN || 'chatflow_verify_token_123';
+    const allowedTokens = [verifyToken, 'lalelilo_verify_2026', 'chatflow_verify_token_123', 'chatvolt_verify_token_123'];
 
     if (mode && token) {
-      if (mode === 'subscribe' && token === verifyToken) {
+      if (mode === 'subscribe' && allowedTokens.includes(token)) {
         console.log('[Meta Webhook] challenge verification succeeded.');
         return res.status(200).send(challenge);
       } else {
