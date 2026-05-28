@@ -50,6 +50,7 @@ const clientDistPath = path.join(__dirname, '../../client/dist');
 app.use(express.static(clientDistPath));
 
 // SPA catch-all: any GET that doesn't match an API route serves index.html
+const fs = require('fs');
 app.get('*', (req, res, next) => {
   // Don't catch API routes or socket.io
   if (req.path.startsWith('/inbox') || req.path.startsWith('/channels') || 
@@ -59,7 +60,84 @@ app.get('*', (req, res, next) => {
       req.path.startsWith('/master-admin')) {
     return next();
   }
-  res.sendFile(path.join(clientDistPath, 'index.html'));
+  
+  const indexPath = path.join(clientDistPath, 'index.html');
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    // Return a beautiful informational page if the frontend dist folder is empty
+    res.status(200).send(`
+      <!DOCTYPE html>
+      <html lang="pt-BR">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>ChatFlow — API Server Active</title>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Outfit:wght@800;900&display=swap" rel="stylesheet">
+        <style>
+          body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at center, #14141d 0%, #08080c 100%);
+            color: #f3f4f6;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+          }
+          .card {
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 500px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+          }
+          h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 36px;
+            margin: 0 0 10px 0;
+            background: linear-gradient(135deg, #8a2be2, #00e5ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+          }
+          p {
+            color: #9ca3af;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 25px;
+          }
+          .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #8a2be2 0%, #00e5ff 100%);
+            color: #000;
+            text-decoration: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 14px;
+            box-shadow: 0 4px 15px rgba(0, 229, 255, 0.3);
+            transition: all 0.2s;
+          }
+          .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 229, 255, 0.5);
+          }
+        </style>
+      </head>
+      <body>
+        <div class="card">
+          <h1>ChatFlow Active</h1>
+          <p>O servidor de API e Webhooks do ChatFlow está online e operando com sucesso. Para acessar a interface administrativa e gerenciar seus agentes inteligentes, acesse o endereço oficial do seu aplicativo no Vercel.</p>
+          <a href="/master-admin" class="btn">Retornar ao Painel Master</a>
+        </div>
+      </body>
+      </html>
+    `);
+  }
 });
 
 // Global Error Boundary & Logging Middleware
