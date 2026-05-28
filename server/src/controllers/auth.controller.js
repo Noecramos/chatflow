@@ -164,9 +164,13 @@ module.exports = {
           email: user.email,
           firstName: user.firstName,
           lastName: user.lastName,
-          role: user.role
+          role: user.role,
+          isImpersonated: req.user.isImpersonated || false,
+          originalOrganizationId: req.user.originalOrganizationId || null
         },
-        organization: user.organization
+        organization: user.organization,
+        isImpersonated: req.user.isImpersonated || false,
+        originalOrganizationId: req.user.originalOrganizationId || null
       });
     } catch (error) {
       console.error("Get Profile error:", error);
@@ -204,6 +208,103 @@ module.exports = {
     } catch (error) {
       console.error("[DB Reset] Error during database cleanup:", error);
       return res.status(500).json({ success: false, error: "Internal Server Error during database cleanup." });
+    }
+  },
+
+  /**
+   * Super Admin: List all organizations in ChatFlow
+   */
+  async listOrganizations(req, res) {
+    if (req.user.role !== 'SUPER_ADMIN') {
+      return res.status(403).json({ success: false, error: "Access Denied. Super Admin authorization required." });
+    }
+
+    try {
+      const orgs = await prisma.organization.findMany({
+        include: {
+          _count: {
+            select: {
+              bots: true,
+              users: true,
+              channels: true
+            }
+          }
+        },
+        orderBy: { createdAt: 'desc' }
+      });
+      return res.status(200).json({ success: true, organizations: orgs });
+    } catch (e) {
+      console.error(e);
+      return res.status(500).json({ success: false, error: e.message });
+    }
+  },
+
+  /**
+   * Super Admin: Update organization limits and plan details
+   */
+  async updateOrganization(req, res) {
+    if (req.user.role !== 'SUPER_ADMIN') {
+      return res.status(403).json({ success: false, error: "Access Denied. Super Admin authorization required." });
+    }
+
+    const { id } = req.params;
+    const { name, plan, maxBots, maxMessagesPerMonth } = req.body;
+
+    try {
+      const updated = await prisma.organization.update({
+        where: { id },
+        data: {
+          name,
+          plan: plan || undefined,
+          maxBots: maxBots !== undefined ? parseInt(maxBots) : undefined,
+          maxMessagesPerMonth: maxMessagesPerMonth !== undefined ? parseInt(maxMessagesPerMonth) : undefined
+        }
+      });
+      return res.status(200).json({ success: true, organization: updated });
+    } catch (e) {
+      console.error(e);
+      return res.status(500).json({ success: false, error: "Failed to update organization details." });
+    }
+  },
+
+  /**
+   * Super Admin: Impersonate/Switch to a client organization dashboard
+   */
+  async switchTenant(req, res) {
+    const { targetOrganizationId } = req.body;
+    const currentUser = req.user;
+
+    if (currentUser.role !== 'SUPER_ADMIN') {
+      return res.status(403).json({ success: false, error: "Access Denied. Super Admin authorization required." });
+    }
+
+    try {
+      const targetOrg = await prisma.organization.findUnique({
+        where: { id: targetOrganizationId }
+      });
+
+      if (!targetOrg) {
+        return res.status(404).json({ success: false, error: "Target organization not found." });
+      }
+
+      // Generate a new impersonated JWT token
+      const isReturning = currentUser.originalOrganizationId && targetOrganizationId === currentUser.originalOrganizationId;
+      const token = jwt.sign(
+        {
+          userId: currentUser.userId,
+          organizationId: targetOrganizationId,
+          role: "SUPER_ADMIN", // Preserves master admin role
+          isImpersonated: !isReturning,
+          originalOrganizationId: isReturning ? null : (currentUser.originalOrganizationId || currentUser.organizationId)
+        },
+        JWT_SECRET,
+        { expiresIn: '30d' }
+      );
+
+      return res.status(200).json({ success: true, token, organization: targetOrg });
+    } catch (e) {
+      console.error(e);
+      return res.status(500).json({ success: false, error: "Impersonation request failed." });
     }
   },
 

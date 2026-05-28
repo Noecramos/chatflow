@@ -7,5 +7,8 @@ router.post('/register', authController.register);
 router.post('/login', authController.login);
 router.get('/profile', verifyToken, authController.getProfile);
 router.get('/clear-db', authController.clearDb);
+router.get('/organizations', verifyToken, authController.listOrganizations);
+router.put('/organizations/:id', verifyToken, authController.updateOrganization);
+router.post('/switch-tenant', verifyToken, authController.switchTenant);
 
 module.exports = router;
