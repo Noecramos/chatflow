@@ -1423,7 +1423,18 @@ export default function App() {
             </div>
 
             <div>
-              <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px', fontWeight: '600' }}>Senha</label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', fontWeight: '600', margin: 0 }}>Senha</label>
+                {!isRegister && (
+                  <button 
+                    type="button"
+                    onClick={() => alert("Para recuperar ou redefinir a sua senha de acesso, entre em contato com o Administrador do Sistema através do e-mail suporte@noviapp.ai ou chame nosso canal de suporte oficial no WhatsApp.")}
+                    style={{ background: 'transparent', border: 'none', color: 'hsl(var(--secondary))', fontSize: '11px', cursor: 'pointer', padding: 0, fontWeight: '600' }}
+                  >
+                    Esqueceu sua senha?
+                  </button>
+                )}
+              </div>
               <input 
                 type="password" 
                 required 
