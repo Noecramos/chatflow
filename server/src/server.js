@@ -277,6 +277,129 @@ async function bootstrap() {
       console.warn('[Seed] Warning: Failed to migrate legacy bots:', migError.message);
     }
 
+    // Automatically seed/configure Lalelilo WABA, Instagram & Gemini settings if org exists
+    try {
+      const org = await db.organization.findUnique({ where: { slug: 'lalelilo' } });
+      if (org) {
+        console.log('[Seed] Lalelilo organization found. Ensuring active Meta integrations are configured...');
+        const crypto = require('./utils/crypto');
+
+        // 1. Encrypt and save Gemini key for Lalelilo
+        const activeGeminiKey = "AIzaSyCCOnn8qoVWB5RIk2CL5eHwCQPqyx-MDxY";
+        const encryptedGemini = crypto.encrypt(activeGeminiKey, org.id);
+        await db.organization.update({
+          where: { id: org.id },
+          data: {
+            geminiKey: encryptedGemini,
+            plan: "ENTERPRISE",
+            maxBots: 10,
+            maxMessagesPerMonth: 100000
+          }
+        });
+
+        // 2. Find or Create Lalelilo's default Bot
+        let bot = await db.bot.findFirst({ where: { organizationId: org.id } });
+        if (!bot) {
+          bot = await db.bot.create({
+            data: {
+              organizationId: org.id,
+              name: "Agente IA",
+              model: "gemini-2.5-flash",
+              systemPrompt: "Você é o assistente virtual da Lalelilo Kids, uma loja de roupas infantis premium. Você ajuda os clientes tirando dúvidas, mostrando o catálogo e auxiliando nas compras e pedidos.",
+              greetingMessage: "Olá! Seja bem-vindo à Lalelilo Kids. Como posso te ajudar hoje?",
+              temperature: 0.7
+            }
+          });
+          console.log('[Seed] Created default Bot Agente IA for Lalelilo.');
+        }
+
+        // 3. Configure WhatsApp Channel
+        const wabaCredentials = {
+          accessToken: "EAALdSbooPbgBRrY59nrmgZC9ZAuvLjM1ehPhPNBo8uXuzvXAGWCedIK6YEnApTpVpukIXCublxJxlrW5LxzBNuoRDILB2O8ziZCLPH7xyfzuZBZBiq6sYRhgCN6CqGSZBKhqMW7OBZAwhunAL4MbW8zapzfu1MEROUnSq3v1Ox76aOB9xZAhj9uwg4Lle4MZAtAZDZD",
+          phoneNumberId: "1012968131907785",
+          businessAccountId: "34852365081075513"
+        };
+        const encryptedWaba = crypto.encrypt(JSON.stringify(wabaCredentials), org.id);
+
+        const existingWaba = await db.channel.findFirst({
+          where: { botId: bot.id, type: 'WHATSAPP' }
+        });
+
+        if (existingWaba) {
+          await db.channel.update({
+            where: { id: existingWaba.id },
+            data: { credentials: encryptedWaba, isActive: true }
+          });
+        } else {
+          await db.channel.create({
+            data: {
+              organizationId: org.id,
+              botId: bot.id,
+              type: 'WHATSAPP',
+              provider: 'META',
+              credentials: encryptedWaba,
+              isActive: true
+            }
+          });
+        }
+
+        // 4. Configure Instagram & FB Messenger Channels
+        const igCredentials = {
+          accessToken: "EAALdSbooPbgBRh0nFZCq2u8QpSOftfuvpCBd5yB2kyZCN7TUFZBOSxO1ovdhQHPbz8yj8kqWRzjN38UZCohA80nDUQk9TAYP5mjQ6ccSWk0c1ccZBLg5cd2Lb99QSYZBwbZC6iWIZAZBekLyxhGixAtEUdj075hDz2Al03LwWje5GumCZB0SdgiAgU93F1NbPbN8YmcLIZD",
+          pageId: "112732697526925"
+        };
+        const encryptedIg = crypto.encrypt(JSON.stringify(igCredentials), org.id);
+
+        const existingIg = await db.channel.findFirst({
+          where: { botId: bot.id, type: 'INSTAGRAM' }
+        });
+
+        if (existingIg) {
+          await db.channel.update({
+            where: { id: existingIg.id },
+            data: { credentials: encryptedIg, isActive: true }
+          });
+        } else {
+          await db.channel.create({
+            data: {
+              organizationId: org.id,
+              botId: bot.id,
+              type: 'INSTAGRAM',
+              provider: 'META',
+              credentials: encryptedIg,
+              isActive: true
+            }
+          });
+        }
+
+        const existingFb = await db.channel.findFirst({
+          where: { botId: bot.id, type: 'MESSENGER' }
+        });
+
+        if (existingFb) {
+          await db.channel.update({
+            where: { id: existingFb.id },
+            data: { credentials: encryptedIg, isActive: true }
+          });
+        } else {
+          await db.channel.create({
+            data: {
+              organizationId: org.id,
+              botId: bot.id,
+              type: 'MESSENGER',
+              provider: 'META',
+              credentials: encryptedIg,
+              isActive: true
+            }
+          });
+        }
+
+        console.log('[Seed] Lalelilo Meta integration channels, Gemini key, and limits verified successfully.');
+      }
+    } catch (laleliloError) {
+      console.warn('[Seed] Warning: Failed to seed Lalelilo Meta channels:', laleliloError.message);
+    }
+
     server.listen(PORT, () => {
       console.log(`================================================================`);
       console.log(` CHATFLOW ENTERPRISE SAAS BOOTED SUCCESSFULLY`);
