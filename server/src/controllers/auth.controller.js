@@ -157,6 +157,17 @@ module.exports = {
         return res.status(404).json({ success: false, error: "User not found." });
       }
 
+      // If impersonated, fetch the target organization details instead of master organization
+      let activeOrg = user.organization;
+      if (req.user.isImpersonated && req.user.organizationId) {
+        const impersonatedOrg = await prisma.organization.findUnique({
+          where: { id: req.user.organizationId }
+        });
+        if (impersonatedOrg) {
+          activeOrg = impersonatedOrg;
+        }
+      }
+
       return res.status(200).json({
         success: true,
         user: {
@@ -168,7 +179,7 @@ module.exports = {
           isImpersonated: req.user.isImpersonated || false,
           originalOrganizationId: req.user.originalOrganizationId || null
         },
-        organization: user.organization,
+        organization: activeOrg,
         isImpersonated: req.user.isImpersonated || false,
         originalOrganizationId: req.user.originalOrganizationId || null
       });
