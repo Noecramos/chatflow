@@ -211,6 +211,44 @@ module.exports = {
         io.to(organizationId).emit("message_received", { session: updated, message: systemMessage });
       }
 
+      // Auto-trigger bot response when returned to AI and AI is active
+      if (!isHumanHandoverActive && updated.bot?.isAiActive) {
+        const lastUserMsg = await prisma.message.findFirst({
+          where: { conversationId: id, senderType: "USER" },
+          orderBy: { createdAt: 'desc' }
+        });
+
+        if (lastUserMsg) {
+          const aiService = require('../services/ai.service');
+          console.log(`[Handover Return] Automatically triggering AI for returned conversation: ${id}`);
+          
+          // Execute AI chat processing asynchronously or synchronously
+          aiService.processChatMessage(prisma, updated.bot, updated, lastUserMsg.content)
+            .then(async (reply) => {
+              const botMessage = await prisma.message.create({
+                data: {
+                  conversationId: id,
+                  senderType: "BOT",
+                  content: reply
+                }
+              });
+
+              try {
+                await metaService.sendTextMessage(updated.channel, updated.contact.platformId, reply);
+              } catch (err) {
+                console.error("Meta Cloud automatic handover reply delivery error:", err.message);
+              }
+
+              if (io) {
+                io.to(organizationId).emit("message_sent", { session: updated, message: botMessage });
+              }
+            })
+            .catch((err) => {
+              console.error("[Handover Return] AI generation failed:", err.message);
+            });
+        }
+      }
+
       return res.status(200).json({ success: true, conversation: updated, systemMessage });
     } catch (e) {
       console.error(e);
@@ -963,6 +1001,297 @@ Suggested Agent Reply:`
     } catch (e) {
       console.error("Failed to delete list:", e);
       return res.status(500).json({ success: false, error: e.message });
+    }
+  },
+
+  /**
+   * Search catalog products from Lalelilo's live Supabase catalog.
+   */
+  async searchCatalogProducts(req, res) {
+    const { id } = req.params;
+    const { query } = req.query;
+    const { organizationId } = req.user;
+
+    try {
+      const conversation = await prisma.inboxConversation.findFirst({
+        where: { id, organizationId },
+        include: { bot: true, contact: true }
+      });
+
+      if (!conversation) {
+        return res.status(404).json({ success: false, error: "Conversation thread not found." });
+      }
+
+      const cartService = require('../services/ecommerce');
+      const products = await cartService.searchProducts(prisma, conversation.bot, query || "");
+      
+      return res.status(200).json({ success: true, products });
+    } catch (error) {
+      console.error("Failed to search catalog products:", error);
+      return res.status(500).json({ success: false, error: error.message });
+    }
+  },
+
+  /**
+   * Add or edit an item manually to the customer's cart.
+   */
+  async addManualCartItem(req, res) {
+    const { id } = req.params;
+    const { productId, quantity, size, color } = req.body;
+    const { organizationId } = req.user;
+
+    if (!productId) {
+      return res.status(400).json({ success: false, error: "Product ID is required." });
+    }
+
+    try {
+      const conversation = await prisma.inboxConversation.findFirst({
+        where: { id, organizationId },
+        include: { bot: true, contact: true }
+      });
+
+      if (!conversation) {
+        return res.status(404).json({ success: false, error: "Conversation thread not found." });
+      }
+
+      const cartService = require('../services/ecommerce');
+      const qty = parseInt(quantity || 1);
+      
+      const cartItems = await cartService.addToCart(
+        prisma,
+        conversation,
+        productId,
+        qty,
+        conversation.bot,
+        size || null,
+        color || null
+      );
+
+      // Emit socket update to notify the dashboard of real-time cart additions
+      if (io) {
+        io.to(organizationId).emit("session_updated", { session: conversation });
+      }
+
+      return res.status(200).json({ success: true, cartItems });
+    } catch (error) {
+      console.error("Failed to add manual cart item:", error);
+      return res.status(500).json({ success: false, error: error.message });
+    }
+  },
+
+  /**
+   * Remove a product variant manually from the customer's cart.
+   */
+  async removeManualCartItem(req, res) {
+    const { id, productId } = req.params;
+    const { organizationId } = req.user;
+
+    try {
+      const conversation = await prisma.inboxConversation.findFirst({
+        where: { id, organizationId },
+        include: { contact: true }
+      });
+
+      if (!conversation) {
+        return res.status(404).json({ success: false, error: "Conversation thread not found." });
+      }
+
+      const cartService = require('../services/ecommerce');
+      const cartItems = await cartService.removeFromCart(prisma, conversation, productId);
+
+      // Emit socket update to notify dashboard in real time
+      if (io) {
+        io.to(organizationId).emit("session_updated", { session: conversation });
+      }
+
+      return res.status(200).json({ success: true, cartItems });
+    } catch (error) {
+      console.error("Failed to remove manual cart item:", error);
+      return res.status(500).json({ success: false, error: error.message });
+    }
+  },
+
+  /**
+   * Apply a custom manual discount (flat currency or percentage) to the contact's metadata.
+   */
+  async applyManualDiscount(req, res) {
+    const { id } = req.params;
+    const { discountType, discountValue } = req.body; // 'fixed' | 'percentage', and number
+    const { organizationId } = req.user;
+
+    try {
+      const conversation = await prisma.inboxConversation.findFirst({
+        where: { id, organizationId },
+        include: { contact: true }
+      });
+
+      if (!conversation) {
+        return res.status(404).json({ success: false, error: "Conversation thread not found." });
+      }
+
+      let meta = {};
+      if (conversation.contact.metadata) {
+        try {
+          meta = JSON.parse(conversation.contact.metadata);
+        } catch (e) {
+          meta = {};
+        }
+      }
+
+      // Store discount values inside Contact metadata
+      if (discountType === 'percentage' || discountType === 'fixed') {
+        meta.appliedDiscountType = discountType;
+        meta.appliedDiscountValue = Number(discountValue || 0);
+      } else {
+        delete meta.appliedDiscountType;
+        delete meta.appliedDiscountValue;
+      }
+
+      await prisma.contact.update({
+        where: { id: conversation.contactId },
+        data: { metadata: JSON.stringify(meta) }
+      });
+
+      // Emit socket update to sync dashboard total
+      if (io) {
+        io.to(organizationId).emit("session_updated", { session: conversation });
+      }
+
+      return res.status(200).json({ 
+        success: true, 
+        message: "Discount applied successfully.",
+        discountType: meta.appliedDiscountType || null,
+        discountValue: meta.appliedDiscountValue || 0
+      });
+    } catch (error) {
+      console.error("Failed to apply manual discount:", error);
+      return res.status(500).json({ success: false, error: error.message });
+    }
+  },
+
+  /**
+   * Format the current cart summary (with any discounts applied) and send as a message to Meta.
+   */
+  async sendCartSummary(req, res) {
+    const { id } = req.params;
+    const { organizationId } = req.user;
+
+    try {
+      const conversation = await prisma.inboxConversation.findFirst({
+        where: { id, organizationId },
+        include: { channel: true, contact: true }
+      });
+
+      if (!conversation) {
+        return res.status(404).json({ success: false, error: "Conversation thread not found." });
+      }
+
+      const cartItems = await prisma.cartItem.findMany({
+        where: { conversationId: id }
+      });
+
+      if (cartItems.length === 0) {
+        return res.status(400).json({ success: false, error: "Cart is empty. Cannot send summary." });
+      }
+
+      // Load discount and shop ID from metadata
+      let shopName = "nossa loja";
+      let discount = 0;
+      let discountType = null;
+      let discountValue = 0;
+
+      if (conversation.contact.metadata) {
+        try {
+          const meta = JSON.parse(conversation.contact.metadata);
+          discountType = meta.appliedDiscountType || null;
+          discountValue = Number(meta.appliedDiscountValue || 0);
+
+          if (meta.assignedShopId) {
+            const { getShops } = require('../services/ecommerce');
+            const shops = await getShops();
+            const shop = shops.find(s => s.id === meta.assignedShopId);
+            if (shop) shopName = shop.name;
+          }
+        } catch (e) {
+          console.warn("[SendCartSummary] Metadata parse failed:", e.message);
+        }
+      }
+
+      const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      const roundedSubtotal = Math.round(subtotal * 100) / 100;
+
+      if (discountType === 'percentage' && discountValue > 0) {
+        discount = Math.round((roundedSubtotal * (discountValue / 100)) * 100) / 100;
+      } else if (discountType === 'fixed' && discountValue > 0) {
+        discount = Math.min(discountValue, roundedSubtotal);
+      }
+      
+      const finalTotal = Math.max(0, Math.round((roundedSubtotal - discount) * 100) / 100);
+
+      // Build friendly message summary
+      let msg = `Olá! Montei um carrinho super especial para você na *${shopName}*! 😍\n\n`;
+      msg += `🛍️ *Sua sacola de compras:*\n`;
+      
+      cartItems.forEach((item, index) => {
+        msg += `${index + 1}️⃣ *${item.name}*\n   Qtd: ${item.quantity} · Preço: R$ ${item.price.toFixed(2).replace('.', ',')} (Subtotal: R$ ${(item.price * item.quantity).toFixed(2).replace('.', ',')})\n`;
+      });
+
+      msg += `\n💵 *Resumo dos Valores:*\n`;
+      msg += `• Subtotal: R$ ${roundedSubtotal.toFixed(2).replace('.', ',')}\n`;
+      
+      if (discount > 0) {
+        const discountDesc = discountType === 'percentage' ? ` (${discountValue}%)` : '';
+        msg += `• Desconto Especial${discountDesc}: - R$ ${discount.toFixed(2).replace('.', ',')}\n`;
+      }
+      
+      msg += `\n💰 *Total final: R$ ${finalTotal.toFixed(2).replace('.', ',')}*\n\n`;
+      msg += `Você confirma esses itens para iniciarmos o fechamento de pagamento? 😊`;
+
+      // Send via Meta API
+      try {
+        await metaService.sendTextMessage(conversation.channel, conversation.contact.platformId, msg);
+      } catch (err) {
+        console.error("[SendCartSummary] Meta transmission failure:", err.message);
+        return res.status(502).json({ success: false, error: `Transmission failed: ${err.message}` });
+      }
+
+      const operator = await prisma.user.findUnique({
+        where: { id: req.user.userId },
+        select: { firstName: true, lastName: true }
+      });
+      const operatorName = operator ? `${operator.firstName} ${operator.lastName}` : "Atendente";
+
+      // Save as Agent message
+      const agentMessage = await prisma.message.create({
+        data: {
+          conversationId: id,
+          senderType: "AGENT",
+          content: msg,
+          metadata: JSON.stringify({ senderName: operatorName, isCartSummary: true })
+        }
+      });
+
+      // Update conversation
+      const updated = await prisma.inboxConversation.update({
+        where: { id },
+        data: { lastMessageAt: new Date() },
+        include: {
+          contact: true,
+          channel: { select: { type: true } },
+          bot: { select: { name: true } },
+          assignedUser: { select: { id: true, firstName: true, lastName: true } }
+        }
+      });
+
+      if (io) {
+        io.to(organizationId).emit("message_sent", { session: updated, message: agentMessage });
+      }
+
+      return res.status(200).json({ success: true, message: agentMessage });
+
+    } catch (error) {
+      console.error("Failed to send cart summary:", error);
+      return res.status(500).json({ success: false, error: error.message });
     }
   }
 };

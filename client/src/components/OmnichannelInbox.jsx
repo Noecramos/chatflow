@@ -54,9 +54,140 @@ export default function OmnichannelInbox({ token, user }) {
   const [aiSuggestion, setAiSuggestion] = useState('');
   const [generatingSuggestion, setGeneratingSuggestion] = useState(false);
   const [lastMessages, setLastMessages] = useState({});
+
+  // Cart Builder & Negotiation States
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchingCatalog, setSearchingCatalog] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedSize, setSelectedSize] = useState('');
+  const [selectedColor, setSelectedColor] = useState('');
+  const [quantityToAdd, setQuantityToAdd] = useState(1);
+  const [addingToCart, setAddingToCart] = useState(false);
+  const [discountType, setDiscountType] = useState('fixed');
+  const [discountValue, setDiscountValue] = useState(0);
+  const [savingDiscount, setSavingDiscount] = useState(false);
+  const [sendingCart, setSendingCart] = useState(false);
   
   const messagesEndRef = useRef(null);
   const socketRef = useRef(null);
+
+  const handleSearchCatalog = async (queryText) => {
+    setSearchQuery(queryText);
+    if (!queryText.trim()) { setSearchResults([]); return; }
+    try {
+      setSearchingCatalog(true);
+      const res = await fetch(`/inbox/conversations/${activeConv.id}/products?query=${encodeURIComponent(queryText)}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSearchResults(data.products || []);
+      }
+    } catch (e) {
+      console.error("Catalog search error:", e);
+    } finally {
+      setSearchingCatalog(false);
+    }
+  };
+
+  const handleAddManualCartItem = async (productId, quantity, size, color) => {
+    try {
+      setAddingToCart(true);
+      const res = await fetch(`/inbox/conversations/${activeConv.id}/cart`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ productId, quantity, size, color })
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchConversationDetails(activeConv.id);
+        setSelectedProduct(null);
+        setSelectedSize('');
+        setSelectedColor('');
+        setQuantityToAdd(1);
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Erro ao adicionar item.');
+    } finally {
+      setAddingToCart(false);
+    }
+  };
+
+  const handleRemoveManualCartItem = async (productId) => {
+    try {
+      const res = await fetch(`/inbox/conversations/${activeConv.id}/cart/${productId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchConversationDetails(activeConv.id);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleAdjustQuantity = async (productId, currentQty, delta) => {
+    if (currentQty + delta <= 0) {
+      await handleRemoveManualCartItem(productId);
+    } else {
+      await handleAddManualCartItem(productId, delta, null, null);
+    }
+  };
+
+  const handleApplyDiscount = async () => {
+    try {
+      setSavingDiscount(true);
+      const res = await fetch(`/inbox/conversations/${activeConv.id}/cart/discount`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ discountType, discountValue: Number(discountValue || 0) })
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchConversationDetails(activeConv.id);
+        alert('Desconto aplicado com sucesso! R$ ou % atualizados no resumo.');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Erro ao aplicar desconto.');
+    } finally {
+      setSavingDiscount(false);
+    }
+  };
+
+  const handleSendCartSummary = async () => {
+    try {
+      setSendingCart(true);
+      const res = await fetch(`/inbox/conversations/${activeConv.id}/cart/send`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        if (data.message) {
+          setMessages(prev => [...prev, data.message]);
+        }
+        alert('Resumo do carrinho enviado ao cliente com sucesso! 😊');
+      } else {
+        alert(data.error || 'Erro ao enviar resumo.');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Erro ao enviar carrinho.');
+    } finally {
+      setSendingCart(false);
+    }
+  };
 
   const fetchConversations = async (tabOverride) => {
     try {
@@ -111,6 +242,22 @@ export default function OmnichannelInbox({ token, user }) {
     setActiveConv(conv); setAssignedUser(conv.assignedUserId || ''); setLabel(conv.label || ''); setNotes(conv.notes || '');
     setPriority(conv.priority || 'MEDIA'); setConvStatus(conv.status || 'OPEN');
     setConvTags(() => { try { return JSON.parse(conv.tags || '[]'); } catch { return []; } });
+    
+    // Clear search and select cart values
+    setSearchQuery('');
+    setSearchResults([]);
+    setSelectedProduct(null);
+
+    // Load discount values from metadata if present
+    try {
+      const meta = JSON.parse(conv.contact?.metadata || '{}');
+      setDiscountType(meta.appliedDiscountType || 'fixed');
+      setDiscountValue(meta.appliedDiscountValue || 0);
+    } catch (e) {
+      setDiscountType('fixed');
+      setDiscountValue(0);
+    }
+
     setDetailTab('details'); fetchConversationDetails(conv.id); markAsRead(conv.id);
     if (socketRef.current) socketRef.current.emit('join_conversation', conv.id);
   };
@@ -431,8 +578,12 @@ export default function OmnichannelInbox({ token, user }) {
                 <span style={{ fontSize: '10px', color: 'hsl(var(--text-muted))' }}>conv_{activeConv.id.slice(0, 8)}</span>
               </div>
               <div style={{ display: 'flex', borderBottom: '1px solid hsl(var(--border))' }}>
-                {['details', 'notes'].map(t => (
-                  <button key={t} onClick={() => setDetailTab(t)} style={{ flex: 1, padding: '10px', border: 'none', cursor: 'pointer', background: detailTab === t ? 'hsl(var(--primary) / 0.08)' : 'transparent', borderBottom: detailTab === t ? '2px solid hsl(var(--primary))' : 'none', color: detailTab === t ? 'hsl(var(--primary))' : 'hsl(var(--text-muted))', fontSize: '12px', fontWeight: '600' }}>{t === 'details' ? 'Detalhes' : 'Notas'}</button>
+                {[
+                  { key: 'details', label: 'Detalhes' },
+                  { key: 'notes', label: 'Notas' },
+                  { key: 'cart', label: 'Sacola' }
+                ].map(t => (
+                  <button key={t.key} onClick={() => setDetailTab(t.key)} style={{ flex: 1, padding: '10px 4px', border: 'none', cursor: 'pointer', background: detailTab === t.key ? 'hsl(var(--primary) / 0.08)' : 'transparent', borderBottom: detailTab === t.key ? '2px solid hsl(var(--primary))' : 'none', color: detailTab === t.key ? 'hsl(var(--primary))' : 'hsl(var(--text-muted))', fontSize: '11px', fontWeight: '600', whiteSpace: 'nowrap' }}>{t.label}</button>
                 ))}
               </div>
               <div style={{ padding: '12px 16px' }}>
@@ -489,7 +640,7 @@ export default function OmnichannelInbox({ token, user }) {
                   <button onClick={handleSaveProperties} disabled={metaLoading} className="btn-primary" style={{ width: '100%', padding: '8px', fontSize: '12px', marginTop: '6px' }}>
                     {metaLoading ? "Salvando..." : "Salvar Propriedades"}
                   </button>
-                </>) : (<>
+                </>) : detailTab === 'notes' ? (<>
                   <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Registre observações..." rows={10} style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', borderRadius: '6px', padding: '10px', fontSize: '12px', outline: 'none', resize: 'none', lineHeight: '1.5' }} />
                   <select value={label} onChange={(e) => setLabel(e.target.value)} style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', borderRadius: '6px', padding: '6px', fontSize: '11px', color: '#fff' }}>
                     <option value="">Sem Marcador</option>
@@ -500,7 +651,184 @@ export default function OmnichannelInbox({ token, user }) {
                   <button onClick={handleSaveProperties} disabled={metaLoading} className="btn-primary" style={{ width: '100%', padding: '10px', fontSize: '12px' }}>
                     {metaLoading ? "Salvando..." : "Salvar Propriedades"}
                   </button>
-                </>)}
+                </>) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    
+                    {/* Live Catalog Product Search */}
+                    <div>
+                      <h5 style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', textTransform: 'uppercase', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        🔍 Buscar no Catálogo
+                      </h5>
+                      <div style={{ display: 'flex', gap: '4px' }}>
+                        <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Pesquisar vestido, calçado..." onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleSearchCatalog(searchQuery))} style={{ flex: 1, background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '5px 8px', borderRadius: '4px', fontSize: '11px' }} />
+                        <button type="button" onClick={() => handleSearchCatalog(searchQuery)} disabled={searchingCatalog} style={{ background: 'hsl(var(--primary))', border: 'none', color: '#fff', borderRadius: '4px', padding: '5px 8px', cursor: 'pointer', fontSize: '11px' }}>
+                          {searchingCatalog ? '...' : 'Ir'}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Catalog Search Results */}
+                    {searchResults.length > 0 && (
+                      <div style={{ maxHeight: '160px', overflowY: 'auto', border: '1px solid hsl(var(--border))', borderRadius: '6px', background: 'hsl(var(--border) / 0.2)', padding: '4px' }}>
+                        {searchResults.map(p => (
+                          <div key={p.id} onClick={() => { setSelectedProduct(p); setSelectedSize(p.variants?.[0] || ''); setSelectedColor(p.colors?.[0] || ''); }} style={{ display: 'flex', gap: '6px', padding: '6px', borderRadius: '4px', cursor: 'pointer', borderBottom: '1px solid hsl(var(--border) / 0.3)', background: selectedProduct?.id === p.id ? 'hsl(var(--primary) / 0.15)' : 'transparent', transition: 'all 0.1s' }}>
+                            {p.imageUrl ? (
+                              <img src={p.imageUrl} alt={p.name} style={{ width: '32px', height: '32px', borderRadius: '4px', objectFit: 'cover' }} />
+                            ) : (
+                              <div style={{ width: '32px', height: '32px', borderRadius: '4px', background: 'hsl(var(--border) / 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px' }}>👗</div>
+                            )}
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: '11px', fontWeight: '600', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
+                              <div style={{ fontSize: '10px', color: 'hsl(var(--secondary))' }}>R$ {p.price.toFixed(2)}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Selected Product Variation Details Picker */}
+                    {selectedProduct && (
+                      <div style={{ padding: '8px', borderRadius: '6px', background: 'hsl(var(--primary) / 0.05)', border: '1px solid hsl(var(--primary) / 0.2)', fontSize: '11px' }}>
+                        <div style={{ fontWeight: '600', marginBottom: '6px' }}>Opções do Item:</div>
+                        
+                        {/* Sizes list badges */}
+                        {selectedProduct.variants && selectedProduct.variants.length > 0 && (
+                          <div style={{ marginBottom: '6px' }}>
+                            <span style={{ color: 'hsl(var(--text-muted))' }}>📏 Tamanho: </span>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px', marginTop: '3px' }}>
+                              {selectedProduct.variants.map(sz => (
+                                <button key={sz} type="button" onClick={() => setSelectedSize(sz)} style={{ padding: '2px 6px', border: '1px solid', borderColor: selectedSize === sz ? 'hsl(var(--primary))' : 'hsl(var(--border))', background: selectedSize === sz ? 'hsl(var(--primary) / 0.2)' : 'transparent', color: selectedSize === sz ? 'hsl(var(--primary))' : '#fff', borderRadius: '3px', fontSize: '9px', fontWeight: '700', cursor: 'pointer' }}>
+                                  {sz}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Colors list badges */}
+                        {selectedProduct.colors && selectedProduct.colors.length > 0 && (
+                          <div style={{ marginBottom: '6px' }}>
+                            <span style={{ color: 'hsl(var(--text-muted))' }}>🎨 Cor: </span>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px', marginTop: '3px' }}>
+                              {selectedProduct.colors.map(col => (
+                                <button key={col} type="button" onClick={() => setSelectedColor(col)} style={{ padding: '2px 6px', border: '1px solid', borderColor: selectedColor === col ? 'hsl(var(--primary))' : 'hsl(var(--border))', background: selectedColor === col ? 'hsl(var(--primary) / 0.2)' : 'transparent', color: selectedColor === col ? 'hsl(var(--primary))' : '#fff', borderRadius: '3px', fontSize: '9px', fontWeight: '700', cursor: 'pointer' }}>
+                                  {col}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Quantity and Actions */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <button type="button" onClick={() => setQuantityToAdd(q => Math.max(1, q - 1))} style={{ padding: '2px 6px', background: 'hsl(var(--border) / 0.5)', border: 'none', borderRadius: '3px', cursor: 'pointer', fontSize: '10px' }}>-</button>
+                            <span style={{ minWidth: '16px', textAlign: 'center', fontWeight: '700' }}>{quantityToAdd}</span>
+                            <button type="button" onClick={() => setQuantityToAdd(q => q + 1)} style={{ padding: '2px 6px', background: 'hsl(var(--border) / 0.5)', border: 'none', borderRadius: '3px', cursor: 'pointer', fontSize: '10px' }}>+</button>
+                          </div>
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            <button type="button" onClick={() => setSelectedProduct(null)} style={{ padding: '4px 8px', border: '1px solid hsl(var(--border))', background: 'transparent', borderRadius: '4px', fontSize: '10px', cursor: 'pointer' }}>Cancelar</button>
+                            <button type="button" onClick={() => handleAddManualCartItem(selectedProduct.id, quantityToAdd, selectedSize, selectedColor)} disabled={addingToCart} style={{ padding: '4px 8px', background: 'hsl(var(--primary))', border: 'none', color: '#fff', borderRadius: '4px', fontSize: '10px', fontWeight: '600', cursor: 'pointer' }}>
+                              {addingToCart ? '...' : 'Adicionar'}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Active Cart Items Listing (Multiple items allowed) */}
+                    <div>
+                      <h5 style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', textTransform: 'uppercase', marginBottom: '6px' }}>
+                        🛒 Itens no Carrinho
+                      </h5>
+                      {cartItems.length === 0 ? (
+                        <div style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', textAlign: 'center', padding: '10px 0', border: '1px dashed hsl(var(--border) / 0.5)', borderRadius: '6px' }}>
+                          Carrinho de compras vazio
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          {cartItems.map(item => (
+                            <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'hsl(var(--border) / 0.15)', padding: '6px 8px', borderRadius: '6px', fontSize: '11px' }}>
+                              <div style={{ flex: 1, minWidth: 0, paddingRight: '6px' }}>
+                                <div style={{ fontWeight: '600', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={item.name}>{item.name}</div>
+                                <div style={{ color: 'hsl(var(--secondary))', fontSize: '10px', marginTop: '1px' }}>
+                                  R$ {item.price.toFixed(2)} × {item.quantity}
+                                </div>
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+                                  <button type="button" onClick={() => handleAdjustQuantity(item.productId, item.quantity, -1)} style={{ width: '16px', height: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'hsl(var(--border) / 0.5)', border: 'none', borderRadius: '3px', cursor: 'pointer', fontSize: '9px' }}>-</button>
+                                  <button type="button" onClick={() => handleAdjustQuantity(item.productId, item.quantity, 1)} style={{ width: '16px', height: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'hsl(var(--border) / 0.5)', border: 'none', borderRadius: '3px', cursor: 'pointer', fontSize: '9px' }}>+</button>
+                                </div>
+                                <button type="button" onClick={() => handleRemoveManualCartItem(item.productId)} style={{ border: 'none', background: 'transparent', color: '#c62828', cursor: 'pointer', padding: '0', display: 'flex', alignItems: 'center' }} title="Excluir item">
+                                  🗑️
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Manual Discount Entry Section */}
+                    {cartItems.length > 0 && (
+                      <div style={{ padding: '10px', borderRadius: '8px', background: 'hsl(var(--border) / 0.2)', border: '1px solid hsl(var(--border) / 0.4)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <h5 style={{ fontSize: '10px', color: 'hsl(var(--text-muted))', textTransform: 'uppercase', margin: 0, fontWeight: '700' }}>
+                          🏷️ Desconto Especial
+                        </h5>
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                          <select value={discountType} onChange={(e) => setDiscountType(e.target.value)} style={{ background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', borderRadius: '4px', fontSize: '11px', padding: '4px' }}>
+                            <option value="fixed">R$ Fixo</option>
+                            <option value="percentage">% Porcento</option>
+                          </select>
+                          <input type="number" min="0" value={discountValue || ''} onChange={(e) => setDiscountValue(e.target.value)} placeholder="0" style={{ flex: 1, background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '4px 6px', borderRadius: '4px', fontSize: '11px', textAlign: 'right' }} />
+                          <button type="button" onClick={handleApplyDiscount} disabled={savingDiscount} style={{ background: 'hsl(var(--secondary))', border: 'none', color: '#000', borderRadius: '4px', padding: '4px 8px', cursor: 'pointer', fontSize: '11px', fontWeight: '600' }}>
+                            {savingDiscount ? '...' : 'Aplicar'}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Summary Totals & Dispatches */}
+                    {cartItems.length > 0 && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '6px', borderTop: '1px solid hsl(var(--border))', paddingTop: '10px' }}>
+                        {(() => {
+                          const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                          let discountAmount = 0;
+                          if (discountType === 'percentage' && discountValue > 0) {
+                            discountAmount = subtotal * (discountValue / 100);
+                          } else if (discountType === 'fixed' && discountValue > 0) {
+                            discountAmount = Math.min(discountValue, subtotal);
+                          }
+                          const finalTotal = Math.max(0, subtotal - discountAmount);
+
+                          return (
+                            <>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'hsl(var(--text-muted))' }}>
+                                <span>Subtotal:</span>
+                                <span>R$ {subtotal.toFixed(2)}</span>
+                              </div>
+                              {discountAmount > 0 && (
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#2e7d32', fontWeight: '600' }}>
+                                  <span>Desconto especial:</span>
+                                  <span>- R$ {discountAmount.toFixed(2)}</span>
+                                </div>
+                              )}
+                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: '800', borderTop: '1px dashed hsl(var(--border) / 0.4)', paddingTop: '6px', marginTop: '2px' }}>
+                                <span>Total Final:</span>
+                                <span style={{ color: 'hsl(var(--secondary))' }}>R$ {finalTotal.toFixed(2)}</span>
+                              </div>
+
+                              <button type="button" onClick={handleSendCartSummary} disabled={sendingCart} className="btn-primary" style={{ width: '100%', padding: '10px', fontSize: '12px', marginTop: '6px', background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.8))', color: '#fff', border: 'none', fontWeight: '700', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                                📤 {sendingCart ? 'Enviando...' : 'Enviar Carrinho ao Cliente'}
+                              </button>
+                            </>
+                          );
+                        })()}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </>

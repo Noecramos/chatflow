@@ -19,6 +19,13 @@ router.post('/conversations/:id/handover', verifyToken, inboxController.toggleHa
 router.put('/conversations/:id/properties', verifyToken, inboxController.updateProperties);
 router.post('/conversations/:id/reply', verifyToken, inboxController.sendManualReply);
 
+// Manual Cart Builder Operations
+router.get('/conversations/:id/products', verifyToken, inboxController.searchCatalogProducts);
+router.post('/conversations/:id/cart', verifyToken, inboxController.addManualCartItem);
+router.delete('/conversations/:id/cart/:productId', verifyToken, inboxController.removeManualCartItem);
+router.post('/conversations/:id/cart/discount', verifyToken, inboxController.applyManualDiscount);
+router.post('/conversations/:id/cart/send', verifyToken, inboxController.sendCartSummary);
+
 // Copilot AI suggestions for support agent co-replies
 router.get('/conversations/:id/suggestions', verifyToken, inboxController.getAiSuggestions);
 

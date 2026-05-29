@@ -89,6 +89,21 @@ async function executeBotAction(action, payload) {
 
 module.exports = {
   /**
+   * Fetch all active shops from Lalelilo Supabase
+   */
+  async getShops() {
+    try {
+      if (supabaseUrl && supabaseKey) {
+        const endpoint = `/shops?select=id,name,city,state&is_active=eq.true&order=name`;
+        return await supabaseRequest('GET', endpoint);
+      }
+    } catch (e) {
+      console.error("[GetShops] Supabase REST fetch failed:", e.message);
+    }
+    return [];
+  },
+
+  /**
    * Search product variant listings in Lalelilo Supabase
    * Uses keyword splitting and searches across name + description for broader matching
    */
@@ -236,7 +251,7 @@ module.exports = {
   /**
    * Add item to database CartItem table and sync it to Lalelilo Supabase Cart
    */
-  async addToCart(prisma, conversation, productId, quantity, bot) {
+  async addToCart(prisma, conversation, productId, quantity, bot, size = null, color = null) {
     const phone = conversation.contact?.phone || conversation.contact?.platformId || "";
     const productInfo = await this.checkProductStock(prisma, bot, productId);
 
@@ -250,9 +265,21 @@ module.exports = {
         if (!cartId) {
           const expires = new Date();
           expires.setHours(expires.getHours() + 2);
+
+          let shopId = null;
+          if (conversation.contact?.metadata) {
+            try {
+              const meta = JSON.parse(conversation.contact.metadata);
+              shopId = meta.assignedShopId || null;
+            } catch (e) {
+              console.warn("[AddToCart] Error parsing metadata:", e.message);
+            }
+          }
+
           const newCart = await supabaseRequest('POST', '/carts', {
             client_id: DEFAULT_CLIENT_ID,
             customer_phone: phone,
+            shop_id: shopId,
             expires_at: expires.toISOString()
           });
           if (newCart && newCart.length > 0) {
@@ -273,7 +300,9 @@ module.exports = {
               cart_id: cartId,
               product_id: productId,
               quantity,
-              price: productInfo.price
+              price: productInfo.price,
+              size: size || null,
+              color: color || null
             });
           }
         }
@@ -283,6 +312,8 @@ module.exports = {
     }
 
     // 2. Add to ChatFlow local DB for dashboard tracking
+    const displayName = `${productInfo.name}${size || color ? ' (' : ''}${size ? 'Tam ' + size : ''}${size && color ? ' / ' : ''}${color ? color : ''}${size || color ? ')' : ''}`;
+
     const existing = await prisma.cartItem.findFirst({
       where: { conversationId: conversation.id, productId }
     });
@@ -290,14 +321,17 @@ module.exports = {
     if (existing) {
       await prisma.cartItem.update({
         where: { id: existing.id },
-        data: { quantity: existing.quantity + quantity }
+        data: { 
+          quantity: existing.quantity + quantity,
+          name: displayName
+        }
       });
     } else {
       await prisma.cartItem.create({
         data: {
           conversationId: conversation.id,
           productId,
-          name: productInfo.name,
+          name: displayName,
           price: productInfo.price,
           quantity: quantity
         }
@@ -353,6 +387,30 @@ module.exports = {
     const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const roundedTotal = Math.round(total * 100) / 100;
 
+    // Load discount and shop ID from metadata
+    let shopId = null;
+    let discount = 0;
+    let discountType = null;
+    let discountValue = 0;
+    if (conversation.contact?.metadata) {
+      try {
+        const meta = JSON.parse(conversation.contact.metadata);
+        shopId = meta.assignedShopId || null;
+        discountType = meta.appliedDiscountType || null;
+        discountValue = Number(meta.appliedDiscountValue || 0);
+
+        if (discountType === 'percentage' && discountValue > 0) {
+          discount = Math.round((roundedTotal * (discountValue / 100)) * 100) / 100;
+        } else if (discountType === 'fixed' && discountValue > 0) {
+          discount = Math.min(discountValue, roundedTotal);
+        }
+      } catch (e) {
+        console.warn("[Checkout] Failed to parse contact metadata JSON:", e.message);
+      }
+    }
+
+    const finalAmount = Math.max(0, Math.round((roundedTotal - discount) * 100) / 100);
+
     let orderId = null;
     let orderNumber = `WA${Date.now().toString(36).toUpperCase()}`;
     let pixKey = "";
@@ -393,8 +451,19 @@ module.exports = {
               subtotal: i.price * i.quantity
             }));
 
+            // Retrieve salesperson details if assigned
+            let agentId = null;
+            let agentName = null;
+            if (conversation.assignedUserId) {
+              agentId = conversation.assignedUserId;
+              if (conversation.assignedUser) {
+                agentName = `${conversation.assignedUser.firstName} ${conversation.assignedUser.lastName}`.trim();
+              }
+            }
+
             const supabaseOrder = await supabaseRequest('POST', '/orders', {
               client_id: DEFAULT_CLIENT_ID,
+              shop_id: shopId,
               order_number: orderNumber,
               customer_name: customerName,
               customer_phone: phone,
@@ -402,11 +471,13 @@ module.exports = {
               status: 'pending',
               subtotal: roundedTotal,
               delivery_fee: 0,
-              discount: 0,
-              total_amount: roundedTotal,
+              discount: discount,
+              total_amount: finalAmount,
               payment_method: 'pix',
               payment_status: 'pending',
-              source_channel: 'whatsapp',
+              source_channel: conversation.channel?.type?.toLowerCase() || 'whatsapp',
+              agent_id: agentId,
+              agent_name: agentName,
               cart_id: cartId,
               items: orderItems
             });
@@ -418,7 +489,7 @@ module.exports = {
               const payment = await asaasRequest('POST', '/payments', {
                 customer: customerId,
                 billingType: 'PIX',
-                value: roundedTotal,
+                value: finalAmount,
                 dueDate: new Date().toISOString().split('T')[0],
                 description: `Lalelilo #${orderNumber}`,
                 externalReference: orderId
@@ -433,7 +504,7 @@ module.exports = {
                 order_id: orderId,
                 asaas_payment_id: payment.id,
                 asaas_customer_id: customerId,
-                amount: roundedTotal,
+                amount: finalAmount,
                 status: 'PENDING',
                 pix_code: pixKey,
                 client_id: DEFAULT_CLIENT_ID
@@ -458,7 +529,7 @@ module.exports = {
         organizationId: conversation.organizationId,
         conversationId: conversation.id,
         contactId: conversation.contactId,
-        totalAmount: roundedTotal,
+        totalAmount: finalAmount,
         status: "PENDING",
         shippingAddress: shippingAddress || "Collected via Chat",
         paymentLink: pixKey ? `PIX_KEY:${pixKey}` : `https://checkout.chatflow.com/pay/${orderNumber}`
@@ -470,6 +541,6 @@ module.exports = {
       where: { conversationId: conversation.id }
     });
 
-    return { order, total: roundedTotal, pixKey: pixKey || "PIX_KEY_MOCK_FALLBACK_123" };
+    return { order, total: finalAmount, pixKey: pixKey || "PIX_KEY_MOCK_FALLBACK_123" };
   }
 };
