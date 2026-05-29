@@ -72,24 +72,33 @@ export default function OmnichannelInbox({ token, user }) {
   const messagesEndRef = useRef(null);
   const socketRef = useRef(null);
 
-  const handleSearchCatalog = async (queryText) => {
+  const handleSearchCatalog = (queryText) => {
     setSearchQuery(queryText);
-    if (!queryText.trim()) { setSearchResults([]); return; }
-    try {
-      setSearchingCatalog(true);
-      const res = await fetch(`/inbox/conversations/${activeConv.id}/products?query=${encodeURIComponent(queryText)}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (data.success) {
-        setSearchResults(data.products || []);
-      }
-    } catch (e) {
-      console.error("Catalog search error:", e);
-    } finally {
-      setSearchingCatalog(false);
-    }
   };
+
+  // Live Catalog Autocomplete search as you type & Default listing autofill on empty query
+  useEffect(() => {
+    if (!token || !activeConv?.id || detailTab !== 'cart') return;
+
+    const delayDebounceFn = setTimeout(async () => {
+      try {
+        setSearchingCatalog(true);
+        const res = await fetch(`/inbox/conversations/${activeConv.id}/products?query=${encodeURIComponent(searchQuery)}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.success) {
+          setSearchResults(data.products || []);
+        }
+      } catch (e) {
+        console.error("Catalog search error:", e);
+      } finally {
+        setSearchingCatalog(false);
+      }
+    }, 150); // 150ms debounce for high performance and smooth typing
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery, activeConv?.id, detailTab, token]);
 
   const handleAddManualCartItem = async (productId, quantity, size, color) => {
     try {

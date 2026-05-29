@@ -125,6 +125,30 @@ module.exports = {
     // 2. Direct Supabase Query with smart keyword search
     try {
       if (supabaseUrl && supabaseKey) {
+        // If query is empty or whitespace, return default list of active products to autofill the Catalog view
+        if (!query || !query.trim()) {
+          const endpoint = `/products?select=id,name,price,compare_at_price,description,image_url,sizes,colors&is_active=eq.true&order=name&limit=20`;
+          try {
+            const products = await supabaseRequest('GET', endpoint);
+            if (products && products.length > 0) {
+              return products.map(p => ({
+                id: p.id,
+                name: p.name,
+                price: Number(p.price),
+                compareAtPrice: p.compare_at_price ? Number(p.compare_at_price) : null,
+                stock: 10,
+                description: p.description || "",
+                variants: p.sizes || [],
+                colors: p.colors || [],
+                imageUrl: p.image_url || ""
+              }));
+            }
+          } catch (e) {
+            console.error("[SearchProducts] Default fetch failed:", e.message);
+          }
+          return [];
+        }
+
         // Split query into individual keywords, filter out short/common words
         const stopWords = ['de', 'da', 'do', 'para', 'com', 'um', 'uma', 'o', 'a', 'os', 'as', 'e', 'ou', 'no', 'na', 'quero', 'ver', 'tem', 'me', 'mostra'];
         const keywords = query
@@ -132,10 +156,22 @@ module.exports = {
           .split(/\s+/)
           .filter(w => w.length > 2 && !stopWords.includes(w));
 
+        // Portuguese plural/singular stemming: e.g. "vestidos" -> "vestido", "moletoms" -> "moletom"
+        const searchKeywords = [];
+        for (const kw of keywords) {
+          searchKeywords.push(kw);
+          if (kw.length > 3 && kw.endsWith('s')) {
+            const stemmed = kw.slice(0, -1);
+            if (!searchKeywords.includes(stemmed)) {
+              searchKeywords.push(stemmed);
+            }
+          }
+        }
+
         let allProducts = [];
 
         // Search each keyword across name and description
-        for (const keyword of keywords) {
+        for (const keyword of searchKeywords) {
           const encoded = encodeURIComponent(keyword.toUpperCase());
           const encodedLower = encodeURIComponent(keyword);
           // Use 'or' filter to search both name and description
@@ -150,10 +186,15 @@ module.exports = {
           }
         }
 
-        // If no keyword match, try the full query as-is
+        // If no keyword match, try the full query as-is (with stemming if it ends in 's')
         if (allProducts.length === 0) {
-          const encodedFull = encodeURIComponent(query);
-          const endpoint = `/products?select=id,name,price,compare_at_price,description,image_url,sizes,colors&or=(name.ilike.%25${encodedFull}%25,description.ilike.%25${encodedFull}%25)&is_active=eq.true&limit=10`;
+          let cleanQuery = query;
+          if (query.length > 3 && query.toLowerCase().endsWith('s')) {
+            cleanQuery = query.slice(0, -1);
+          }
+          const encodedFull = encodeURIComponent(cleanQuery.toUpperCase());
+          const encodedFullLower = encodeURIComponent(cleanQuery.toLowerCase());
+          const endpoint = `/products?select=id,name,price,compare_at_price,description,image_url,sizes,colors&or=(name.ilike.%25${encodedFull}%25,description.ilike.%25${encodedFullLower}%25)&is_active=eq.true&limit=10`;
           try {
             const products = await supabaseRequest('GET', endpoint);
             if (products && products.length > 0) {
@@ -173,7 +214,7 @@ module.exports = {
         });
 
         if (unique.length > 0) {
-          return unique.slice(0, 8).map(p => ({
+          return unique.slice(0, 10).map(p => ({
             id: p.id,
             name: p.name,
             price: Number(p.price),
