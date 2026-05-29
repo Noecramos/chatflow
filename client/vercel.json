@@ -1,4 +1,13 @@
 {
+  "headers": [
+    {
+      "source": "/master-admin",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store, no-cache, must-revalidate" },
+        { "key": "Pragma", "value": "no-cache" }
+      ]
+    }
+  ],
   "rewrites": [
     { "source": "/inbox/:path*", "destination": "https://chatflow-production-262f.up.railway.app/inbox/:path*" },
     { "source": "/channels/:path*", "destination": "https://chatflow-production-262f.up.railway.app/channels/:path*" },
