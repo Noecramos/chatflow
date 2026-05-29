@@ -90,6 +90,7 @@ async function executeBotAction(action, payload) {
 module.exports = {
   /**
    * Search product variant listings in Lalelilo Supabase
+   * Uses keyword splitting and searches across name + description for broader matching
    */
   async searchProducts(prisma, bot, query, filters = "") {
     // 1. Try DB connector BotAction
@@ -106,19 +107,67 @@ module.exports = {
       }
     }
 
-    // 2. Direct Supabase Query
+    // 2. Direct Supabase Query with smart keyword search
     try {
       if (supabaseUrl && supabaseKey) {
-        const endpoint = `/products?select=id,name,price,compare_at_price,description,image_url,sizes,colors&name=ilike.%25${encodeURIComponent(query)}%25&is_active=eq.true&limit=5`;
-        const products = await supabaseRequest('GET', endpoint);
-        if (products && products.length > 0) {
-          return products.map(p => ({
+        // Split query into individual keywords, filter out short/common words
+        const stopWords = ['de', 'da', 'do', 'para', 'com', 'um', 'uma', 'o', 'a', 'os', 'as', 'e', 'ou', 'no', 'na', 'quero', 'ver', 'tem', 'me', 'mostra'];
+        const keywords = query
+          .toLowerCase()
+          .split(/\s+/)
+          .filter(w => w.length > 2 && !stopWords.includes(w));
+
+        let allProducts = [];
+
+        // Search each keyword across name and description
+        for (const keyword of keywords) {
+          const encoded = encodeURIComponent(keyword.toUpperCase());
+          const encodedLower = encodeURIComponent(keyword);
+          // Use 'or' filter to search both name and description
+          const endpoint = `/products?select=id,name,price,compare_at_price,description,image_url,sizes,colors&or=(name.ilike.%25${encoded}%25,description.ilike.%25${encodedLower}%25)&is_active=eq.true&limit=10`;
+          try {
+            const products = await supabaseRequest('GET', endpoint);
+            if (products && products.length > 0) {
+              allProducts.push(...products);
+            }
+          } catch (e) {
+            console.warn(`[SearchProducts] Keyword "${keyword}" search failed:`, e.message);
+          }
+        }
+
+        // If no keyword match, try the full query as-is
+        if (allProducts.length === 0) {
+          const encodedFull = encodeURIComponent(query);
+          const endpoint = `/products?select=id,name,price,compare_at_price,description,image_url,sizes,colors&or=(name.ilike.%25${encodedFull}%25,description.ilike.%25${encodedFull}%25)&is_active=eq.true&limit=10`;
+          try {
+            const products = await supabaseRequest('GET', endpoint);
+            if (products && products.length > 0) {
+              allProducts = products;
+            }
+          } catch (e) {
+            console.warn("[SearchProducts] Full query search failed:", e.message);
+          }
+        }
+
+        // Deduplicate by product ID
+        const seen = new Set();
+        const unique = allProducts.filter(p => {
+          if (seen.has(p.id)) return false;
+          seen.add(p.id);
+          return true;
+        });
+
+        if (unique.length > 0) {
+          return unique.slice(0, 8).map(p => ({
             id: p.id,
             name: p.name,
             price: Number(p.price),
+            compareAtPrice: p.compare_at_price ? Number(p.compare_at_price) : null,
             stock: 10,
             description: p.description || "",
-            variants: p.sizes || []
+            variants: p.sizes || [],
+            colors: p.colors || [],
+            imageUrl: p.image_url || ""
           }));
         }
       }
@@ -126,11 +175,8 @@ module.exports = {
       console.error("[SearchProducts] Supabase REST search failed:", e.message);
     }
 
-    // 3. Mock Fallback
-    const mockCatalog = [
-      { id: "prod_01", name: "Premium Wireless Headphones", price: 129.99, stock: 15, description: "Noise cancelling Bluetooth over-ear headphones.", variants: ["Matte Black", "Silver Gray"] }
-    ];
-    return mockCatalog.filter(p => p.name.toLowerCase().includes(query.toLowerCase()));
+    // 3. No results found
+    return [];
   },
 
   /**
