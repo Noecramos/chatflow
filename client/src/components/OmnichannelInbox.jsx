@@ -97,7 +97,7 @@ export default function OmnichannelInbox({ token, user }) {
       if (activeConv && activeConv.id === data.session.id) setMessages(prev => [...prev, data.message]);
       fetchConversations();
     });
-    socket.on('message_sent', (data) => { if (activeConv && activeConv.id === data.session.id) setMessages(prev => [...prev, data.message]); fetchConversations(); });
+    socket.on('message_sent', (data) => { if (activeConv && activeConv.id === data.session.id) setMessages(prev => { if (prev.some(m => m.id === data.message.id)) return prev; return [...prev, data.message]; }); fetchConversations(); });
     socket.on('session_updated', (data) => { setConversations(prev => prev.map(s => s.id === data.session.id ? { ...data.session, contact: s.contact, channel: s.channel, bot: s.bot } : s)); if (activeConv && activeConv.id === data.session.id) setActiveConv(prev => ({ ...prev, ...data.session })); });
     return () => socket.disconnect();
   }, [token, activeConv?.id]);
@@ -115,7 +115,29 @@ export default function OmnichannelInbox({ token, user }) {
     if (socketRef.current) socketRef.current.emit('join_conversation', conv.id);
   };
 
-  const handleSendReply = async (e) => { e.preventDefault(); if (!replyText.trim() || !activeConv) return; const text = replyText; setReplyText(''); try { const res = await fetch(`/inbox/conversations/${activeConv.id}/reply`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ content: text }) }); const data = await res.json(); if (!data.success) alert(data.error); } catch (err) { console.error(err); } };
+  const handleSendReply = async (e) => {
+    e.preventDefault();
+    if (!replyText.trim() || !activeConv) return;
+    const text = replyText;
+    setReplyText('');
+    try {
+      const res = await fetch(`/inbox/conversations/${activeConv.id}/reply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ content: text })
+      });
+      const data = await res.json();
+      if (data.success && data.message) {
+        // Immediately append agent message to chat so the bubble shows without waiting for socket
+        setMessages(prev => [...prev, data.message]);
+      } else if (!data.success) {
+        alert(data.error);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Erro ao enviar mensagem. Verifique a conexão.');
+    }
+  };
   const handleToggleHandover = async () => { if (!activeConv) return; setHandoverLoading(true); const t = !activeConv.isHumanHandoverActive; try { const res = await fetch(`/inbox/conversations/${activeConv.id}/handover`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ isHumanHandoverActive: t }) }); const data = await res.json(); if (data.success) setActiveConv(prev => ({ ...prev, isHumanHandoverActive: t })); } catch (err) { console.error(err); } finally { setHandoverLoading(false); } };
   const handleSaveProperties = async () => { if (!activeConv) return; setMetaLoading(true); try { const res = await fetch(`/inbox/conversations/${activeConv.id}/properties`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ label, notes, priority, status: convStatus, tags: convTags }) }); const data = await res.json(); if (data.success) { setActiveConv(prev => ({ ...prev, label, notes, priority, status: convStatus })); fetchConversations(); } } catch (err) { console.error(err); } finally { setMetaLoading(false); } };
   const handleQuickUpdate = async (field, value) => { if (!activeConv) return; try { await fetch(`/inbox/conversations/${activeConv.id}/properties`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ [field]: value }) }); setActiveConv(prev => ({ ...prev, [field]: value })); if (field === 'status') setConvStatus(value); if (field === 'priority') setPriority(value); fetchConversations(); } catch (err) { console.error(err); } };
