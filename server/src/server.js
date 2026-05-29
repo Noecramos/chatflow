@@ -34,6 +34,8 @@ app.use('/widget', express.static(path.join(__dirname, '../../widget')));
 
 // Standalone Master Admin System Console
 app.get('/master-admin', (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+  res.set('Pragma', 'no-cache');
   res.sendFile(path.join(__dirname, 'views/admin.html'));
 });
 
