@@ -5,6 +5,8 @@
 const prisma = require('../db');
 const metaService = require('../services/meta');
 const aiService = require('../services/ai.service');
+const { transcribeAudio } = require('../services/audio-stt');
+const crypto = require('../utils/crypto');
 
 const processedMessageIds = new Set();
 const processedMessageIdsQueue = [];
@@ -125,6 +127,25 @@ module.exports = {
 
         if (message.type === 'text') {
           messageText = message.text.body;
+        } else if (message.type === 'audio') {
+          // Transcribe audio using Google Cloud Speech-to-Text (client's API key)
+          const googleSTTKey = process.env.GOOGLE_TTS_API_KEY;
+          const wabaToken = process.env.LALELILO_WABA_ACCESS_TOKEN || process.env.META_ACCESS_TOKEN;
+          const audioMediaId = message.audio?.id;
+          if (googleSTTKey && wabaToken && audioMediaId) {
+            console.log(`[Webhook] Audio message received, transcribing with Google STT...`);
+            const transcribed = await transcribeAudio(audioMediaId, wabaToken, googleSTTKey);
+            if (transcribed) {
+              messageText = transcribed;
+              metaDetails = { ...metaDetails, originalType: 'audio', transcribed: true };
+            } else {
+              messageText = '[Áudio não reconhecido]';
+              metaDetails = { ...metaDetails, originalType: 'audio', transcribed: false };
+            }
+          } else {
+            messageText = '[Mensagem de áudio]';
+            metaDetails = { ...metaDetails, originalType: 'audio', transcribed: false };
+          }
         } else if (message.type === 'interactive') {
           const interactive = message.interactive;
           if (interactive.type === 'list_reply') {
@@ -176,7 +197,38 @@ module.exports = {
         let metaDetails = msgId ? { messengerMessageId: msgId } : {};
 
         if (message) {
-          messageText = message.text || "[Media attachment]";
+          // Check for audio attachments in IG/Messenger
+          const audioAttachment = message.attachments?.find(a => a.type === 'audio');
+          if (audioAttachment && audioAttachment.payload?.url) {
+            const googleSTTKey = process.env.GOOGLE_TTS_API_KEY;
+            if (googleSTTKey) {
+              console.log(`[Webhook] IG/FB audio attachment, transcribing...`);
+              // For IG/Messenger, audio URL is directly available (no media ID lookup needed)
+              try {
+                const axios = require('axios');
+                const audioRes = await axios.get(audioAttachment.payload.url, { responseType: 'arraybuffer' });
+                const base64Audio = Buffer.from(audioRes.data).toString('base64');
+                const sttRes = await axios.post(`https://speech.googleapis.com/v1/speech:recognize?key=${googleSTTKey}`, {
+                  config: { encoding: 'OGG_OPUS', sampleRateHertz: 16000, languageCode: 'pt-BR', model: 'latest_long', enableAutomaticPunctuation: true },
+                  audio: { content: base64Audio }
+                });
+                const results = sttRes.data.results;
+                if (results && results.length > 0) {
+                  messageText = results.map(r => r.alternatives?.[0]?.transcript || '').join(' ').trim();
+                  metaDetails = { ...metaDetails, originalType: 'audio', transcribed: true };
+                } else {
+                  messageText = '[Áudio não reconhecido]';
+                }
+              } catch (e) {
+                console.error('[Webhook] IG/FB audio transcription failed:', e.message);
+                messageText = '[Mensagem de áudio]';
+              }
+            } else {
+              messageText = '[Mensagem de áudio]';
+            }
+          } else {
+            messageText = message.text || "[Media attachment]";
+          }
           metaDetails = message.attachments ? { ...metaDetails, attachments: message.attachments } : metaDetails;
         } else if (postback) {
           messageText = postback.title;
