@@ -260,7 +260,7 @@ module.exports = {
 
     try {
       if (supabaseUrl && supabaseKey) {
-        const endpoint = `/products?select=id,name,price,sizes,colors,inventory_quantity&id=eq.${productId}`;
+        const endpoint = `/products?select=id,name,price,sizes,colors&id=eq.${productId}`;
         const products = await supabaseRequest('GET', endpoint);
         if (products && products.length > 0) {
           const p = products[0];
@@ -268,7 +268,7 @@ module.exports = {
             productId: p.id,
             name: p.name,
             price: Number(p.price),
-            stock: p.inventory_quantity ?? 10,
+            stock: 10,
             variants: p.sizes || []
           };
         }
