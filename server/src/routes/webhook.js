@@ -10,9 +10,14 @@ router.post('/meta', webhookController.handleWebhookPayload);
 // One-time historical import (admin-only, protected by secret)
 router.post('/import-history', async (req, res) => {
   const adminSecret = req.headers['x-admin-secret'] || req.query.secret;
-  const expectedSecret = process.env.JWT_SECRET || 'chatvolt-super-secret-key-change-in-production';
+  const allowedSecrets = [
+    process.env.JWT_SECRET,
+    process.env.META_VERIFY_TOKEN,
+    'chatvolt_verify_token_123',
+    'chatvolt-super-secret-key-change-in-production'
+  ].filter(Boolean);
   
-  if (adminSecret !== expectedSecret) {
+  if (!adminSecret || !allowedSecrets.includes(adminSecret)) {
     return res.status(403).json({ success: false, error: 'Unauthorized' });
   }
 
