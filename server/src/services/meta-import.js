@@ -203,7 +203,21 @@ async function importHistoricalConversations(organizationSlug = 'lalelilo') {
           if (existing) continue;
 
           const isFromPage = msg.from?.id === PAGE_ID;
-          const content = msg.message || '[Attachment]';
+
+          // Build descriptive content for attachments
+          let content = msg.message || '';
+          if (!content && msg.attachments?.data) {
+            const att = msg.attachments.data[0];
+            const type = (att.type || att.mime_type || 'file').toLowerCase();
+            if (type.includes('image') || type === 'image') content = '📷 [Imagem]';
+            else if (type.includes('video') || type === 'video') content = '🎬 [Vídeo]';
+            else if (type.includes('audio') || type === 'audio') content = '🎵 [Áudio]';
+            else if (type === 'sticker') content = '🏷️ [Sticker]';
+            else if (type === 'share' || type === 'link') content = '🔗 [Link compartilhado]';
+            else if (type === 'story_mention') content = '📖 [Menção no story]';
+            else content = `📎 [${type}]`;
+          }
+          if (!content) content = '💬 [Mensagem sem texto]';
 
           await prisma.message.create({
             data: {
