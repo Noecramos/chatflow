@@ -303,10 +303,12 @@ export default function OmnichannelInbox({ token, user }) {
             {/* Chat Panel */}
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
               {/* Chat Header */}
-              <div style={{ padding: '12px 20px', borderBottom: '1px solid hsl(var(--border))', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'hsl(var(--bg-card) / 0.15)', flexShrink: 0 }}>
-                <div>
-                  <h4 style={{ fontSize: '15px', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
-                    {activeConv.contact?.name || 'Cliente'} 
+              <div style={{ padding: '12px 20px', borderBottom: '1px solid hsl(var(--border))', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'hsl(var(--bg-card) / 0.15)', flexShrink: 0, gap: '12px' }}>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '15px', fontWeight: '700', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '180px' }}>
+                      {activeConv.contact?.name || 'Cliente'}
+                    </span>
                     {renderChannelBadge(activeConv.channel.type)}
                     {activeConv.isHumanHandoverActive && (
                       <span style={{ 
@@ -323,8 +325,8 @@ export default function OmnichannelInbox({ token, user }) {
                         Humano Solicitado
                       </span>
                     )}
-                  </h4>
-                  <p style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', margin: '2px 0 0' }}>
+                  </div>
+                  <p style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     ID: <code style={{ fontSize: '10px' }}>{activeConv.contact?.platformId}</code> · Bot: <strong>{activeConv.bot?.name || "Zimmy"}</strong>
                   </p>
                 </div>
@@ -401,9 +403,9 @@ export default function OmnichannelInbox({ token, user }) {
             </div>
 
             {/* Detail Panel */}
-            <div style={{ width: '280px', flexShrink: 0, borderLeft: '1px solid hsl(var(--border))', display: 'flex', flexDirection: 'column', background: 'hsl(var(--bg-card) / 0.15)', overflowY: 'auto' }}>
+            <div style={{ width: '280px', flexShrink: 0, borderLeft: '1px solid hsl(var(--border))', display: 'flex', flexDirection: 'column', background: 'hsl(var(--bg-card) / 0.15)', overflowY: 'auto', overflowX: 'hidden' }}>
               <div style={{ padding: '14px 16px', borderBottom: '1px solid hsl(var(--border))' }}>
-                <h4 style={{ fontSize: '14px', fontWeight: '700', margin: 0 }}>{activeConv.contact?.name || 'Visitante'}</h4>
+                <h4 style={{ fontSize: '14px', fontWeight: '700', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{activeConv.contact?.name || 'Visitante'}</h4>
                 <span style={{ fontSize: '10px', color: 'hsl(var(--text-muted))' }}>conv_{activeConv.id.slice(0, 8)}</span>
               </div>
               <div style={{ display: 'flex', borderBottom: '1px solid hsl(var(--border))' }}>
