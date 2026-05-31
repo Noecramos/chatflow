@@ -11,6 +11,20 @@ const crypto = require('../utils/crypto');
 const processedMessageIds = new Set();
 const processedMessageIdsQueue = [];
 
+// Webhook request log (ring buffer - last 50 requests)
+const webhookLog = [];
+const MAX_WEBHOOK_LOG = 50;
+
+function logWebhookRequest(entry) {
+  entry.timestamp = new Date().toISOString();
+  webhookLog.push(entry);
+  if (webhookLog.length > MAX_WEBHOOK_LOG) webhookLog.shift();
+}
+
+function getWebhookLog() {
+  return [...webhookLog];
+}
+
 async function isDuplicate(msgId) {
   if (!msgId) return false;
 
@@ -66,6 +80,7 @@ function broadcastToDashboard(orgId, event, data) {
 
 module.exports = {
   setSocketIO,
+  getWebhookLog,
 
   /**
    * Meta challenge verify token flow
@@ -97,11 +112,23 @@ module.exports = {
     const body = req.body;
     console.log('[Meta Webhook] Payload received:', JSON.stringify(body, null, 2));
 
+    const logEntry = {
+      object: body.object || 'unknown',
+      entryCount: body.entry?.length || 0,
+      status: 'received',
+      details: null,
+      error: null
+    };
+
     // Acknowledge Meta immediately to avoid retry storms
     res.status(200).send('EVENT_RECEIVED');
 
     try {
-      if (!body.object) return;
+      if (!body.object) {
+        logEntry.status = 'skipped_no_object';
+        logWebhookRequest(logEntry);
+        return;
+      }
 
       // 1. WhatsApp Events (Batch Processing)
       if (body.object === 'whatsapp_business_account') {
@@ -259,8 +286,13 @@ module.exports = {
         }
       }
 
+      logEntry.status = 'processed_ok';
+      logWebhookRequest(logEntry);
     } catch (e) {
       console.error("[Meta Webhook parsing error]:", e);
+      logEntry.status = 'error';
+      logEntry.error = e.message;
+      logWebhookRequest(logEntry);
     }
   }
 };
@@ -269,13 +301,15 @@ module.exports = {
  * Common Orchestrator mapping webhooks directly to Contact and InboxConversation tables
  */
 async function processOmnichannelMessage({ senderId, senderName, channelType, channelIdentifier, content, metadata }) {
-  console.log(`[Omni Webhook Processor] Msg from ${senderId} via ${channelType}`);
+  console.log(`[Omni Webhook Processor] Msg from ${senderId} via ${channelType}, identifier: ${channelIdentifier}`);
 
   // 1. Locate channel integration by matching decrypted credentials (tenant isolation)
   const channels = await prisma.channel.findMany({
     where: { type: channelType, isActive: true },
     include: { bot: true }
   });
+
+  console.log(`[Omni Webhook Processor] Found ${channels.length} active ${channelType} channels to match against`);
 
   const crypto = require('../utils/crypto');
   let channel = null;

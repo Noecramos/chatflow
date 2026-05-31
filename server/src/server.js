@@ -240,7 +240,7 @@ app.get('/health/diagnostic', async (req, res) => {
     return res.json({
       status: 'diagnostic',
       timestamp: new Date(),
-      codeVersion: 'batch-processing-v2',
+      codeVersion: 'batch-processing-v3-with-logging',
       channels: channelSummary,
       recentConversations: recentConvos.map(c => ({
         id: c.id,
@@ -259,7 +259,8 @@ app.get('/health/diagnostic', async (req, res) => {
         channelType: m.conversation?.channel?.type,
         contactName: m.conversation?.contact?.name,
         createdAt: m.createdAt
-      }))
+      })),
+      webhookLog: webhookController.getWebhookLog()
     });
   } catch (err) {
     return res.status(500).json({ error: err.message });
