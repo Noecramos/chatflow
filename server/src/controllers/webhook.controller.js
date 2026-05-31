@@ -97,154 +97,166 @@ module.exports = {
     const body = req.body;
     console.log('[Meta Webhook] Payload received:', JSON.stringify(body, null, 2));
 
-    // Acknowledge Meta
+    // Acknowledge Meta immediately to avoid retry storms
     res.status(200).send('EVENT_RECEIVED');
 
     try {
       if (!body.object) return;
 
-      // 1. WhatsApp Events
+      // 1. WhatsApp Events (Batch Processing)
       if (body.object === 'whatsapp_business_account') {
-        const entry = body.entry?.[0];
-        const change = entry?.changes?.[0]?.value;
-        const message = change?.messages?.[0];
-        const contact = change?.contacts?.[0];
+        if (body.entry && Array.isArray(body.entry)) {
+          for (const entry of body.entry) {
+            if (entry.changes && Array.isArray(entry.changes)) {
+              for (const change of entry.changes) {
+                const value = change.value;
+                if (!value || !value.messages || !Array.isArray(value.messages)) continue;
 
-        if (!message) return;
+                for (const message of value.messages) {
+                  const contact = value.contacts?.[0];
 
-        // Webhook retry deduplication
-        if (await isDuplicate(message.id)) {
-          console.log(`[Meta Webhook] Skipping duplicate WhatsApp message: ${message.id}`);
-          return;
-        }
+                  // Webhook retry deduplication
+                  if (await isDuplicate(message.id)) {
+                    console.log(`[Meta Webhook] Skipping duplicate WhatsApp message: ${message.id}`);
+                    continue;
+                  }
 
-        const senderPhone = message.from;
-        const senderName = contact?.profile?.name || `WhatsApp User (${senderPhone.slice(-4)})`;
-        const phoneId = change.metadata?.phone_number_id;
+                  const senderPhone = message.from;
+                  const senderName = contact?.profile?.name || `WhatsApp User (${senderPhone.slice(-4)})`;
+                  const phoneId = value.metadata?.phone_number_id;
 
-        let messageText = "";
-        let metaDetails = { whatsappMessageId: message.id };
+                  let messageText = "";
+                  let metaDetails = { whatsappMessageId: message.id };
 
-        if (message.type === 'text') {
-          messageText = message.text.body;
-        } else if (message.type === 'audio') {
-          // Transcribe audio using Google Cloud Speech-to-Text (client's API key)
-          const googleSTTKey = process.env.GOOGLE_TTS_API_KEY;
-          const wabaToken = process.env.LALELILO_WABA_ACCESS_TOKEN || process.env.META_ACCESS_TOKEN;
-          const audioMediaId = message.audio?.id;
-          if (googleSTTKey && wabaToken && audioMediaId) {
-            console.log(`[Webhook] Audio message received, transcribing with Google STT...`);
-            const transcribed = await transcribeAudio(audioMediaId, wabaToken, googleSTTKey);
-            if (transcribed) {
-              messageText = transcribed;
-              metaDetails = { ...metaDetails, originalType: 'audio', transcribed: true };
-            } else {
-              messageText = '[Áudio não reconhecido]';
-              metaDetails = { ...metaDetails, originalType: 'audio', transcribed: false };
+                  if (message.type === 'text') {
+                    messageText = message.text.body;
+                  } else if (message.type === 'audio') {
+                    // Transcribe audio using Google Cloud Speech-to-Text (client's API key)
+                    const googleSTTKey = process.env.GOOGLE_TTS_API_KEY;
+                    const wabaToken = process.env.LALELILO_WABA_ACCESS_TOKEN || process.env.META_ACCESS_TOKEN;
+                    const audioMediaId = message.audio?.id;
+                    if (googleSTTKey && wabaToken && audioMediaId) {
+                      console.log(`[Webhook] Audio message received, transcribing with Google STT...`);
+                      const transcribed = await transcribeAudio(audioMediaId, wabaToken, googleSTTKey);
+                      if (transcribed) {
+                        messageText = transcribed;
+                        metaDetails = { ...metaDetails, originalType: 'audio', transcribed: true };
+                      } else {
+                        messageText = '[Áudio não reconhecido]';
+                        metaDetails = { ...metaDetails, originalType: 'audio', transcribed: false };
+                      }
+                    } else {
+                      messageText = '[Mensagem de áudio]';
+                      metaDetails = { ...metaDetails, originalType: 'audio', transcribed: false };
+                    }
+                  } else if (message.type === 'interactive') {
+                    const interactive = message.interactive;
+                    if (interactive.type === 'list_reply') {
+                      messageText = interactive.list_reply.title;
+                      metaDetails = { ...metaDetails, list_reply_id: interactive.list_reply.id };
+                    } else if (interactive.type === 'button_reply') {
+                      messageText = interactive.button_reply.title;
+                      metaDetails = { ...metaDetails, button_reply_id: interactive.button_reply.id };
+                    }
+                  } else if (message.type === 'order') {
+                    const order = message.order;
+                    messageText = `WhatsApp Native Order Submitted: ${order.product_items.length} items.`;
+                    metaDetails = { ...metaDetails, orderItems: order.product_items, catalogId: order.catalog_id };
+                  } else {
+                    messageText = `[Media/Interactive payload: ${message.type}]`;
+                  }
+
+                  await processOmnichannelMessage({
+                    senderId: senderPhone,
+                    senderName: senderName,
+                    channelType: 'WHATSAPP',
+                    channelIdentifier: phoneId,
+                    content: messageText,
+                    metadata: metaDetails
+                  });
+                }
+              }
             }
-          } else {
-            messageText = '[Mensagem de áudio]';
-            metaDetails = { ...metaDetails, originalType: 'audio', transcribed: false };
           }
-        } else if (message.type === 'interactive') {
-          const interactive = message.interactive;
-          if (interactive.type === 'list_reply') {
-            messageText = interactive.list_reply.title;
-            metaDetails = { ...metaDetails, list_reply_id: interactive.list_reply.id };
-          } else if (interactive.type === 'button_reply') {
-            messageText = interactive.button_reply.title;
-            metaDetails = { ...metaDetails, button_reply_id: interactive.button_reply.id };
-          }
-        } else if (message.type === 'order') {
-          const order = message.order;
-          messageText = `WhatsApp Native Order Submitted: ${order.product_items.length} items.`;
-          metaDetails = { ...metaDetails, orderItems: order.product_items, catalogId: order.catalog_id };
-        } else {
-          messageText = `[Media/Interactive payload: ${message.type}]`;
         }
-
-        await processOmnichannelMessage({
-          senderId: senderPhone,
-          senderName: senderName,
-          channelType: 'WHATSAPP',
-          channelIdentifier: phoneId,
-          content: messageText,
-          metadata: metaDetails
-        });
       }
 
-      // 2. Instagram & Messenger Events
+      // 2. Instagram & Messenger Events (Batch Processing)
       if (body.object === 'page' || body.object === 'instagram') {
-        const entry = body.entry?.[0];
-        const messaging = entry?.messaging?.[0];
-        if (!messaging) return;
+        if (body.entry && Array.isArray(body.entry)) {
+          for (const entry of body.entry) {
+            if (entry.messaging && Array.isArray(entry.messaging)) {
+              for (const messaging of entry.messaging) {
+                const senderId = messaging.sender?.id;
+                const recipientId = messaging.recipient?.id;
+                const message = messaging.message;
+                const postback = messaging.postback;
 
-        const senderId = messaging.sender?.id;
-        const recipientId = messaging.recipient?.id;
-        const message = messaging.message;
-        const postback = messaging.postback;
+                if (!message && !postback) continue;
 
-        if (!message && !postback) return;
-
-        // Webhook retry deduplication
-        const msgId = message?.mid;
-        if (msgId && await isDuplicate(msgId)) {
-          console.log(`[Meta Webhook] Skipping duplicate IG/Messenger message: ${msgId}`);
-          return;
-        }
-
-        let messageText = "";
-        let metaDetails = msgId ? { messengerMessageId: msgId } : {};
-
-        if (message) {
-          // Check for audio attachments in IG/Messenger
-          const audioAttachment = message.attachments?.find(a => a.type === 'audio');
-          if (audioAttachment && audioAttachment.payload?.url) {
-            const googleSTTKey = process.env.GOOGLE_TTS_API_KEY;
-            if (googleSTTKey) {
-              console.log(`[Webhook] IG/FB audio attachment, transcribing...`);
-              // For IG/Messenger, audio URL is directly available (no media ID lookup needed)
-              try {
-                const axios = require('axios');
-                const audioRes = await axios.get(audioAttachment.payload.url, { responseType: 'arraybuffer' });
-                const base64Audio = Buffer.from(audioRes.data).toString('base64');
-                const sttRes = await axios.post(`https://speech.googleapis.com/v1/speech:recognize?key=${googleSTTKey}`, {
-                  config: { encoding: 'OGG_OPUS', sampleRateHertz: 16000, languageCode: 'pt-BR', model: 'latest_long', enableAutomaticPunctuation: true },
-                  audio: { content: base64Audio }
-                });
-                const results = sttRes.data.results;
-                if (results && results.length > 0) {
-                  messageText = results.map(r => r.alternatives?.[0]?.transcript || '').join(' ').trim();
-                  metaDetails = { ...metaDetails, originalType: 'audio', transcribed: true };
-                } else {
-                  messageText = '[Áudio não reconhecido]';
+                // Webhook retry deduplication
+                const msgId = message?.mid;
+                if (msgId && await isDuplicate(msgId)) {
+                  console.log(`[Meta Webhook] Skipping duplicate IG/Messenger message: ${msgId}`);
+                  continue;
                 }
-              } catch (e) {
-                console.error('[Webhook] IG/FB audio transcription failed:', e.message);
-                messageText = '[Mensagem de áudio]';
+
+                let messageText = "";
+                let metaDetails = msgId ? { messengerMessageId: msgId } : {};
+
+                if (message) {
+                  // Check for audio attachments in IG/Messenger
+                  const audioAttachment = message.attachments?.find(a => a.type === 'audio');
+                  if (audioAttachment && audioAttachment.payload?.url) {
+                    const googleSTTKey = process.env.GOOGLE_TTS_API_KEY;
+                    if (googleSTTKey) {
+                      console.log(`[Webhook] IG/FB audio attachment, transcribing...`);
+                      // For IG/Messenger, audio URL is directly available (no media ID lookup needed)
+                      try {
+                        const axios = require('axios');
+                        const audioRes = await axios.get(audioAttachment.payload.url, { responseType: 'arraybuffer' });
+                        const base64Audio = Buffer.from(audioRes.data).toString('base64');
+                        const sttRes = await axios.post(`https://speech.googleapis.com/v1/speech:recognize?key=${googleSTTKey}`, {
+                          config: { encoding: 'OGG_OPUS', sampleRateHertz: 16000, languageCode: 'pt-BR', model: 'latest_long', enableAutomaticPunctuation: true },
+                          audio: { content: base64Audio }
+                        });
+                        const results = sttRes.data.results;
+                        if (results && results.length > 0) {
+                          messageText = results.map(r => r.alternatives?.[0]?.transcript || '').join(' ').trim();
+                          metaDetails = { ...metaDetails, originalType: 'audio', transcribed: true };
+                        } else {
+                          messageText = '[Áudio não reconhecido]';
+                        }
+                      } catch (e) {
+                        console.error('[Webhook] IG/FB audio transcription failed:', e.message);
+                        messageText = '[Mensagem de áudio]';
+                      }
+                    } else {
+                      messageText = '[Mensagem de áudio]';
+                    }
+                  } else {
+                    messageText = message.text || "[Media attachment]";
+                  }
+                  metaDetails = message.attachments ? { ...metaDetails, attachments: message.attachments } : metaDetails;
+                } else if (postback) {
+                  messageText = postback.title;
+                  metaDetails = { ...metaDetails, payload: postback.payload };
+                }
+
+                const channelType = body.object === 'instagram' ? 'INSTAGRAM' : 'MESSENGER';
+
+                await processOmnichannelMessage({
+                  senderId: senderId,
+                  senderName: `${channelType === 'INSTAGRAM' ? 'IG' : 'Messenger'} User (${senderId.slice(-4)})`,
+                  channelType: channelType,
+                  channelIdentifier: recipientId,
+                  content: messageText,
+                  metadata: metaDetails
+                });
               }
-            } else {
-              messageText = '[Mensagem de áudio]';
             }
-          } else {
-            messageText = message.text || "[Media attachment]";
           }
-          metaDetails = message.attachments ? { ...metaDetails, attachments: message.attachments } : metaDetails;
-        } else if (postback) {
-          messageText = postback.title;
-          metaDetails = { ...metaDetails, payload: postback.payload };
         }
-
-        const channelType = body.object === 'instagram' ? 'INSTAGRAM' : 'MESSENGER';
-
-        await processOmnichannelMessage({
-          senderId: senderId,
-          senderName: `${channelType === 'INSTAGRAM' ? 'IG' : 'Messenger'} User (${senderId.slice(-4)})`,
-          channelType: channelType,
-          channelIdentifier: recipientId,
-          content: messageText,
-          metadata: metaDetails
-        });
       }
 
     } catch (e) {
@@ -288,8 +300,14 @@ async function processOmnichannelMessage({ senderId, senderName, channelType, ch
             channel = chan;
             break;
           }
+        } else if (channelType === 'INSTAGRAM') {
+          // Match by Facebook Page ID or Instagram Business Account ID
+          if (creds.pageId === channelIdentifier || creds.instagramBusinessAccountId === channelIdentifier) {
+            channel = chan;
+            break;
+          }
         } else {
-          // Match by Facebook/Instagram Page ID
+          // Match by Facebook Page ID for MESSENGER
           if (creds.pageId === channelIdentifier) {
             channel = chan;
             break;
