@@ -157,6 +157,115 @@ app.get('/health', (req, res) => {
   return res.status(200).json({ status: "healthy", timestamp: new Date() });
 });
 
+// Diagnostic endpoint — shows channel config and recent webhook activity
+app.get('/health/diagnostic', async (req, res) => {
+  // Simple security: require a secret query param
+  if (req.query.key !== (process.env.META_VERIFY_TOKEN || 'chatflow_verify_token_123')) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+
+  try {
+    const channels = await db.channel.findMany({
+      select: {
+        id: true,
+        type: true,
+        isActive: true,
+        organizationId: true,
+        credentials: true,
+        createdAt: true
+      }
+    });
+
+    // Mask sensitive data but show structure
+    const channelSummary = channels.map(c => {
+      let credsParsed = null;
+      try {
+        credsParsed = JSON.parse(c.credentials);
+      } catch (e) {
+        credsParsed = { encrypted: true, length: c.credentials?.length || 0 };
+      }
+
+      // Mask tokens but show keys present
+      if (credsParsed && typeof credsParsed === 'object') {
+        const masked = {};
+        for (const [key, val] of Object.entries(credsParsed)) {
+          if (typeof val === 'string' && val.length > 20) {
+            masked[key] = val.slice(0, 8) + '...' + val.slice(-4) + ` (${val.length} chars)`;
+          } else {
+            masked[key] = val;
+          }
+        }
+        credsParsed = masked;
+      }
+
+      return {
+        id: c.id,
+        type: c.type,
+        isActive: c.isActive,
+        organizationId: c.organizationId,
+        credentials: credsParsed,
+        createdAt: c.createdAt
+      };
+    });
+
+    // Recent conversations (last 5)
+    const recentConvos = await db.inboxConversation.findMany({
+      take: 5,
+      orderBy: { lastMessageAt: 'desc' },
+      include: {
+        contact: { select: { name: true, platformType: true, platformId: true } },
+        channel: { select: { type: true } },
+        _count: { select: { messages: true } }
+      }
+    });
+
+    // Recent messages (last 10)
+    const recentMessages = await db.message.findMany({
+      take: 10,
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        senderType: true,
+        content: true,
+        createdAt: true,
+        conversation: {
+          select: {
+            contact: { select: { name: true, platformType: true } },
+            channel: { select: { type: true } }
+          }
+        }
+      }
+    });
+
+    return res.json({
+      status: 'diagnostic',
+      timestamp: new Date(),
+      codeVersion: 'batch-processing-v2',
+      channels: channelSummary,
+      recentConversations: recentConvos.map(c => ({
+        id: c.id,
+        status: c.status,
+        channelType: c.channel?.type,
+        contactName: c.contact?.name,
+        platformType: c.contact?.platformType,
+        messageCount: c._count?.messages,
+        lastMessageAt: c.lastMessageAt,
+        isHumanHandover: c.isHumanHandoverActive
+      })),
+      recentMessages: recentMessages.map(m => ({
+        id: m.id,
+        senderType: m.senderType,
+        content: m.content?.substring(0, 100),
+        channelType: m.conversation?.channel?.type,
+        contactName: m.conversation?.contact?.name,
+        createdAt: m.createdAt
+      }))
+    });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 // Setup socket connection
 const io = socketIo(server, {
   cors: {
