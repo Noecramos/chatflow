@@ -1864,7 +1864,7 @@ export default function App() {
                     if (data.success) setCrmPipeline(data.pipeline);
                     else alert(`Erro CRM: ${data.error}`);
                   } catch (e) { console.error('[CRM Error]', e); alert('Erro de rede ao atualizar pipeline.'); }
-                }} className="btn-primary" style={{ padding: '8px 14px', fontSize: '12px' }}>↻ Atualizar</button>
+                }} className="btn-primary" style={{ padding: '8px', minWidth: '34px', height: '34px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px' }}>↻</button>
               </div>
 
               {/* Mobile Stage Selector Tabs */}
