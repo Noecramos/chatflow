@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  MessageSquare, ShoppingCart, Settings, LogOut, 
+  Menu, MessageSquare, ShoppingCart, Settings, LogOut, 
   Sparkles, Database, LayoutDashboard, Cpu, 
   Layers, User, UserCheck, FileText, Megaphone, 
   FileCode, Globe, Bell, CheckCircle2, ChevronRight, 
@@ -18,6 +18,14 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [organization, setOrganization] = useState(null);
   const [activeTab, setActiveTab] = useState('CONVERSAS');
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Auth form states
   const [isRegister, setIsRegister] = useState(false);
@@ -1525,7 +1533,13 @@ export default function App() {
     <div className="dashboard-container">
       
       {/* SIDEBAR NAVIGATION: PORTUGUESE */}
-      <div className="sidebar" style={{ width: '250px' }}>
+      {isMobile && (
+        <div 
+          className={`sidebar-backdrop ${isSidebarOpen ? 'open' : ''}`} 
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+      <div className={`sidebar ${isSidebarOpen ? 'open' : ''}`} style={{ width: '250px' }}>
         
         <div className="sidebar-logo" style={{ paddingBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
           <img src="/icon.png" alt="ChatFlow Logo" style={{ height: '24px', width: 'auto', borderRadius: '4px' }} />
@@ -1533,7 +1547,7 @@ export default function App() {
         </div>
 
         <div className="sidebar-nav" style={{ marginTop: '10px', gap: '4px' }}>
-          <div onClick={() => { setActiveTab('CONVERSAS'); fetchConversations(); }} className={`nav-item ${activeTab === 'CONVERSAS' ? 'active' : ''}`}>
+          <div onClick={() => { setActiveTab('CONVERSAS'); fetchConversations(); if (isMobile) setIsSidebarOpen(false); }} className={`nav-item ${activeTab === 'CONVERSAS' ? 'active' : ''}`}>
             <MessageSquare size={17} />
             <span>Conversas</span>
             {conversations.filter(c => c.status === 'OPEN').length > 0 && (
@@ -1543,70 +1557,70 @@ export default function App() {
             )}
           </div>
 
-          <div onClick={() => { setActiveTab('CRM'); fetch('/inbox/crm/pipeline', { headers: { 'Authorization': `Bearer ${token}` } }).then(r => { const ct = r.headers.get('content-type'); if (ct && ct.includes('application/json')) return r.json(); console.error('[CRM Nav] Non-JSON:', r.status); return { success: false }; }).then(d => { if (d.success) setCrmPipeline(d.pipeline); }).catch(e => console.error('[CRM Nav]', e)); }} className={`nav-item ${activeTab === 'CRM' ? 'active' : ''}`}>
+          <div onClick={() => { setActiveTab('CRM'); fetch('/inbox/crm/pipeline', { headers: { 'Authorization': `Bearer ${token}` } }).then(r => { const ct = r.headers.get('content-type'); if (ct && ct.includes('application/json')) return r.json(); console.error('[CRM Nav] Non-JSON:', r.status); return { success: false }; }).then(d => { if (d.success) setCrmPipeline(d.pipeline); }).catch(e => console.error('[CRM Nav]', e)); if (isMobile) setIsSidebarOpen(false); }} className={`nav-item ${activeTab === 'CRM' ? 'active' : ''}`}>
             <Layers size={17} />
             <span>Fluxo CRM</span>
           </div>
 
-          <div onClick={() => { setActiveTab('CONTATOS'); fetchConversations(); }} className={`nav-item ${activeTab === 'CONTATOS' ? 'active' : ''}`}>
+          <div onClick={() => { setActiveTab('CONTATOS'); fetchConversations(); if (isMobile) setIsSidebarOpen(false); }} className={`nav-item ${activeTab === 'CONTATOS' ? 'active' : ''}`}>
             <User size={17} />
             <span>Contatos</span>
           </div>
 
-          <div onClick={() => { setActiveTab('AGENTES'); fetchBotsList(); }} className={`nav-item ${activeTab === 'AGENTES' ? 'active' : ''}`}>
+          <div onClick={() => { setActiveTab('AGENTES'); fetchBotsList(); if (isMobile) setIsSidebarOpen(false); }} className={`nav-item ${activeTab === 'AGENTES' ? 'active' : ''}`}>
             <Cpu size={17} />
             <span>Agentes AI</span>
           </div>
 
-          <div onClick={() => { setActiveTab('OPERADORES'); fetchAgentsList(); }} className={`nav-item ${activeTab === 'OPERADORES' ? 'active' : ''}`}>
+          <div onClick={() => { setActiveTab('OPERADORES'); fetchAgentsList(); if (isMobile) setIsSidebarOpen(false); }} className={`nav-item ${activeTab === 'OPERADORES' ? 'active' : ''}`}>
             <UserCheck size={17} />
             <span>Operadores</span>
           </div>
 
-          <div onClick={() => setActiveTab('CONHECIMENTO')} className={`nav-item ${activeTab === 'CONHECIMENTO' ? 'active' : ''}`}>
+          <div onClick={() => { setActiveTab('CONHECIMENTO'); if (isMobile) setIsSidebarOpen(false); }} className={`nav-item ${activeTab === 'CONHECIMENTO' ? 'active' : ''}`}>
             <Database size={17} />
             <span>Bases de conhecimento</span>
           </div>
 
-          <div onClick={() => setActiveTab('ARTEFATOS')} className={`nav-item ${activeTab === 'ARTEFATOS' ? 'active' : ''}`}>
+          <div onClick={() => { setActiveTab('ARTEFATOS'); if (isMobile) setIsSidebarOpen(false); }} className={`nav-item ${activeTab === 'ARTEFATOS' ? 'active' : ''}`}>
             <FileText size={17} />
             <span>Artefatos</span>
           </div>
 
-          <div onClick={() => { setActiveTab('DISPAROS'); fetchConversations(); }} className={`nav-item ${activeTab === 'DISPAROS' ? 'active' : ''}`}>
+          <div onClick={() => { setActiveTab('DISPAROS'); fetchConversations(); if (isMobile) setIsSidebarOpen(false); }} className={`nav-item ${activeTab === 'DISPAROS' ? 'active' : ''}`}>
             <Megaphone size={17} />
             <span>Disparos</span>
           </div>
 
-          <div onClick={() => setActiveTab('NOVIAPI')} className={`nav-item ${activeTab === 'NOVIAPI' ? 'active' : ''}`}>
+          <div onClick={() => { setActiveTab('NOVIAPI'); if (isMobile) setIsSidebarOpen(false); }} className={`nav-item ${activeTab === 'NOVIAPI' ? 'active' : ''}`}>
             <FileCode size={17} />
             <span>NoviAPI</span>
             <span className="badge" style={{ marginLeft: 'auto', background: 'linear-gradient(135deg, #006aff, hsl(var(--secondary)))', color: '#fff', fontSize: '8px', padding: '2px 5px' }}>BETA</span>
           </div>
 
-          <div onClick={() => setActiveTab('METRICAS')} className={`nav-item ${activeTab === 'METRICAS' ? 'active' : ''}`}>
+          <div onClick={() => { setActiveTab('METRICAS'); if (isMobile) setIsSidebarOpen(false); }} className={`nav-item ${activeTab === 'METRICAS' ? 'active' : ''}`}>
             <BarChart3 size={17} />
             <span>Métricas</span>
           </div>
 
-          <div onClick={() => setActiveTab('HUB')} className={`nav-item ${activeTab === 'HUB' ? 'active' : ''}`}>
+          <div onClick={() => { setActiveTab('HUB'); if (isMobile) setIsSidebarOpen(false); }} className={`nav-item ${activeTab === 'HUB' ? 'active' : ''}`}>
             <Globe size={17} />
             <span>Hub</span>
           </div>
 
-          <div onClick={() => setActiveTab('CONFIGURACOES')} className={`nav-item ${activeTab === 'CONFIGURACOES' ? 'active' : ''}`}>
+          <div onClick={() => { setActiveTab('CONFIGURACOES'); if (isMobile) setIsSidebarOpen(false); }} className={`nav-item ${activeTab === 'CONFIGURACOES' ? 'active' : ''}`}>
             <Settings size={17} />
             <span>Configurações</span>
           </div>
 
-          <div onClick={() => setActiveTab('DOCS')} className={`nav-item ${activeTab === 'DOCS' ? 'active' : ''}`}>
+          <div onClick={() => { setActiveTab('DOCS'); if (isMobile) setIsSidebarOpen(false); }} className={`nav-item ${activeTab === 'DOCS' ? 'active' : ''}`}>
             <HelpCircle size={17} />
             <span>Documentação</span>
           </div>
 
           {(user?.role === 'SUPERADMIN' || user?.role === 'SUPER_ADMIN') && !user?.isImpersonated && (
             <div 
-              onClick={() => { setActiveTab('MASTER'); fetchSubscribersList(); }} 
+              onClick={() => { setActiveTab('MASTER'); fetchSubscribersList(); if (isMobile) setIsSidebarOpen(false); }} 
               className={`nav-item ${activeTab === 'MASTER' ? 'active' : ''}`} 
               style={{ 
                 borderLeft: '3px solid hsl(var(--primary))', 
@@ -1713,9 +1727,26 @@ export default function App() {
         )}
 
         {/* TOP NAV BAR */}
-        <div className="main-header" style={{ height: '65px', padding: '0 25px' }}>
+        <div className="main-header" style={{ height: '65px', padding: isMobile ? '0 12px' : '0 25px' }}>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: '500' }}>
+            {isMobile && (
+              <button 
+                onClick={() => setIsSidebarOpen(true)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#fff',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  marginRight: '4px',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+              >
+                <Menu size={20} />
+              </button>
+            )}
             {activeTab === 'HUB' ? (
               <>
                 <span 
@@ -1754,36 +1785,44 @@ export default function App() {
             )}
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '10px' : '18px' }}>
             
             {organization && (
-              <div className="org-badge" style={{ fontSize: '11px', background: 'rgba(255,255,255,0.03)', border: '1px solid hsl(var(--border))', padding: '4px 10px', height: '28px' }}>
+              <div className="org-badge" style={{ fontSize: '10px', background: 'rgba(255,255,255,0.03)', border: '1px solid hsl(var(--border))', padding: '4px 8px', height: '28px' }}>
                 <Database size={12} style={{ color: 'hsl(var(--secondary))' }} />
-                <span>Créditos: <strong>{organization.apiUsageThisMonth}</strong> / {organization.maxMessagesPerMonth} msgs</span>
+                <span>{isMobile ? `Créditos: ${organization.apiUsageThisMonth}` : `Créditos: ${organization.apiUsageThisMonth} / ${organization.maxMessagesPerMonth}`}</span>
               </div>
             )}
 
-            <div style={{ position: 'relative', cursor: 'pointer', color: 'hsl(var(--text-muted))' }}>
-              <Bell size={18} />
-              <div style={{ position: 'absolute', top: '-2px', right: '-2px', width: '6px', height: '6px', borderRadius: '50%', background: 'hsl(var(--primary))' }}></div>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: '600', cursor: 'pointer', background: 'rgba(255,255,255,0.02)', padding: '4px 8px', borderRadius: '4px', border: '1px solid hsl(var(--border))' }}>
-              <span>🇧🇷</span>
-              <span style={{ color: 'hsl(var(--text-muted))' }}>PT-BR</span>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'hsl(var(--border) / 0.4)', padding: '6px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: '600', cursor: 'pointer', border: '1px solid hsl(var(--border))' }}>
-              <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#25d366' }}></span>
-              <span>Online</span>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                <span style={{ fontSize: '12px', fontWeight: '700', color: '#fff' }}>{user.firstName}</span>
-                <span style={{ fontSize: '10px', color: 'hsl(var(--text-muted))' }}>{user.email}</span>
+            {!isMobile && (
+              <div style={{ position: 'relative', cursor: 'pointer', color: 'hsl(var(--text-muted))' }}>
+                <Bell size={18} />
+                <div style={{ position: 'absolute', top: '-2px', right: '-2px', width: '6px', height: '6px', borderRadius: '50%', background: 'hsl(var(--primary))' }}></div>
               </div>
-              <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)))', display: 'flex', alignItems: 'center', justifyCenter: 'center', color: '#000', fontWeight: '700', fontSize: '12px', boxShadow: '0 0 10px hsl(var(--primary-glow))' }}>
+            )}
+
+            {!isMobile && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: '600', cursor: 'pointer', background: 'rgba(255,255,255,0.02)', padding: '4px 8px', borderRadius: '4px', border: '1px solid hsl(var(--border))' }}>
+                <span>🇧🇷</span>
+                <span style={{ color: 'hsl(var(--text-muted))' }}>PT-BR</span>
+              </div>
+            )}
+
+            {!isMobile && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'hsl(var(--border) / 0.4)', padding: '6px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: '600', cursor: 'pointer', border: '1px solid hsl(var(--border))' }}>
+                <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#25d366' }}></span>
+                <span>Online</span>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '6px' : '10px' }}>
+              {!isMobile && (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                  <span style={{ fontSize: '12px', fontWeight: '700', color: '#fff' }}>{user.firstName}</span>
+                  <span style={{ fontSize: '10px', color: 'hsl(var(--text-muted))' }}>{user.email}</span>
+                </div>
+              )}
+              <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000', fontWeight: '700', fontSize: '12px', boxShadow: '0 0 10px hsl(var(--primary-glow))' }}>
                 <span style={{ margin: 'auto' }}>{user.firstName[0].toUpperCase()}</span>
               </div>
             </div>
@@ -2300,7 +2339,7 @@ export default function App() {
                 </p>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '25px', alignItems: 'start' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '2fr 1fr', gap: isMobile ? '16px' : '25px', alignItems: 'start' }}>
                 
                 {/* List of Operators */}
                 <div className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -2451,7 +2490,7 @@ export default function App() {
                 </p>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '25px', alignItems: 'start' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '2fr 1fr', gap: isMobile ? '16px' : '25px', alignItems: 'start' }}>
                 <div className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
                   <h4 style={{ fontSize: '14px', fontWeight: '700', borderBottom: '1px solid hsl(var(--border))', paddingBottom: '10px' }}>Respostas Rápidas Ativas</h4>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -3157,7 +3196,7 @@ export default function App() {
               </div>
 
               {/* Main split dashboard panel */}
-              <div style={{ display: 'grid', gridTemplateColumns: '290px 1fr', gap: '24px', alignItems: 'start' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '290px 1fr', gap: '24px', alignItems: 'start' }}>
                 
                 {/* Left Panel: Seus Códigos */}
                 <div className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', borderRadius: '12px' }}>
@@ -3401,7 +3440,7 @@ export default function App() {
                           <Terminal size={18} style={{ color: 'hsl(var(--secondary))' }} /> Testbed & Sandbox Console
                         </h4>
 
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: '20px' }}>
                           
                           {/* Column 1: JSON Input */}
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -3543,9 +3582,9 @@ export default function App() {
 
           {/* TAB 10: HUB */}
           {activeTab === 'HUB' && (
-            <div style={{ display: 'flex', minHeight: 'calc(100vh - 70px)', background: 'hsl(var(--bg-main))' }}>
+            <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', minHeight: 'calc(100vh - 70px)', background: 'hsl(var(--bg-main))' }}>
               {/* Left sidebar */}
-              <div className="glass" style={{ width: '260px', padding: '24px 16px', display: 'flex', flexDirection: 'column', gap: '24px', borderRight: '1px solid hsl(var(--border))', borderRadius: '0', background: 'hsl(var(--bg-card) / 0.4)' }}>
+              <div className="glass" style={{ width: isMobile ? '100%' : '260px', padding: '24px 16px', display: 'flex', flexDirection: 'column', gap: '24px', borderRight: isMobile ? 'none' : '1px solid hsl(var(--border))', borderBottom: isMobile ? '1px solid hsl(var(--border))' : 'none', borderRadius: '0', background: 'hsl(var(--bg-card) / 0.4)' }}>
                 <div>
                   <h3 style={{ fontSize: '20px', fontWeight: '800', background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <Globe size={22} style={{ color: 'hsl(var(--primary))' }} /> ChatFlow Hub
@@ -3948,7 +3987,7 @@ export default function App() {
                   </div>
                 ) : (
                   /* Hub Announcement and Community Feed */
-                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '30px', alignItems: 'start', maxWidth: '1200px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '2fr 1fr', gap: '20px', alignItems: 'start', maxWidth: '1200px' }}>
                     {/* Left Column: Feed */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                       {/* Create Post Panel */}
@@ -4128,7 +4167,7 @@ export default function App() {
                 <span style={{ color: 'hsl(var(--text-muted))', cursor: 'pointer' }}>Chaves API</span>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '30px', alignItems: 'start', marginTop: '10px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 2fr', gap: '20px', alignItems: 'start', marginTop: '10px' }}>
                 
                 {/* Left logo card */}
                 <div className="glass" style={{ padding: '30px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
@@ -4253,7 +4292,7 @@ export default function App() {
               </div>
 
               {/* System Health Metrics Card Row */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '16px' }}>
                 <div className="glass glowing-card" style={{ padding: '20px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '16px' }}>
                   <div style={{ background: 'hsl(var(--primary) / 0.15)', color: 'hsl(var(--primary))', padding: '12px', borderRadius: '8px' }}>
                     <Layers size={24} />

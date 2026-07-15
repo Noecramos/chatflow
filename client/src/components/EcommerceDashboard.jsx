@@ -5,6 +5,13 @@ import {
 } from 'lucide-react';
 
 export default function EcommerceDashboard({ token }) {
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const [metrics, setMetrics] = useState({
     totalSales: 0,
     totalOrdersCount: 0,
@@ -75,7 +82,7 @@ export default function EcommerceDashboard({ token }) {
     <div style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '30px', maxWidth: '1200px', margin: '0 auto' }}>
       
       {/* 1. Header & Actions */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', gap: isMobile ? '16px' : '28px' }}>
         <div>
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '26px', fontWeight: 800 }}>
             Comércio Conversacional no WhatsApp
@@ -143,7 +150,7 @@ export default function EcommerceDashboard({ token }) {
       </div>
 
       {/* 3. Main Split View: Orders List & Connector Settings */}
-      <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: '30px', alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '3fr 2fr', gap: '30px', alignItems: 'start' }}>
         
         {/* Left Panel: Table of Orders */}
         <div className="glass" style={{ padding: '24px', overflow: 'hidden' }}>

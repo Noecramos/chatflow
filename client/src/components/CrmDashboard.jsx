@@ -14,6 +14,13 @@ const CHANNEL_ICONS = {
 };
 
 export default function CrmDashboard({ token }) {
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const [metrics, setMetrics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [channel, setChannel] = useState('ALL');
@@ -64,7 +71,7 @@ export default function CrmDashboard({ token }) {
     <div style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '28px', maxWidth: '1200px', margin: '0 auto' }}>
 
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', gap: isMobile ? '16px' : '28px' }}>
         <div>
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '24px', fontWeight: 800 }}>
             📊 Painel CRM & Métricas
@@ -120,7 +127,7 @@ export default function CrmDashboard({ token }) {
       </div>
 
       {/* Charts Row */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '20px' }}>
 
         {/* Funnel Visualization */}
         <div className="glass" style={{ padding: '24px' }}>
@@ -322,33 +329,35 @@ export default function CrmDashboard({ token }) {
         <h4 style={{ fontSize: '14px', fontWeight: '700', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Target size={16} style={{ color: 'hsl(var(--primary))' }} /> Resumo por Etapa
         </h4>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-          <thead>
-            <tr style={{ borderBottom: '1px solid hsl(var(--border))', color: 'hsl(var(--text-muted))' }}>
-              <th style={{ padding: '10px 8px', textAlign: 'left' }}>Etapa</th>
-              <th style={{ padding: '10px 8px', textAlign: 'center' }}>Leads</th>
-              <th style={{ padding: '10px 8px', textAlign: 'right' }}>Valor Total</th>
-              <th style={{ padding: '10px 8px', textAlign: 'right' }}>% do Pipeline</th>
-            </tr>
-          </thead>
-          <tbody>
-            {metrics.funnel.map(stage => (
-              <tr key={stage.key} style={{ borderBottom: '1px solid hsl(var(--border) / 0.3)' }}>
-                <td style={{ padding: '10px 8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: stage.color }} />
-                  <span style={{ fontWeight: '600' }}>{stage.name}</span>
-                </td>
-                <td style={{ padding: '10px 8px', textAlign: 'center', fontWeight: '700' }}>{stage.count}</td>
-                <td style={{ padding: '10px 8px', textAlign: 'right', color: 'hsl(var(--secondary))' }}>
-                  R$ {stage.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </td>
-                <td style={{ padding: '10px 8px', textAlign: 'right', color: 'hsl(var(--text-muted))' }}>
-                  {metrics.totalLeads > 0 ? ((stage.count / metrics.totalLeads) * 100).toFixed(1) : 0}%
-                </td>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '500px' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid hsl(var(--border))', color: 'hsl(var(--text-muted))' }}>
+                <th style={{ padding: '10px 8px', textAlign: 'left' }}>Etapa</th>
+                <th style={{ padding: '10px 8px', textAlign: 'center' }}>Leads</th>
+                <th style={{ padding: '10px 8px', textAlign: 'right' }}>Valor Total</th>
+                <th style={{ padding: '10px 8px', textAlign: 'right' }}>% do Pipeline</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {metrics.funnel.map(stage => (
+                <tr key={stage.key} style={{ borderBottom: '1px solid hsl(var(--border) / 0.3)' }}>
+                  <td style={{ padding: '10px 8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: stage.color }} />
+                    <span style={{ fontWeight: '600' }}>{stage.name}</span>
+                  </td>
+                  <td style={{ padding: '10px 8px', textAlign: 'center', fontWeight: '700' }}>{stage.count}</td>
+                  <td style={{ padding: '10px 8px', textAlign: 'right', color: 'hsl(var(--secondary))' }}>
+                    R$ {stage.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </td>
+                  <td style={{ padding: '10px 8px', textAlign: 'right', color: 'hsl(var(--text-muted))' }}>
+                    {metrics.totalLeads > 0 ? ((stage.count / metrics.totalLeads) * 100).toFixed(1) : 0}%
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
     </div>

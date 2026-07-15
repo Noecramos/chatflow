@@ -28,6 +28,15 @@ const STATUS_OPTIONS = [
 ];
 
 export default function OmnichannelInbox({ token, user }) {
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [mobileViewMode, setMobileViewMode] = useState('list'); // 'list' | 'chat' | 'details'
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const [conversations, setConversations] = useState([]);
   const [activeConv, setActiveConv] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -269,6 +278,7 @@ export default function OmnichannelInbox({ token, user }) {
 
     setDetailTab('details'); fetchConversationDetails(conv.id); markAsRead(conv.id);
     if (socketRef.current) socketRef.current.emit('join_conversation', conv.id);
+    setMobileViewMode('chat');
   };
 
   const handleSendReply = async (e) => {
@@ -347,38 +357,41 @@ export default function OmnichannelInbox({ token, user }) {
     <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 65px)', overflow: 'hidden' }}>
 
       {/* ═══ TOP: Status Tabs + Search ═══ */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px', borderBottom: '1px solid hsl(var(--border))', background: 'hsl(var(--bg-card) / 0.2)', flexShrink: 0 }}>
-        <div style={{ display: 'flex' }}>
-          {STATUS_TABS.map(tab => {
-            const count = tabCounts[tab.key] || 0;
-            const isActive = activeTab === tab.key;
-            return (
-              <button key={tab.key} onClick={() => setActiveTab(tab.key)}
-                style={{ padding: '12px 18px', background: 'transparent', border: 'none', borderBottom: isActive ? '2px solid hsl(var(--primary))' : '2px solid transparent', color: isActive ? '#fff' : 'hsl(var(--text-muted))', fontSize: '13px', fontWeight: isActive ? '600' : '400', cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px', transition: 'all 0.15s' }}>
-                {tab.label}
-                {count > 0 && tab.key !== 'all' && (
-                  <span style={{ background: tab.key === 'unread' ? '#f44336' : 'hsl(var(--primary))', color: '#fff', borderRadius: '10px', padding: '1px 7px', fontSize: '10px', fontWeight: '700', minWidth: '18px', textAlign: 'center' }}>{count}</span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{ position: 'relative' }}>
-            <Search size={14} style={{ position: 'absolute', left: '10px', top: '9px', color: 'hsl(var(--text-muted))' }} />
-            <input type="text" placeholder="Filtro de Texto" value={searchFilter} onChange={(e) => setSearchFilter(e.target.value)}
-              style={{ width: '200px', background: 'hsl(var(--border) / 0.4)', border: '1px solid hsl(var(--border))', padding: '8px 12px 8px 30px', borderRadius: '6px', fontSize: '12px' }} />
+      {(!isMobile || mobileViewMode === 'list') && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px', borderBottom: '1px solid hsl(var(--border))', background: 'hsl(var(--bg-card) / 0.2)', flexShrink: 0, flexWrap: 'wrap', gap: '10px' }}>
+          <div style={{ display: 'flex', overflowX: 'auto', maxWidth: '100%' }}>
+            {STATUS_TABS.map(tab => {
+              const count = tabCounts[tab.key] || 0;
+              const isActive = activeTab === tab.key;
+              return (
+                <button key={tab.key} onClick={() => setActiveTab(tab.key)}
+                  style={{ padding: '12px 18px', background: 'transparent', border: 'none', borderBottom: isActive ? '2px solid hsl(var(--primary))' : '2px solid transparent', color: isActive ? '#fff' : 'hsl(var(--text-muted))', fontSize: '13px', fontWeight: isActive ? '600' : '400', cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px', transition: 'all 0.15s' }}>
+                  {tab.label}
+                  {count > 0 && tab.key !== 'all' && (
+                    <span style={{ background: tab.key === 'unread' ? '#f44336' : 'hsl(var(--primary))', color: '#fff', borderRadius: '10px', padding: '1px 7px', fontSize: '10px', fontWeight: '700', minWidth: '18px', textAlign: 'center' }}>{count}</span>
+                  )}
+                </button>
+              );
+            })}
           </div>
-          <button style={{ background: 'hsl(var(--border) / 0.4)', border: '1px solid hsl(var(--border))', borderRadius: '6px', padding: '7px', cursor: 'pointer', color: 'hsl(var(--text-muted))' }}><Filter size={14} /></button>
-          <button style={{ background: 'hsl(var(--border) / 0.4)', border: '1px solid hsl(var(--border))', borderRadius: '6px', padding: '7px', cursor: 'pointer', color: 'hsl(var(--text-muted))' }}><MoreVertical size={14} /></button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 0', marginLeft: isMobile ? 'auto' : '0' }}>
+            <div style={{ position: 'relative' }}>
+              <Search size={14} style={{ position: 'absolute', left: '10px', top: '9px', color: 'hsl(var(--text-muted))' }} />
+              <input type="text" placeholder="Filtro de Texto" value={searchFilter} onChange={(e) => setSearchFilter(e.target.value)}
+                style={{ width: isMobile ? '160px' : '200px', background: 'hsl(var(--border) / 0.4)', border: '1px solid hsl(var(--border))', padding: '8px 12px 8px 30px', borderRadius: '6px', fontSize: '12px' }} />
+            </div>
+            <button style={{ background: 'hsl(var(--border) / 0.4)', border: '1px solid hsl(var(--border))', borderRadius: '6px', padding: '7px', cursor: 'pointer', color: 'hsl(var(--text-muted))' }}><Filter size={14} /></button>
+            <button style={{ background: 'hsl(var(--border) / 0.4)', border: '1px solid hsl(var(--border))', borderRadius: '6px', padding: '7px', cursor: 'pointer', color: 'hsl(var(--text-muted))' }}><MoreVertical size={14} /></button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ═══ BODY ═══ */}
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
 
         {/* LEFT: Conversation Cards */}
-        <div style={{ width: activeConv ? '380px' : '45%', flexShrink: 0, borderRight: '1px solid hsl(var(--border))', display: 'flex', flexDirection: 'column', transition: 'width 0.3s' }}>
+        {(!isMobile || mobileViewMode === 'list' || !activeConv) && (
+          <div style={{ width: isMobile ? '100%' : (activeConv ? '380px' : '45%'), flexShrink: 0, borderRight: isMobile ? 'none' : '1px solid hsl(var(--border))', display: 'flex', flexDirection: 'column', transition: 'width 0.3s' }}>
           
           {/* Channel filter chips */}
           <div style={{ padding: '8px 14px', display: 'flex', gap: '4px', overflowX: 'auto', borderBottom: '1px solid hsl(var(--border) / 0.4)' }}>
@@ -474,51 +487,91 @@ export default function OmnichannelInbox({ token, user }) {
             )}
           </div>
         </div>
+      )}
 
         {/* RIGHT: Chat + Detail OR Stats */}
         {activeConv ? (
           <>
             {/* Chat Panel */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-              {/* Chat Header */}
-              <div style={{ padding: '12px 20px', borderBottom: '1px solid hsl(var(--border))', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'hsl(var(--bg-card) / 0.15)', flexShrink: 0, gap: '12px' }}>
-                <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: '15px', fontWeight: '700', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '180px' }}>
-                      {activeConv.contact?.name || 'Cliente'}
-                    </span>
-                    {renderChannelBadge(activeConv.channel.type)}
-                    {activeConv.isHumanHandoverActive && (
-                      <span style={{ 
-                        background: '#e8f5e9', 
-                        color: '#2e7d32', 
-                        fontSize: '9px', 
+            {(!isMobile || mobileViewMode === 'chat') && (
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                {/* Chat Header */}
+                <div style={{ padding: '12px 20px', borderBottom: '1px solid hsl(var(--border))', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'hsl(var(--bg-card) / 0.15)', flexShrink: 0, gap: '12px' }}>
+                  {isMobile && (
+                    <button 
+                      onClick={() => setMobileViewMode('list')} 
+                      style={{ 
+                        background: 'transparent', 
+                        border: 'none', 
+                        color: 'hsl(var(--text-muted))', 
+                        cursor: 'pointer', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '4px', 
+                        fontSize: '13px', 
                         fontWeight: '700', 
-                        padding: '2px 6px', 
-                        borderRadius: '4px', 
-                        border: '1px solid #c8e6c9',
-                        textTransform: 'uppercase',
-                        whiteSpace: 'nowrap'
-                      }}>
-                        Humano Solicitado
+                        padding: '6px 10px 6px 0', 
+                        borderRight: '1px solid hsl(var(--border))', 
+                        marginRight: '4px' 
+                      }}
+                    >
+                      ← Voltar
+                    </button>
+                  )}
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '15px', fontWeight: '700', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '180px' }}>
+                        {activeConv.contact?.name || 'Cliente'}
                       </span>
-                    )}
+                      {renderChannelBadge(activeConv.channel.type)}
+                      {activeConv.isHumanHandoverActive && (
+                        <span style={{ 
+                          background: '#e8f5e9', 
+                          color: '#2e7d32', 
+                          fontSize: '9px', 
+                          fontWeight: '700', 
+                          padding: '2px 6px', 
+                          borderRadius: '4px', 
+                          border: '1px solid #c8e6c9',
+                          textTransform: 'uppercase',
+                          whiteSpace: 'nowrap'
+                        }}>
+                          Humano Solicitado
+                        </span>
+                      )}
+                    </div>
+                    <p style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      ID: <code style={{ fontSize: '10px' }}>{activeConv.contact?.platformId}</code> · Bot: <strong>{activeConv.bot?.name || "Zimmy"}</strong>
+                    </p>
                   </div>
-                  <p style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    ID: <code style={{ fontSize: '10px' }}>{activeConv.contact?.platformId}</code> · Bot: <strong>{activeConv.bot?.name || "Zimmy"}</strong>
-                  </p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {isMobile && (
+                      <button 
+                        onClick={() => setMobileViewMode('details')}
+                        style={{ 
+                          background: 'transparent', 
+                          border: '1px solid hsl(var(--border))', 
+                          color: '#fff', 
+                          padding: '6px 10px', 
+                          borderRadius: '8px', 
+                          fontSize: '11px', 
+                          fontWeight: '600', 
+                          cursor: 'pointer' 
+                        }}
+                      >
+                        Detalhes
+                      </button>
+                    )}
+                    <button onClick={handleGenerateSuggestion} disabled={generatingSuggestion}
+                      style={{ background: 'transparent', border: '1px solid hsl(var(--primary))', color: 'hsl(var(--primary))', padding: '6px 12px', borderRadius: '8px', fontSize: '11px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <Sparkles size={13} /> {generatingSuggestion ? "..." : "IA"}
+                    </button>
+                    <button onClick={handleToggleHandover}
+                      style={{ background: activeConv.isHumanHandoverActive ? 'hsl(var(--secondary))' : 'hsl(var(--border))', border: 'none', color: activeConv.isHumanHandoverActive ? '#000' : '#fff', padding: '6px 14px', borderRadius: '8px', fontSize: '11px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <Bot size={13} /> {activeConv.isHumanHandoverActive ? "IA Silenciada" : "IA Auto"}
+                    </button>
+                  </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <button onClick={handleGenerateSuggestion} disabled={generatingSuggestion}
-                    style={{ background: 'transparent', border: '1px solid hsl(var(--primary))', color: 'hsl(var(--primary))', padding: '6px 12px', borderRadius: '8px', fontSize: '11px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <Sparkles size={13} /> {generatingSuggestion ? "..." : "IA"}
-                  </button>
-                  <button onClick={handleToggleHandover}
-                    style={{ background: activeConv.isHumanHandoverActive ? 'hsl(var(--secondary))' : 'hsl(var(--border))', border: 'none', color: activeConv.isHumanHandoverActive ? '#000' : '#fff', padding: '6px 14px', borderRadius: '8px', fontSize: '11px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <Bot size={13} /> {activeConv.isHumanHandoverActive ? "IA Silenciada" : "IA Auto"}
-                  </button>
-                </div>
-              </div>
 
               {/* AI Suggestion */}
               {aiSuggestion && (
@@ -578,14 +631,36 @@ export default function OmnichannelInbox({ token, user }) {
                 <button type="submit" disabled={!activeConv.isHumanHandoverActive || !replyText.trim()} className="btn-primary"
                   style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><Send size={14} /> Enviar</button>
               </form>
-            </div>
+              </div>
+            )}
 
             {/* Detail Panel */}
-            <div style={{ width: '280px', flexShrink: 0, borderLeft: '1px solid hsl(var(--border))', display: 'flex', flexDirection: 'column', background: 'hsl(var(--bg-card) / 0.15)', overflowY: 'auto', overflowX: 'hidden' }}>
-              <div style={{ padding: '14px 16px', borderBottom: '1px solid hsl(var(--border))' }}>
-                <h4 style={{ fontSize: '14px', fontWeight: '700', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{activeConv.contact?.name || 'Visitante'}</h4>
-                <span style={{ fontSize: '10px', color: 'hsl(var(--text-muted))' }}>conv_{activeConv.id.slice(0, 8)}</span>
-              </div>
+            {(!isMobile || mobileViewMode === 'details') && (
+              <div style={{ width: isMobile ? '100%' : '280px', flexShrink: 0, borderLeft: isMobile ? 'none' : '1px solid hsl(var(--border))', display: 'flex', flexDirection: 'column', background: 'hsl(var(--bg-card) / 0.15)', overflowY: 'auto', overflowX: 'hidden' }}>
+                <div style={{ padding: '14px 16px', borderBottom: '1px solid hsl(var(--border))' }}>
+                  {isMobile && (
+                    <button 
+                      onClick={() => setMobileViewMode('chat')} 
+                      style={{ 
+                        background: 'transparent', 
+                        border: 'none', 
+                        color: 'hsl(var(--text-muted))', 
+                        cursor: 'pointer', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '4px', 
+                        fontSize: '12px', 
+                        fontWeight: '700', 
+                        marginBottom: '8px', 
+                        padding: 0 
+                      }}
+                    >
+                      ← Voltar ao Chat
+                    </button>
+                  )}
+                  <h4 style={{ fontSize: '14px', fontWeight: '700', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{activeConv.contact?.name || 'Visitante'}</h4>
+                  <span style={{ fontSize: '10px', color: 'hsl(var(--text-muted))' }}>conv_{activeConv.id.slice(0, 8)}</span>
+                </div>
               <div style={{ display: 'flex', borderBottom: '1px solid hsl(var(--border))' }}>
                 {[
                   { key: 'details', label: 'Detalhes' },
@@ -840,28 +915,31 @@ export default function OmnichannelInbox({ token, user }) {
                 )}
               </div>
             </div>
-          </>
+          )}
+        </>
         ) : (
           /* Stats Panel - ChatFlow style with big cards */
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px' }}>
-            <h3 style={{ fontSize: '18px', fontWeight: '500', color: 'hsl(var(--text-muted))', marginBottom: '30px' }}>Estatísticas das Conversas Encontradas</h3>
-            <div style={{ display: 'flex', gap: '20px' }}>
-              {[
-                { icon: '💬', value: stats.totalConversations, label: 'Total de\nConversas', color: 'hsl(var(--primary))' },
-                { icon: '🟢', value: tabCounts.human_requested || 0, label: 'Humano\nSolicitado', color: '#4caf50' },
-                { icon: '✦', value: stats.distinctChannels, label: 'Canais\nDistintos', color: '#ff9800' }
-              ].map((stat, i) => (
-                <div key={i} style={{
-                  padding: '32px 44px', borderRadius: '12px', textAlign: 'center', minWidth: '160px',
-                  border: '1px dashed hsl(var(--border) / 0.6)', background: 'hsl(var(--bg-card) / 0.2)'
-                }}>
-                  <div style={{ fontSize: '24px', marginBottom: '8px' }}>{stat.icon}</div>
-                  <div style={{ fontSize: '36px', fontWeight: '800', color: stat.color }}>{stat.value}</div>
-                  <div style={{ fontSize: '13px', color: 'hsl(var(--text-muted))', marginTop: '6px', whiteSpace: 'pre-line' }}>{stat.label}</div>
-                </div>
-              ))}
+          !isMobile && (
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: '500', color: 'hsl(var(--text-muted))', marginBottom: '30px' }}>Estatísticas das Conversas Encontradas</h3>
+              <div style={{ display: 'flex', gap: '20px' }}>
+                {[
+                  { icon: '💬', value: stats.totalConversations, label: 'Total de\nConversas', color: 'hsl(var(--primary))' },
+                  { icon: '🟢', value: tabCounts.human_requested || 0, label: 'Humano\nSolicitado', color: '#4caf50' },
+                  { icon: '✦', value: stats.distinctChannels, label: 'Canais\nDistintos', color: '#ff9800' }
+                ].map((stat, i) => (
+                  <div key={i} style={{
+                    padding: '32px 44px', borderRadius: '12px', textAlign: 'center', minWidth: '160px',
+                    border: '1px dashed hsl(var(--border) / 0.6)', background: 'hsl(var(--bg-card) / 0.2)'
+                  }}>
+                    <div style={{ fontSize: '24px', marginBottom: '8px' }}>{stat.icon}</div>
+                    <div style={{ fontSize: '36px', fontWeight: '800', color: stat.color }}>{stat.value}</div>
+                    <div style={{ fontSize: '13px', color: 'hsl(var(--text-muted))', marginTop: '6px', whiteSpace: 'pre-line' }}>{stat.label}</div>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          )
         )}
       </div>
     </div>
