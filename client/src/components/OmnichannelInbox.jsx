@@ -358,7 +358,17 @@ export default function OmnichannelInbox({ token, user }) {
 
       {/* ═══ TOP: Status Tabs + Search ═══ */}
       {(!isMobile || mobileViewMode === 'list') && (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px', borderBottom: '1px solid hsl(var(--border))', background: 'hsl(var(--bg-card) / 0.2)', flexShrink: 0, flexWrap: 'wrap', gap: '10px' }}>
+        <div style={{ 
+          display: 'flex', 
+          flexDirection: isMobile ? 'column' : 'row',
+          alignItems: isMobile ? 'stretch' : 'center', 
+          justifyContent: 'space-between', 
+          padding: isMobile ? '10px 14px' : '0 20px', 
+          borderBottom: '1px solid hsl(var(--border))', 
+          background: 'hsl(var(--bg-card) / 0.2)', 
+          flexShrink: 0, 
+          gap: isMobile ? '8px' : '10px' 
+        }}>
           <div style={{ display: 'flex', overflowX: 'auto', maxWidth: '100%' }}>
             {STATUS_TABS.map(tab => {
               const count = tabCounts[tab.key] || 0;
@@ -374,11 +384,11 @@ export default function OmnichannelInbox({ token, user }) {
               );
             })}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 0', marginLeft: isMobile ? 'auto' : '0' }}>
-            <div style={{ position: 'relative' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 0', width: isMobile ? '100%' : 'auto' }}>
+            <div style={{ position: 'relative', flex: isMobile ? 1 : 'none' }}>
               <Search size={14} style={{ position: 'absolute', left: '10px', top: '9px', color: 'hsl(var(--text-muted))' }} />
               <input type="text" placeholder="Filtro de Texto" value={searchFilter} onChange={(e) => setSearchFilter(e.target.value)}
-                style={{ width: isMobile ? '160px' : '200px', background: 'hsl(var(--border) / 0.4)', border: '1px solid hsl(var(--border))', padding: '8px 12px 8px 30px', borderRadius: '6px', fontSize: '12px' }} />
+                style={{ width: '100%', background: 'hsl(var(--border) / 0.4)', border: '1px solid hsl(var(--border))', padding: '8px 12px 8px 30px', borderRadius: '6px', fontSize: '12px' }} />
             </div>
             <button style={{ background: 'hsl(var(--border) / 0.4)', border: '1px solid hsl(var(--border))', borderRadius: '6px', padding: '7px', cursor: 'pointer', color: 'hsl(var(--text-muted))' }}><Filter size={14} /></button>
             <button style={{ background: 'hsl(var(--border) / 0.4)', border: '1px solid hsl(var(--border))', borderRadius: '6px', padding: '7px', cursor: 'pointer', color: 'hsl(var(--text-muted))' }}><MoreVertical size={14} /></button>
