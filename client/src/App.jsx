@@ -77,6 +77,7 @@ export default function App() {
   const [conversations, setConversations] = useState([]);
   const [agents, setAgents] = useState([]);
   const [crmPipeline, setCrmPipeline] = useState([]);
+  const [activeCrmStage, setActiveCrmStage] = useState('NOVO');
   const [newAgentEmail, setNewAgentEmail] = useState('');
 
   // Master Admin States
@@ -1866,7 +1867,47 @@ export default function App() {
                 }} className="btn-primary" style={{ padding: '8px 14px', fontSize: '12px' }}>↻ Atualizar</button>
               </div>
 
-              <div style={{ display: 'flex', gap: '14px', flex: 1, overflowX: 'auto', alignItems: 'start', paddingBottom: '20px' }}>
+              {/* Mobile Stage Selector Tabs */}
+              {isMobile && (
+                <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px', marginBottom: '4px', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
+                  {(crmPipeline.length > 0 ? crmPipeline : [
+                    { key: 'NOVO', name: 'Novo Lead', color: '#8a2be2', count: 0 },
+                    { key: 'QUALIFICADO', name: 'Qualificado', color: '#006aff', count: 0 },
+                    { key: 'NEGOCIACAO', name: 'Negociação', color: '#f9d423', count: 0 },
+                    { key: 'PROPOSTA', name: 'Proposta', color: '#ff6b35', count: 0 },
+                    { key: 'FECHADO_WON', name: 'Fechado (Won)', color: '#00c853', count: 0 },
+                    { key: 'FECHADO_LOST', name: 'Perdido (Lost)', color: '#ff1744', count: 0 }
+                  ]).map(col => {
+                    const isActive = activeCrmStage === col.key;
+                    return (
+                      <button
+                        key={col.key}
+                        onClick={() => setActiveCrmStage(col.key)}
+                        style={{
+                          background: isActive ? col.color : 'hsl(var(--border) / 0.3)',
+                          border: `1px solid ${isActive ? col.color : 'hsl(var(--border))'}`,
+                          color: isActive ? '#000' : '#fff',
+                          borderRadius: '20px',
+                          padding: '6px 14px',
+                          fontSize: '11px',
+                          fontWeight: '700',
+                          cursor: 'pointer',
+                          whiteSpace: 'nowrap',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: isActive ? '#000' : col.color }} />
+                        {col.name} ({col.count || 0})
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '14px', flex: 1, overflowX: isMobile ? 'hidden' : 'auto', alignItems: 'start', paddingBottom: '20px', flexDirection: isMobile ? 'column' : 'row' }}>
                 {(crmPipeline.length > 0 ? crmPipeline : [
                   { key: 'NOVO', name: 'Novo Lead', color: '#8a2be2', contacts: [], count: 0, totalValue: 0 },
                   { key: 'QUALIFICADO', name: 'Qualificado', color: '#006aff', contacts: [], count: 0, totalValue: 0 },
@@ -1874,9 +1915,12 @@ export default function App() {
                   { key: 'PROPOSTA', name: 'Proposta', color: '#ff6b35', contacts: [], count: 0, totalValue: 0 },
                   { key: 'FECHADO_WON', name: 'Fechado (Won)', color: '#00c853', contacts: [], count: 0, totalValue: 0 },
                   { key: 'FECHADO_LOST', name: 'Perdido (Lost)', color: '#ff1744', contacts: [], count: 0, totalValue: 0 }
-                ]).map(col => (
+                ])
+                .filter(col => !isMobile || col.key === activeCrmStage)
+                .map(col => (
                   <div className="glass" key={col.key} style={{
-                    flex: '0 0 250px',
+                    flex: isMobile ? '1 1 100%' : '0 0 250px',
+                    width: isMobile ? '100%' : '250px',
                     background: 'rgba(255,255,255,0.01)',
                     border: `1px solid ${col.color}30`,
                     padding: '14px',
