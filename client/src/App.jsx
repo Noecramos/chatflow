@@ -78,6 +78,7 @@ export default function App() {
   const [agents, setAgents] = useState([]);
   const [crmPipeline, setCrmPipeline] = useState([]);
   const [activeCrmStage, setActiveCrmStage] = useState('NOVO');
+  const [isCrmRefreshing, setIsCrmRefreshing] = useState(false);
   const [newAgentEmail, setNewAgentEmail] = useState('');
 
   // Master Admin States
@@ -1852,6 +1853,7 @@ export default function App() {
                 </div>
                 <button onClick={async () => {
                   try {
+                    setIsCrmRefreshing(true);
                     const res = await fetch('/inbox/crm/pipeline', { headers: { 'Authorization': `Bearer ${token}` } });
                     const contentType = res.headers.get('content-type');
                     if (!contentType || !contentType.includes('application/json')) {
@@ -1861,10 +1863,26 @@ export default function App() {
                       return;
                     }
                     const data = await res.json();
-                    if (data.success) setCrmPipeline(data.pipeline);
-                    else alert(`Erro CRM: ${data.error}`);
-                  } catch (e) { console.error('[CRM Error]', e); alert('Erro de rede ao atualizar pipeline.'); }
-                }} className="btn-primary" style={{ padding: '8px', minWidth: '34px', height: '34px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px' }}>↻</button>
+                    if (data.success) {
+                      setCrmPipeline(data.pipeline);
+                      // Also sync conversations to update contact records on other screens
+                      const convRes = await fetch('/inbox/conversations', { headers: { 'Authorization': `Bearer ${token}` } });
+                      const convData = await convRes.json();
+                      if (convData.success) {
+                        setConversations(convData.conversations);
+                      }
+                    } else {
+                      alert(`Erro CRM: ${data.error}`);
+                    }
+                  } catch (e) { 
+                    console.error('[CRM Error]', e); 
+                    alert('Erro de rede ao atualizar pipeline.'); 
+                  } finally {
+                    setIsCrmRefreshing(false);
+                  }
+                }} className="btn-primary" style={{ padding: '8px', minWidth: '34px', height: '34px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px' }}>
+                  <span className={isCrmRefreshing ? 'spin' : ''} style={{ display: 'inline-block' }}>↻</span>
+                </button>
               </div>
 
               {/* Mobile Stage Selector Tabs */}
@@ -2058,47 +2076,49 @@ export default function App() {
                 </p>
               </div>
 
-              <div className="glass" style={{ padding: '20px', overflow: 'hidden' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
-                  <thead>
-                    <tr style={{ borderBottom: '1px solid hsl(var(--border))', color: 'hsl(var(--text-muted))' }}>
-                      <th style={{ padding: '12px 10px' }}>Nome do Lead</th>
-                      <th style={{ padding: '12px 10px' }}>ID de Plataforma</th>
-                      <th style={{ padding: '12px 10px' }}>Canal de Origem</th>
-                      <th style={{ padding: '12px 10px' }}>Data de Cadastro</th>
-                      <th style={{ padding: '12px 10px', textAlign: 'center' }}>Ação</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {conversations.length === 0 ? (
-                      <tr>
-                        <td colSpan="5" style={{ padding: '30px', textAlign: 'center', color: 'hsl(var(--text-muted))' }}>
-                          Nenhum contato sincronizado na base ainda.
-                        </td>
+               <div className="glass" style={{ padding: '20px', overflow: 'hidden' }}>
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', minWidth: '650px', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid hsl(var(--border))', color: 'hsl(var(--text-muted))' }}>
+                        <th style={{ padding: '12px 10px' }}>Nome do Lead</th>
+                        <th style={{ padding: '12px 10px' }}>ID de Plataforma</th>
+                        <th style={{ padding: '12px 10px' }}>Canal de Origem</th>
+                        <th style={{ padding: '12px 10px' }}>Data de Cadastro</th>
+                        <th style={{ padding: '12px 10px', textAlign: 'center' }}>Ação</th>
                       </tr>
-                    ) : (
-                      conversations.map(conv => (
-                        <tr key={conv.id} style={{ borderBottom: '1px solid hsl(var(--border) / 0.4)' }}>
-                          <td style={{ padding: '14px 10px', fontWeight: '600' }}>{conv.contact?.name}</td>
-                          <td style={{ padding: '14px 10px' }}><code>{conv.contact?.platformId}</code></td>
-                          <td style={{ padding: '14px 10px' }}>
-                            <span style={{ fontSize: '10px', background: 'rgba(255,255,255,0.05)', padding: '3px 8px', borderRadius: '12px' }}>
-                              {conv.contact?.platformType || 'WHATSAPP'}
-                            </span>
-                          </td>
-                          <td style={{ padding: '14px 10px' }}>
-                            {new Date(conv.createdAt).toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' })}
-                          </td>
-                          <td style={{ padding: '14px 10px', textAlign: 'center' }}>
-                            <button className="btn-secondary" style={{ padding: '4px 10px', fontSize: '11px' }} onClick={() => setActiveTab('CONVERSAS')}>
-                              Abrir Chat
-                            </button>
+                    </thead>
+                    <tbody>
+                      {conversations.length === 0 ? (
+                        <tr>
+                          <td colSpan="5" style={{ padding: '30px', textAlign: 'center', color: 'hsl(var(--text-muted))' }}>
+                            Nenhum contato sincronizado na base ainda.
                           </td>
                         </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
+                      ) : (
+                        conversations.map(conv => (
+                          <tr key={conv.id} style={{ borderBottom: '1px solid hsl(var(--border) / 0.4)' }}>
+                            <td style={{ padding: '14px 10px', fontWeight: '600' }}>{conv.contact?.name}</td>
+                            <td style={{ padding: '14px 10px' }}><code>{conv.contact?.platformId}</code></td>
+                            <td style={{ padding: '14px 10px' }}>
+                              <span style={{ fontSize: '10px', background: 'rgba(255,255,255,0.05)', padding: '3px 8px', borderRadius: '12px' }}>
+                                {conv.contact?.platformType || 'WHATSAPP'}
+                              </span>
+                            </td>
+                            <td style={{ padding: '14px 10px' }}>
+                              {new Date(conv.createdAt).toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' })}
+                            </td>
+                            <td style={{ padding: '14px 10px', textAlign: 'center' }}>
+                              <button className="btn-secondary" style={{ padding: '4px 10px', fontSize: '11px' }} onClick={() => setActiveTab('CONVERSAS')}>
+                                Abrir Chat
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}
@@ -2648,7 +2668,7 @@ export default function App() {
               </div>
 
               {/* Sub-tab selection bar - Larger, Premium Pills */}
-              <div style={{ display: 'flex', gap: '12px', borderBottom: '1px solid hsl(var(--border) / 0.4)', paddingBottom: '14px', marginTop: '14px' }}>
+              <div style={{ display: 'flex', gap: '12px', borderBottom: '1px solid hsl(var(--border) / 0.4)', paddingBottom: '14px', marginTop: '14px', overflowX: 'auto', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
                 {[
                   { key: 'ativos', label: '⚡ Ativos', count: campaigns.filter(c => c.status === 'PROCESSING' || c.status === 'PAUSED').length },
                   { key: 'agendados', label: '📅 Agendados', count: campaigns.filter(c => c.status === 'PENDING').length },
@@ -2671,7 +2691,8 @@ export default function App() {
                       display: 'flex',
                       alignItems: 'center',
                       gap: '10px',
-                      transition: 'all 0.2s'
+                      transition: 'all 0.2s',
+                      whiteSpace: 'nowrap'
                     }}
                   >
                     <span>{tab.label}</span>
@@ -4385,94 +4406,96 @@ export default function App() {
                     Nenhuma empresa registrada no sistema.
                   </div>
                 ) : (
-                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
-                    <thead>
-                      <tr style={{ borderBottom: '1px solid hsl(var(--border))', color: 'hsl(var(--text-muted))', fontWeight: '600' }}>
-                        <th style={{ padding: '12px 8px' }}>Empresa</th>
-                        <th style={{ padding: '12px 8px' }}>Plano</th>
-                        <th style={{ padding: '12px 8px' }}>Consumo de Mensagens</th>
-                        <th style={{ padding: '12px 8px' }}>Bots Cadastrados</th>
-                        <th style={{ padding: '12px 8px', textAlign: 'right' }}>Ações</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {subscribers.map((subscriber) => {
-                        const usagePercent = Math.min(100, Math.round(((subscriber.apiUsageThisMonth || 0) / (subscriber.maxMessagesPerMonth || 1)) * 100));
-                        return (
-                          <tr key={subscriber.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', color: '#fff' }} className="table-row-hover">
-                            <td style={{ padding: '16px 8px' }}>
-                              <div style={{ fontWeight: '700', color: '#fff' }}>{subscriber.name}</div>
-                              <div style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', marginTop: '2px' }}>UUID: {subscriber.id}</div>
-                            </td>
-                            <td style={{ padding: '16px 8px' }}>
-                              <span style={{
-                                padding: '4px 8px',
-                                borderRadius: '4px',
-                                fontSize: '11px',
-                                fontWeight: '700',
-                                background: subscriber.plan === 'ENTERPRISE' ? 'rgba(138, 43, 226, 0.15)' : subscriber.plan === 'PRO' ? 'rgba(0, 106, 255, 0.15)' : 'rgba(255,255,255,0.05)',
-                                color: subscriber.plan === 'ENTERPRISE' ? 'hsl(var(--secondary))' : subscriber.plan === 'PRO' ? 'hsl(var(--primary))' : 'hsl(var(--text-muted))',
-                                border: '1px solid ' + (subscriber.plan === 'ENTERPRISE' ? 'hsl(var(--secondary) / 0.3)' : subscriber.plan === 'PRO' ? 'hsl(var(--primary) / 0.3)' : 'hsl(var(--border))')
-                              }}>
-                                {subscriber.plan}
-                              </span>
-                            </td>
-                            <td style={{ padding: '16px 8px', width: '220px' }}>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'hsl(var(--text-muted))', marginBottom: '4px' }}>
-                                <span>{subscriber.apiUsageThisMonth || 0} / {subscriber.maxMessagesPerMonth}</span>
-                                <span>{usagePercent}%</span>
-                              </div>
-                              <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '3px', overflow: 'hidden' }}>
-                                <div style={{ 
-                                  width: `${usagePercent}%`, 
-                                  height: '100%', 
-                                  background: usagePercent > 90 ? 'hsl(var(--danger))' : usagePercent > 70 ? 'hsl(var(--warning))' : 'linear-gradient(90deg, hsl(var(--primary)), hsl(var(--secondary)))' 
-                                }} />
-                              </div>
-                            </td>
-                            <td style={{ padding: '16px 8px' }}>
-                              <div style={{ fontWeight: '600' }}>{subscriber.botCount || 0} / {subscriber.maxBots} bots</div>
-                            </td>
-                            <td style={{ padding: '16px 8px', textAlign: 'right' }}>
-                              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                                <button 
-                                  onClick={() => {
-                                    setEditingSubscriber(subscriber);
-                                    setNewPlan(subscriber.plan || 'FREE');
-                                    setNewMaxBots(subscriber.maxBots || 2);
-                                    setNewMaxMessages(subscriber.maxMessagesPerMonth || 1000);
-                                    setIsEditLimitsOpen(true);
-                                  }}
-                                  className="btn-primary" 
-                                  style={{ padding: '6px 10px', fontSize: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid hsl(var(--border))', color: '#fff' }}
-                                  title="Editar Limites"
-                                >
-                                  <Edit size={13} />
-                                </button>
-                                <button 
-                                  onClick={() => handleImpersonate(subscriber.id)}
-                                  className="btn-primary" 
-                                  style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}
-                                  title="Acessar Dashboard"
-                                >
-                                  <Sliders size={13} />
-                                  <span>Acessar</span>
-                                </button>
-                                <button 
-                                  onClick={() => handleDeleteSubscriber(subscriber.id, subscriber.name)}
-                                  className="btn-primary" 
-                                  style={{ padding: '6px 10px', fontSize: '12px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', color: 'rgb(239, 68, 68)' }}
-                                  title="Excluir"
-                                >
-                                  <Trash2 size={13} />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', minWidth: '750px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '1px solid hsl(var(--border))', color: 'hsl(var(--text-muted))', fontWeight: '600' }}>
+                          <th style={{ padding: '12px 8px' }}>Empresa</th>
+                          <th style={{ padding: '12px 8px' }}>Plano</th>
+                          <th style={{ padding: '12px 8px' }}>Consumo de Mensagens</th>
+                          <th style={{ padding: '12px 8px' }}>Bots Cadastrados</th>
+                          <th style={{ padding: '12px 8px', textAlign: 'right' }}>Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {subscribers.map((subscriber) => {
+                          const usagePercent = Math.min(100, Math.round(((subscriber.apiUsageThisMonth || 0) / (subscriber.maxMessagesPerMonth || 1)) * 100));
+                          return (
+                            <tr key={subscriber.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', color: '#fff' }} className="table-row-hover">
+                              <td style={{ padding: '16px 8px' }}>
+                                <div style={{ fontWeight: '700', color: '#fff' }}>{subscriber.name}</div>
+                                <div style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', marginTop: '2px' }}>UUID: {subscriber.id}</div>
+                              </td>
+                              <td style={{ padding: '16px 8px' }}>
+                                <span style={{
+                                  padding: '4px 8px',
+                                  borderRadius: '4px',
+                                  fontSize: '11px',
+                                  fontWeight: '700',
+                                  background: subscriber.plan === 'ENTERPRISE' ? 'rgba(138, 43, 226, 0.15)' : subscriber.plan === 'PRO' ? 'rgba(0, 106, 255, 0.15)' : 'rgba(255,255,255,0.05)',
+                                  color: subscriber.plan === 'ENTERPRISE' ? 'hsl(var(--secondary))' : subscriber.plan === 'PRO' ? 'hsl(var(--primary))' : 'hsl(var(--text-muted))',
+                                  border: '1px solid ' + (subscriber.plan === 'ENTERPRISE' ? 'hsl(var(--secondary) / 0.3)' : subscriber.plan === 'PRO' ? 'hsl(var(--primary) / 0.3)' : 'hsl(var(--border))')
+                                }}>
+                                  {subscriber.plan}
+                                </span>
+                              </td>
+                              <td style={{ padding: '16px 8px', width: '220px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'hsl(var(--text-muted))', marginBottom: '4px' }}>
+                                  <span>{subscriber.apiUsageThisMonth || 0} / {subscriber.maxMessagesPerMonth}</span>
+                                  <span>{usagePercent}%</span>
+                                </div>
+                                <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '3px', overflow: 'hidden' }}>
+                                  <div style={{ 
+                                    width: `${usagePercent}%`, 
+                                    height: '100%', 
+                                    background: usagePercent > 90 ? 'hsl(var(--danger))' : usagePercent > 70 ? 'hsl(var(--warning))' : 'linear-gradient(90deg, hsl(var(--primary)), hsl(var(--secondary)))' 
+                                  }} />
+                                </div>
+                              </td>
+                              <td style={{ padding: '16px 8px' }}>
+                                <div style={{ fontWeight: '600' }}>{subscriber.botCount || 0} / {subscriber.maxBots} bots</div>
+                              </td>
+                              <td style={{ padding: '16px 8px', textAlign: 'right' }}>
+                                <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                                  <button 
+                                    onClick={() => {
+                                      setEditingSubscriber(subscriber);
+                                      setNewPlan(subscriber.plan || 'FREE');
+                                      setNewMaxBots(subscriber.maxBots || 2);
+                                      setNewMaxMessages(subscriber.maxMessagesPerMonth || 1000);
+                                      setIsEditLimitsOpen(true);
+                                    }}
+                                    className="btn-primary" 
+                                    style={{ padding: '6px 10px', fontSize: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid hsl(var(--border))', color: '#fff' }}
+                                    title="Editar Limites"
+                                  >
+                                    <Edit size={13} />
+                                  </button>
+                                  <button 
+                                    onClick={() => handleImpersonate(subscriber.id)}
+                                    className="btn-primary" 
+                                    style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                    title="Acessar Dashboard"
+                                  >
+                                    <Sliders size={13} />
+                                    <span>Acessar</span>
+                                  </button>
+                                  <button 
+                                    onClick={() => handleDeleteSubscriber(subscriber.id, subscriber.name)}
+                                    className="btn-primary" 
+                                    style={{ padding: '6px 10px', fontSize: '12px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', color: 'rgb(239, 68, 68)' }}
+                                    title="Excluir"
+                                  >
+                                    <Trash2 size={13} />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
               </div>
 
