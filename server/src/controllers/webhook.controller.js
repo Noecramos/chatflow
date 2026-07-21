@@ -447,29 +447,19 @@ async function processOmnichannelMessage({ senderId, senderName, channelType, ch
     }
   }
 
-  // 4. Save Customer Message
-  const userMessage = await prisma.message.create({
-    data: {
-      conversationId: conversation.id,
-      senderType: "USER",
-      content: content,
-      metadata: JSON.stringify(metadata)
-    }
+  const inboxService = require('../services/inbox.service');
+
+  // 4. Save & Emit Customer Message via central InboxService
+  const { message: userMessage, conversation: updatedConversation } = await inboxService.createAndEmitMessage({
+    conversationId: conversation.id,
+    organizationId: channel.organizationId,
+    senderType: "USER",
+    content: content,
+    metadata: metadata,
+    io
   });
 
-  // 5. Update Conversation active date
-  const updatedConversation = await prisma.inboxConversation.update({
-    where: { id: conversation.id },
-    data: { lastMessageAt: new Date() },
-    include: {
-      contact: true,
-      channel: { select: { type: true } },
-      bot: { select: { name: true } },
-      assignedUser: { select: { id: true, firstName: true, lastName: true } }
-    }
-  });
-
-  // 6. Socket stream to dashboard
+  // Legacy dashboard broadcast for backward compatibility
   broadcastToDashboard(channel.organizationId, "message_received", {
     session: updatedConversation,
     message: userMessage
@@ -484,13 +474,13 @@ async function processOmnichannelMessage({ senderId, senderName, channelType, ch
   // 8. Trigger AI engine
   const reply = await aiService.processChatMessage(prisma, bot, updatedConversation, content);
 
-  // 9. Save Bot response
-  const botMessage = await prisma.message.create({
-    data: {
-      conversationId: conversation.id,
-      senderType: "BOT",
-      content: reply
-    }
+  // 9. Save & Emit Bot response via central InboxService
+  const { message: botMessage } = await inboxService.createAndEmitMessage({
+    conversationId: conversation.id,
+    organizationId: channel.organizationId,
+    senderType: "BOT",
+    content: reply,
+    io
   });
 
   // 10. Deliver reply back via Meta Graph API
@@ -500,7 +490,7 @@ async function processOmnichannelMessage({ senderId, senderName, channelType, ch
     console.error("Meta Cloud reply delivery error:", err.message);
   }
 
-  // 11. Socket stream back to dashboard
+  // Legacy dashboard broadcast for backward compatibility
   broadcastToDashboard(channel.organizationId, "message_sent", {
     session: updatedConversation,
     message: botMessage

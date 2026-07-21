@@ -275,6 +275,8 @@ const io = socketIo(server, {
   }
 });
 
+const inboxService = require('./services/inbox.service');
+inboxService.setSocketIO(io);
 webhookController.setSocketIO(io);
 inboxController.setSocketIO(io);
 
@@ -300,18 +302,21 @@ io.on('connection', (socket) => {
   const { organizationId, userId } = socket.user;
   console.log(`[Socket Connected] User ${userId} joined organization channel ${organizationId}`);
   
-  // Join Organization Room by default
+  // Join Organization Room by default (both raw ID and standardized org:ID)
   socket.join(organizationId);
+  socket.join(`org:${organizationId}`);
 
   // Focus real-time updates inside a single active conversation
   socket.on('join_conversation', (conversationId) => {
     socket.join(conversationId);
-    console.log(`[Socket] User ${userId} joined conversation room: ${conversationId}`);
+    socket.join(`conversation:${conversationId}`);
+    console.log(`[Socket] User ${userId} joined conversation room: conversation:${conversationId}`);
   });
 
   socket.on('leave_conversation', (conversationId) => {
     socket.leave(conversationId);
-    console.log(`[Socket] User ${userId} left conversation room: ${conversationId}`);
+    socket.leave(`conversation:${conversationId}`);
+    console.log(`[Socket] User ${userId} left conversation room: conversation:${conversationId}`);
   });
 
   socket.on('disconnect', () => {
@@ -327,297 +332,11 @@ async function bootstrap() {
     await db.$connect();
     console.log('[Prisma Client] DB Connection Verified.');
 
-    // Ensure Master Admin System Account exists on startup
-    const bcrypt = require('bcryptjs');
-    const adminEmail = 'admin@chatflow.com';
-    const adminPassword = process.env.MASTER_ADMIN_PASSWORD || 'admin123456';
-
-    let adminOrg = await db.organization.findUnique({
-      where: { slug: 'system-admin' }
-    });
-
-    if (!adminOrg) {
-      adminOrg = await db.organization.create({
-        data: {
-          name: "System Administration",
-          slug: "system-admin",
-          plan: "ENTERPRISE",
-          maxBots: 999,
-          maxMessagesPerMonth: 999999
-        }
-      });
-      console.log('[Seed] Default admin organization created.');
-    }
-
-    const existingAdmin = await db.user.findUnique({
-      where: { email: adminEmail }
-    });
-
-    if (!existingAdmin) {
-      const hashedPassword = await bcrypt.hash(adminPassword, 10);
-      await db.user.create({
-        data: {
-          email: adminEmail,
-          password: hashedPassword,
-          firstName: "System",
-          lastName: "Admin",
-          role: "SUPERADMIN",
-          organizationId: adminOrg.id
-        }
-      });
-      console.log(`[Seed] Default Master Admin seeded successfully: ${adminEmail}`);
-    }
-
-    // Automatically migrate any legacy "Volt Assistant" or "Volt AI Bot" in the database to "Agente IA"
+    // Execute isolated seed script on boot
     try {
-      const migrated = await db.bot.updateMany({
-        where: {
-          name: {
-            in: ["Volt Assistant", "Volt AI Bot"]
-          }
-        },
-        data: {
-          name: "Agente IA",
-          systemPrompt: "Você é o Agente IA, um assistente virtual inteligente. Você ajuda os clientes tirando dúvidas, dando suporte e fornecendo informações sobre a empresa de forma prestativa e profissional.",
-          greetingMessage: "Olá! Seja bem-vindo. Como posso te ajudar hoje?"
-        }
-      });
-      if (migrated.count > 0) {
-        console.log(`[Seed] Automatically migrated ${migrated.count} existing legacy Volt bots to Agente IA.`);
-      }
-    } catch (migError) {
-      console.warn('[Seed] Warning: Failed to migrate legacy bots:', migError.message);
-    }
-
-    // Automatically seed/configure Lalelilo WABA, Instagram & Gemini settings if org exists
-    try {
-      let org = await db.organization.findUnique({ where: { slug: 'lalelilo' } });
-      if (!org) {
-        org = await db.organization.create({
-          data: {
-            name: "Lalelilo Kids",
-            slug: "lalelilo",
-            plan: "ENTERPRISE",
-            maxBots: 10,
-            maxMessagesPerMonth: 100000
-          }
-        });
-        console.log('[Seed] Automatically created Lalelilo organization.');
-      }
-
-      if (org) {
-        console.log('[Seed] Lalelilo organization found. Ensuring active Meta integrations are configured...');
-        const crypto = require('./utils/crypto');
-
-        // Ensure default Lalelilo Owner account exists
-        const existingUser = await db.user.findFirst({
-          where: { organizationId: org.id }
-        });
-        if (!existingUser) {
-          const hashedPassword = await bcrypt.hash('lalelilo123', 10);
-          await db.user.create({
-            data: {
-              email: 'contato@lalelilo.com.br',
-              password: hashedPassword,
-              firstName: "Lalelilo",
-              lastName: "Kids",
-              role: "OWNER",
-              organizationId: org.id
-            }
-          });
-          console.log('[Seed] Default Lalelilo owner user seeded: contato@lalelilo.com.br');
-        }
-
-        // 1. Encrypt and save Gemini key for Lalelilo
-        const activeGeminiKey = process.env.LALELILO_GEMINI_API_KEY;
-        if (activeGeminiKey) {
-          const encryptedGemini = crypto.encrypt(activeGeminiKey, org.id);
-          await db.organization.update({
-            where: { id: org.id },
-            data: {
-              geminiKey: encryptedGemini,
-              plan: "ENTERPRISE",
-              maxBots: 10,
-              maxMessagesPerMonth: 100000
-            }
-          });
-          console.log('[Seed] Lalelilo Gemini key configured successfully.');
-        } else {
-          console.log('[Seed] Skipping Lalelilo Gemini key: LALELILO_GEMINI_API_KEY env variable is not set.');
-        }
-
-        // 2. Find or Create Lalelilo's default Bot with full e-commerce prompt
-        const LALELILO_SYSTEM_PROMPT = `Você é a Lali, a assistente virtual inteligente da Lalelilo Kids 🧸, a maior rede de moda infantil do Nordeste.
-Seu objetivo é ajudar os clientes de forma extremamente calorosa, ágil e acolhedora em nossos canais (WhatsApp, Instagram e Facebook Messenger).
-
-## SEU FLUXO DE CONVERSA (MANDATÓRIO)
-Você deve guiar o cliente passo a passo nesta ordem exata, sem pular etapas:
-
-1. **SAUDAÇÃO & NOME**:
-   - Sempre cumprimente o cliente pelo nome se souber (ex: "Oiii, Camila!").
-   - Se você não souber o nome dele, pergunte logo na primeira mensagem de forma doce: "Olá! Que bom ter você aqui! Eu sou a Lali da Lalelilo. Como posso te chamar? 😊"
-   
-2. **LOCALIZAÇÃO (CIDADE)**:
-   - Depois de saber o nome, pergunte a cidade ou bairro dele no Nordeste para encontrar a loja mais próxima: "Prazer em te conhecer, [Nome]! 💕 De qual cidade ou bairro você é? Assim encontro a Lalelilo mais pertinho de você! 📍"
-   
-3. **SELEÇÃO DA LOJA LOCAL**:
-   - Com base na cidade informada, mencione as lojas disponíveis naquela região e solicite que o cliente confirme de qual loja prefere ser atendido (ex: "Que ótimo! Temos lojas no Shopping Recife e no Shopping Tacaruna. Qual fica mais pertinho para você? 🏪").
-   
-4. **FILTRO DE GÊNERO**:
-   - Após a definição da loja, pergunte se as roupinhas que ele procura são para menino 👦, menina 👧 ou ambos.
-   
-5. **DESCOBERTA DE PRODUTOS & BUSCA**:
-   - Pergunte o que o cliente gostaria de ver e use a ferramenta 'search_products' para buscar no estoque da loja selecionada (utilizando o termo de busca correto).
-   - Mostre as fotos e detalhes dos produtos encontrados de forma atraente.
-   
-6. **GERENCIAMENTO DO CARRINHO**:
-   - Quando o cliente escolher um item, adicione ao carrinho usando 'manage_cart' (ADD) especificando o tamanho e cor desejados.
-   - Sempre pergunte se ele gostaria de ver mais peças antes de fechar.
-
-7. **FINALIZAÇÃO DO CHECKOUT (PIX)**:
-   - Quando o cliente confirmar que deseja fechar o pedido:
-     - Solicite o Nome Completo.
-     - Solicite o CPF (apenas números para a emissão da nota e PIX).
-     - Use a ferramenta 'create_order' para finalizar o pedido e gerar o código PIX copia e cola.
-     - Envie o código de pagamento de forma clara.
-
-## REGRAS CRÍTICAS DO FLUXO:
-- **Transição de Carrinho Humano para IA**: Se um atendente humano interveio, montou o carrinho no painel do ChatFlow e devolveu a conversa para você, você verá os itens do carrinho ativos. Quando a vendedora te devolver o controle, envie uma saudação calorosa, apresente o resumo amigável dos itens que o atendente montou, confirme se o cliente está de acordo e prossiga diretamente para o passo de Checkout (Nome Completo e CPF) para fechar o pedido!
-- NUNCA invente preços ou produtos. Sempre use a ferramenta para consultar as informações atualizadas.
-- Se o cliente solicitar falar com um humano/atendente a qualquer momento, responda que vai transferir imediatamente para um de nossos representantes e aguarde.
-- Use emojis com moderação para manter uma conversa leve, alegre e acolhedora.
-- Mantenha respostas curtas e concisas de 2 a 3 parágrafos no máximo.`;
-
-        const LALELILO_GREETING = "Oiii! 😍 Eu sou a Lali, da *Lalelilo*! A maior rede de moda infantil do Nordeste! 👶✨ Como posso te chamar?";
-
-        let bot = await db.bot.findFirst({ where: { organizationId: org.id } });
-        if (!bot) {
-          bot = await db.bot.create({
-            data: {
-              organizationId: org.id,
-              name: "Agente Lalelilo",
-              model: "gemini-2.5-flash",
-              systemPrompt: LALELILO_SYSTEM_PROMPT,
-              greetingMessage: LALELILO_GREETING,
-              temperature: 0.7
-            }
-          });
-          console.log('[Seed] Created Agente Lalelilo with full e-commerce prompt.');
-        } else {
-          // Always update the prompt on boot to keep it current
-          await db.bot.update({
-            where: { id: bot.id },
-            data: {
-              systemPrompt: LALELILO_SYSTEM_PROMPT,
-              greetingMessage: LALELILO_GREETING,
-              name: "Agente Lalelilo"
-            }
-          });
-          console.log('[Seed] Updated Agente Lalelilo e-commerce prompt.');
-        }
-
-        // 3. Configure WhatsApp Channel
-        const wabaToken = process.env.LALELILO_WABA_ACCESS_TOKEN;
-        const wabaPhoneId = process.env.LALELILO_WABA_PHONE_NUMBER_ID;
-        const wabaBusinessId = process.env.LALELILO_WABA_BUSINESS_ACCOUNT_ID;
-
-        if (wabaToken && wabaPhoneId && wabaBusinessId) {
-          const wabaCredentials = {
-            accessToken: wabaToken,
-            phoneNumberId: wabaPhoneId,
-            businessAccountId: wabaBusinessId
-          };
-          const encryptedWaba = crypto.encrypt(JSON.stringify(wabaCredentials), org.id);
-
-          const existingWaba = await db.channel.findFirst({
-            where: { botId: bot.id, type: 'WHATSAPP' }
-          });
-
-          if (existingWaba) {
-            await db.channel.update({
-              where: { id: existingWaba.id },
-              data: { credentials: encryptedWaba, isActive: true }
-            });
-          } else {
-            await db.channel.create({
-              data: {
-                organizationId: org.id,
-                botId: bot.id,
-                type: 'WHATSAPP',
-                provider: 'META',
-                credentials: encryptedWaba,
-                isActive: true
-              }
-            });
-          }
-          console.log('[Seed] Lalelilo WhatsApp Cloud API channel configured successfully.');
-        } else {
-          console.log('[Seed] Skipping Lalelilo WhatsApp: WABA environment variables are not set.');
-        }
-
-        // 4. Configure Instagram & FB Messenger Channels
-        const igToken = process.env.LALELILO_IG_ACCESS_TOKEN;
-        const igPageId = process.env.LALELILO_IG_PAGE_ID;
-
-        if (igToken && igPageId) {
-          const igCredentials = {
-            accessToken: igToken,
-            pageId: igPageId
-          };
-          const encryptedIg = crypto.encrypt(JSON.stringify(igCredentials), org.id);
-
-          const existingIg = await db.channel.findFirst({
-            where: { botId: bot.id, type: 'INSTAGRAM' }
-          });
-
-          if (existingIg) {
-            await db.channel.update({
-              where: { id: existingIg.id },
-              data: { credentials: encryptedIg, isActive: true }
-            });
-          } else {
-            await db.channel.create({
-              data: {
-                organizationId: org.id,
-                botId: bot.id,
-                type: 'INSTAGRAM',
-                provider: 'META',
-                credentials: encryptedIg,
-                isActive: true
-              }
-            });
-          }
-
-          const existingFb = await db.channel.findFirst({
-            where: { botId: bot.id, type: 'MESSENGER' }
-          });
-
-          if (existingFb) {
-            await db.channel.update({
-              where: { id: existingFb.id },
-              data: { credentials: encryptedIg, isActive: true }
-            });
-          } else {
-            await db.channel.create({
-              data: {
-                organizationId: org.id,
-                botId: bot.id,
-                type: 'MESSENGER',
-                provider: 'META',
-                credentials: encryptedIg,
-                isActive: true
-              }
-            });
-          }
-          console.log('[Seed] Lalelilo Instagram and Messenger channels configured successfully.');
-        } else {
-          console.log('[Seed] Skipping Lalelilo Instagram/Messenger: IG environment variables are not set.');
-        }
-
-        console.log('[Seed] Lalelilo Meta integration channels, Gemini key, and limits verified successfully.');
-      }
-    } catch (laleliloError) {
-      console.warn('[Seed] Warning: Failed to seed Lalelilo Meta channels:', laleliloError.message);
+      const seedScript = require('../prisma/seed');
+    } catch (seedErr) {
+      console.warn('[Seed] Seed script loaded:', seedErr.message);
     }
 
     server.listen(PORT, () => {
@@ -634,3 +353,4 @@ Você deve guiar o cliente passo a passo nesta ordem exata, sem pular etapas:
 }
 
 bootstrap();
+

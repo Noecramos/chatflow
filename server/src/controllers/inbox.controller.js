@@ -265,12 +265,14 @@ module.exports = {
     const { organizationId } = req.user;
 
     try {
+const { parseJson, stringifyJson } = require('../utils/json-helpers');
+
       const updateData = {};
       if (label !== undefined) updateData.label = label;
       if (notes !== undefined) updateData.notes = notes;
       if (priority !== undefined) updateData.priority = priority;
       if (status !== undefined) updateData.status = status;
-      if (tags !== undefined) updateData.tags = JSON.stringify(tags);
+      if (tags !== undefined) updateData.tags = stringifyJson(tags, '[]');
       if (isRead !== undefined) updateData.isRead = isRead;
 
       const updated = await prisma.inboxConversation.update({
@@ -331,27 +333,17 @@ module.exports = {
       });
       const operatorName = operator ? `${operator.firstName} ${operator.lastName}` : "Atendente";
 
-      // Save Message
-      const agentMessage = await prisma.message.create({
-        data: {
-          conversationId: id,
-          senderType: "AGENT",
-          content: content,
-          metadata: JSON.stringify({ senderName: operatorName })
-        }
+      const inboxService = require('../services/inbox.service');
+      const { message: agentMessage, conversation: updated } = await inboxService.createAndEmitMessage({
+        conversationId: id,
+        organizationId,
+        senderType: "AGENT",
+        content,
+        metadata: { senderName: operatorName },
+        io
       });
 
-      const updated = await prisma.inboxConversation.update({
-        where: { id },
-        data: { lastMessageAt: new Date() },
-        include: {
-          contact: true,
-          channel: { select: { type: true } },
-          bot: { select: { name: true } },
-          assignedUser: { select: { id: true, firstName: true, lastName: true } }
-        }
-      });
-
+      // Legacy socket emit for backward compatibility
       if (io) {
         io.to(organizationId).emit("message_sent", { session: updated, message: agentMessage });
       }

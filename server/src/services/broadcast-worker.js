@@ -179,19 +179,21 @@ async function processActiveCampaigns() {
           });
         }
 
-        // Create the message in database
-        const broadcastMsg = await prisma.message.create({
-          data: {
-            conversationId: activeConv.id,
-            senderType: 'BOT',
-            content: content
-          }
+        const inboxService = require('./inbox.service');
+
+        // Create the message in database and emit real-time socket events via central inboxService
+        const { message: broadcastMsg } = await inboxService.createAndEmitMessage({
+          conversationId: activeConv.id,
+          organizationId,
+          senderType: 'BOT',
+          content,
+          io
         });
 
         // Send via Meta API (WhatsApp/Instagram/Messenger/Widget)
         await metaService.sendTextMessage(activeConv.channel, contact.platformId, content);
 
-        // Notify client dashboard in real-time
+        // Legacy socket event for backward compatibility
         if (io) {
           io.to(organizationId).emit('message_sent', {
             session: {

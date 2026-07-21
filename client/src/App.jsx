@@ -12,6 +12,13 @@ import OmnichannelInbox from './components/OmnichannelInbox';
 import EcommerceDashboard from './components/EcommerceDashboard';
 import CrmDashboard from './components/CrmDashboard';
 import Documentation from './components/Documentation';
+import AiAgentsView from './components/views/AiAgentsView';
+import OperatorsView from './components/views/OperatorsView';
+import KnowledgeBaseView from './components/views/KnowledgeBaseView';
+import DisparosView from './components/views/DisparosView';
+import NoviApiView from './components/views/NoviApiView';
+import SettingsView from './components/views/SettingsView';
+import MasterAdminView from './components/views/MasterAdminView';
 
 export default function App() {
   const [token, setToken] = useState(localStorage.getItem('token') || '');
@@ -2123,425 +2130,75 @@ export default function App() {
             </div>
           )}
 
-          {/* TAB 4: AGENTES AI BUILDER (EXACT MATCH TO SCREENSHOT VIEWER) */}
+          {/* TAB 4: AGENTES AI BUILDER */}
           {activeTab === 'AGENTES' && (
-            <div style={{ padding: '25px', display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '1000px', margin: '0 auto' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <h3 style={{ fontSize: '20px', fontWeight: '800' }}>Agentes AI</h3>
-                  <p style={{ color: 'hsl(var(--text-muted))', fontSize: '12px', marginTop: '2px' }}>
-                    Configure as chaves, prompts, modelos e webhooks do seu agente autônomo Zimmy.
-                  </p>
-                </div>
-
-                {/* Add new agent bot inline */}
-                <form onSubmit={handleCreateBot} style={{ display: 'flex', gap: '8px' }}>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Nome do novo Agente AI"
-                    value={newBotName}
-                    onChange={(e) => setNewBotName(e.target.value)}
-                    style={{ background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '6px 12px', borderRadius: '6px', fontSize: '12px', outline: 'none' }}
-                  />
-                  <button type="submit" className="btn-primary" style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <Plus size={14} /> Novo Agente
-                  </button>
-                </form>
-              </div>
-
-              {/* List selection */}
-              <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
-                {bots.map(bot => (
-                  <button
-                    key={bot.id}
-                    onClick={() => handleSelectBot(bot)}
-                    style={{
-                      background: selectedBot?.id === bot.id ? 'hsl(var(--primary-glow))' : 'rgba(255,255,255,0.02)',
-                      color: selectedBot?.id === bot.id ? 'hsl(var(--primary))' : 'hsl(var(--text-muted))',
-                      border: '1px solid',
-                      borderColor: selectedBot?.id === bot.id ? 'hsl(var(--primary) / 0.4)' : 'hsl(var(--border))',
-                      borderRadius: '16px',
-                      padding: '6px 16px',
-                      fontSize: '12px',
-                      fontWeight: '700',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    🤖 {bot.name}
-                  </button>
-                ))}
-              </div>
-
-              {selectedBot ? (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 3fr', gap: '25px', alignItems: 'start', marginTop: '10px' }}>
-                  
-                  {/* Left inner tab selector matching "Geral & Fluxo", "Modelo", "Ferramentas", "Webhooks" */}
-                  <div className="glass" style={{ padding: '16px 10px', display: 'flex', flexDirection: 'column', gap: '4px', background: 'rgba(255,255,255,0.01)' }}>
-                    <div onClick={() => setBotSettingsTab('GERAL')} className={`nav-item ${botSettingsTab === 'GERAL' ? 'active' : ''}`} style={{ fontSize: '13px', padding: '8px 12px' }}>
-                      <User size={15} />
-                      <span>Geral & Fluxo</span>
-                    </div>
-                    <div onClick={() => setBotSettingsTab('MODELO')} className={`nav-item ${botSettingsTab === 'MODELO' ? 'active' : ''}`} style={{ fontSize: '13px', padding: '8px 12px' }}>
-                      <Sliders size={15} />
-                      <span>Modelo</span>
-                    </div>
-                    <div onClick={() => setBotSettingsTab('FERRAMENTAS')} className={`nav-item ${botSettingsTab === 'FERRAMENTAS' ? 'active' : ''}`} style={{ fontSize: '13px', padding: '8px 12px' }}>
-                      <Cpu size={15} />
-                      <span>Ferramentas</span>
-                    </div>
-                    <div onClick={() => setBotSettingsTab('WEBHOOKS')} className={`nav-item ${botSettingsTab === 'WEBHOOKS' ? 'active' : ''}`} style={{ fontSize: '13px', padding: '8px 12px' }}>
-                      <Globe size={15} />
-                      <span>Webhooks</span>
-                    </div>
-                  </div>
-
-                  {/* Right Tab Content Viewports */}
-                  <div className="glass" style={{ padding: '24px' }}>
-                    
-                    {/* SUBTAB 1: GERAL & FLUXO */}
-                    {botSettingsTab === 'GERAL' && (
-                      <form onSubmit={handleUpdateBotSettings} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                        <div style={{ fontSize: '15px', fontWeight: '800', borderBottom: '1px solid hsl(var(--border))', paddingBottom: '10px', marginBottom: '10px' }}>Identificação do Agente</div>
-                        
-                        <div style={{ display: 'flex', gap: '20px', alignItems: 'center', marginBottom: '10px' }}>
-                          <div style={{ width: '70px', height: '70px', borderRadius: '50%', background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)))', display: 'flex', fontSize: '24px', color: '#000', fontWeight: '800' }}>
-                            <span style={{ margin: 'auto' }}>🤖</span>
-                          </div>
-                          <div style={{ display: 'flex', gap: '8px' }}>
-                            <button type="button" className="btn-secondary" style={{ padding: '4px 10px', fontSize: '11px' }}>Substituir</button>
-                            <button type="button" onClick={handleDeleteBot} className="btn-secondary" style={{ padding: '4px 10px', fontSize: '11px', background: 'rgba(239, 68, 68, 0.1)', color: 'rgb(239, 68, 68)', border: 'none' }}>Excluir</button>
-                          </div>
-                        </div>
-
-                        <div>
-                          <label style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px', fontWeight: '600' }}>Nome</label>
-                          <input 
-                            type="text" 
-                            required
-                            value={agentName}
-                            onChange={(e) => setAgentName(e.target.value)}
-                            style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '10px', borderRadius: '6px', fontSize: '13px' }}
-                          />
-                        </div>
-
-                        <div>
-                          <label style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px', fontWeight: '600' }}>Descrição</label>
-                          <input 
-                            type="text" 
-                            value={agentDescription}
-                            onChange={(e) => setAgentDescription(e.target.value)}
-                            style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '10px', borderRadius: '6px', fontSize: '13px' }}
-                          />
-                        </div>
-
-                        <div>
-                          <label style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px', fontWeight: '600' }}>Mensagem de Saudação</label>
-                          <textarea 
-                            rows={3}
-                            value={agentGreeting}
-                            onChange={(e) => setAgentGreeting(e.target.value)}
-                            placeholder="Ex: Olá! Como posso te ajudar hoje?"
-                            style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '10px', borderRadius: '6px', fontSize: '13px', resize: 'vertical' }}
-                          />
-                        </div>
-
-                        <div style={{ marginTop: '10px' }}>
-                          <span style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px', fontWeight: '600' }}>ID do Agente</span>
-                          <code style={{ background: 'rgba(255,255,255,0.03)', padding: '6px 12px', borderRadius: '4px', border: '1px solid hsl(var(--border))', fontSize: '11px', display: 'inline-block' }}>{selectedBot.id}</code>
-                        </div>
-
-                        <button type="submit" disabled={isBotSaving} className="btn-primary" style={{ alignSelf: 'flex-start', padding: '10px 20px', fontSize: '13px', fontWeight: '700', marginTop: '10px' }}>
-                          {isBotSaving ? "Salvando..." : "Salvar Agente"}
-                        </button>
-                      </form>
-                    )}
-
-                    {/* SUBTAB 2: MODELO */}
-                    {botSettingsTab === 'MODELO' && (
-                      <form onSubmit={handleUpdateBotSettings} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                        <div style={{ fontSize: '15px', fontWeight: '800', borderBottom: '1px solid hsl(var(--border))', paddingBottom: '10px', marginBottom: '10px' }}>Prompt & Personalidade</div>
-                        
-                        <div>
-                          <label style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '6px', fontWeight: '600' }}>
-                            Prompt - Personalize o Prompt, o modelo de linguagem e opções de comportamento do seu agente.
-                          </label>
-                          <textarea 
-                            rows={8}
-                            required
-                            value={agentPrompt}
-                            onChange={(e) => setAgentPrompt(e.target.value)}
-                            style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '12px', borderRadius: '6px', fontSize: '13px', lineHeight: '1.4', resize: 'vertical' }}
-                          />
-                        </div>
-
-                        <div>
-                          <label style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px', fontWeight: '600' }}>Modelo de Linguagem AI</label>
-                          <select 
-                            value={agentModel}
-                            onChange={(e) => setAgentModel(e.target.value)}
-                            style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '10px', borderRadius: '6px', fontSize: '13px' }}
-                          >
-                            <option value="gemini-2.5-flash">Google Gemini 2.5 Flash (Recomendado)</option>
-                            <option value="gemini-2.5-pro">Google Gemini 2.5 Pro</option>
-                            <option value="chatgpt-4o-mini">ChatGPT-4o Mini (Simulado)</option>
-                          </select>
-                        </div>
-
-                        <div>
-                          <label style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px', fontWeight: '600' }}>Temperatura: {agentTemperature}</label>
-                          <input 
-                            type="range" 
-                            min="0" 
-                            max="1" 
-                            step="0.1"
-                            value={agentTemperature}
-                            onChange={(e) => setAgentTemperature(parseFloat(e.target.value))}
-                            style={{ width: '100%', accentColor: 'hsl(var(--primary))' }}
-                          />
-                        </div>
-
-                        <button type="submit" disabled={isBotSaving} className="btn-primary" style={{ alignSelf: 'flex-start', padding: '10px 20px', fontSize: '13px', fontWeight: '700', marginTop: '10px' }}>
-                          {isBotSaving ? "Salvando..." : "Salvar Prompt"}
-                        </button>
-                      </form>
-                    )}
-
-                    {/* SUBTAB 3: FERRAMENTAS */}
-                    {botSettingsTab === 'FERRAMENTAS' && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                        <div style={{ fontSize: '15px', fontWeight: '800', borderBottom: '1px solid hsl(var(--border))', paddingBottom: '10px', marginBottom: '10px' }}>Ferramentas do Agente</div>
-                        <p style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', margin: 0 }}>Ative ou desative as ferramentas disponíveis para tornar seu agente Zimmy mais inteligente.</p>
-
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '10px' }}>
-                          
-                          <div className="glass" style={{ padding: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.01)' }}>
-                            <div>
-                              <div style={{ fontWeight: '700', fontSize: '13px' }}>Conectar Base de Conhecimento</div>
-                              <div style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', marginTop: '2px' }}>Permite que o agente consulte vetores e chunks indexados na Base.</div>
-                            </div>
-                            <button onClick={() => setToolKnowledgeBase(!toolKnowledgeBase)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: toolKnowledgeBase ? 'hsl(var(--secondary))' : 'hsl(var(--text-muted))' }}>
-                              {toolKnowledgeBase ? <ToggleRight size={28} /> : <ToggleLeft size={28} />}
-                            </button>
-                          </div>
-
-                          <div className="glass" style={{ padding: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.01)' }}>
-                            <div>
-                              <div style={{ fontWeight: '700', fontSize: '13px' }}>Solicitar Transbordo Humano</div>
-                              <div style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', marginTop: '2px' }}>O agente muta a si mesmo automaticamente quando transbordo é exigido.</div>
-                            </div>
-                            <button onClick={() => setToolHumanHandover(!toolHumanHandover)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: toolHumanHandover ? 'hsl(var(--secondary))' : 'hsl(var(--text-muted))' }}>
-                              {toolHumanHandover ? <ToggleRight size={28} /> : <ToggleLeft size={28} />}
-                            </button>
-                          </div>
-
-                          <div className="glass" style={{ padding: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.01)' }}>
-                            <div>
-                              <div style={{ fontWeight: '700', fontSize: '13px' }}>Integrar HTTP ERP (Mock Connector)</div>
-                              <div style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', marginTop: '2px' }}>O agente realiza buscas automáticas e reservas em seu estoque ERP.</div>
-                            </div>
-                            <button onClick={() => setToolMockErp(!toolMockErp)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: toolMockErp ? 'hsl(var(--secondary))' : 'hsl(var(--text-muted))' }}>
-                              {toolMockErp ? <ToggleRight size={28} /> : <ToggleLeft size={28} />}
-                            </button>
-                          </div>
-
-                        </div>
-                      </div>
-                    )}
-
-                    {/* SUBTAB 4: WEBHOOKS */}
-                    {botSettingsTab === 'WEBHOOKS' && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                        <div style={{ fontSize: '15px', fontWeight: '800', borderBottom: '1px solid hsl(var(--border))', paddingBottom: '10px', marginBottom: '10px' }}>Webhooks de Saída (Outbound)</div>
-                        
-                        <div>
-                          <label style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px', fontWeight: '600' }}>Sua URL Externa</label>
-                          <input 
-                            type="text" 
-                            placeholder="https://meu-endpoint.com/callback"
-                            value={outboundWebhook}
-                            onChange={(e) => setOutboundWebhook(e.target.value)}
-                            style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '10px', borderRadius: '6px', fontSize: '13px' }}
-                          />
-                        </div>
-
-                        <div>
-                          <label style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px', fontWeight: '600' }}>Header de Autorização (Opcional)</label>
-                          <input 
-                            type="text" 
-                            placeholder="Bearer meu-segredo-customizado"
-                            value={outboundHeader}
-                            onChange={(e) => setOutboundHeader(e.target.value)}
-                            style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '10px', borderRadius: '6px', fontSize: '13px' }}
-                          />
-                        </div>
-
-                        <button type="button" onClick={() => alert("Webhook configurado com sucesso!")} className="btn-primary" style={{ alignSelf: 'flex-start', padding: '10px 20px', fontSize: '13px', fontWeight: '700', marginTop: '10px' }}>
-                          Salvar Webhook
-                        </button>
-                      </div>
-                    )}
-
-                  </div>
-
-                </div>
-              ) : (
-                <div className="glass" style={{ padding: '40px', textAlign: 'center', color: 'hsl(var(--text-muted))' }}>
-                  Crie ou selecione um Agente AI para começar a configurar.
-                </div>
-              )}
-            </div>
+            <AiAgentsView
+              bots={bots}
+              selectedBot={selectedBot}
+              handleSelectBot={handleSelectBot}
+              handleCreateBot={handleCreateBot}
+              newBotName={newBotName}
+              setNewBotName={setNewBotName}
+              botSettingsTab={botSettingsTab}
+              setBotSettingsTab={setBotSettingsTab}
+              handleUpdateBotSettings={handleUpdateBotSettings}
+              handleDeleteBot={handleDeleteBot}
+              agentName={agentName}
+              setAgentName={setAgentName}
+              agentDescription={agentDescription}
+              setAgentDescription={setAgentDescription}
+              agentGreeting={agentGreeting}
+              setAgentGreeting={setAgentGreeting}
+              agentPrompt={agentPrompt}
+              setAgentPrompt={setAgentPrompt}
+              agentModel={agentModel}
+              setAgentModel={setAgentModel}
+              agentTemperature={agentTemperature}
+              setAgentTemperature={setAgentTemperature}
+              isBotSaving={isBotSaving}
+              toolKnowledgeBase={toolKnowledgeBase}
+              setToolKnowledgeBase={setToolKnowledgeBase}
+              toolHumanHandover={toolHumanHandover}
+              setToolHumanHandover={setToolHumanHandover}
+              toolMockErp={toolMockErp}
+              setToolMockErp={setToolMockErp}
+              outboundWebhook={outboundWebhook}
+              setOutboundWebhook={setOutboundWebhook}
+              outboundHeader={outboundHeader}
+              setOutboundHeader={setOutboundHeader}
+            />
           )}
 
-          {/* TAB 4.5: OPERADORES (HUMAN TEAM ROSTER SEATS) */}
+          {/* TAB 4.5: OPERADORES */}
           {activeTab === 'OPERADORES' && (
-            <div style={{ padding: '25px', display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '900px', margin: '0 auto' }}>
-              <div>
-                <h3 style={{ fontSize: '20px', fontWeight: '800' }}>Equipe & Operadores</h3>
-                <p style={{ color: 'hsl(var(--text-muted))', fontSize: '12px', marginTop: '2px' }}>
-                  Controle as permissões de acesso da sua equipe e distribua os chats de suporte e vendas.
-                </p>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '2fr 1fr', gap: isMobile ? '16px' : '25px', alignItems: 'start' }}>
-                
-                {/* List of Operators */}
-                <div className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                  <h4 style={{ fontSize: '14px', fontWeight: '700', borderBottom: '1px solid hsl(var(--border))', paddingBottom: '10px' }}>Contas de Operadores Ativas</h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    {agents.map(ag => (
-                      <div key={ag.id} className="glowing-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', display: 'flex', gap: '12px', alignItems: 'center' }}>
-                        <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)))', display: 'flex', color: '#000', fontWeight: '800', fontSize: '12px' }}>
-                          <span style={{ margin: 'auto' }}>{ag.firstName[0].toUpperCase()}</span>
-                        </div>
-                        <div>
-                          <div style={{ fontWeight: '700', fontSize: '13px' }}>{ag.firstName} {ag.lastName}</div>
-                          <div style={{ fontSize: '11px', color: 'hsl(var(--text-muted))' }}>{ag.email}</div>
-                          <div style={{ fontSize: '9px', background: ag.role === 'OWNER' ? 'hsl(var(--primary-glow))' : 'rgba(255,255,255,0.05)', color: ag.role === 'OWNER' ? 'hsl(var(--primary))' : 'hsl(var(--text-muted))', fontWeight: '700', display: 'inline-block', padding: '1px 5px', borderRadius: '4px', marginTop: '4px' }}>{ag.role}</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Create Operator form */}
-                <div className="glass" style={{ padding: '20px' }}>
-                  <h4 style={{ fontSize: '14px', fontWeight: '700', marginBottom: '14px' }}>Adicionar Operador</h4>
-                  <form onSubmit={handleCreateAgent} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <div>
-                      <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px' }}>Nome</label>
-                      <input 
-                        type="text" 
-                        required
-                        value={newAgentFirstName}
-                        onChange={(e) => setNewAgentFirstName(e.target.value)}
-                        placeholder="Diego"
-                        style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '8px 10px', borderRadius: '6px', fontSize: '12px' }}
-                      />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px' }}>Sobrenome</label>
-                      <input 
-                        type="text" 
-                        required
-                        value={newAgentLastName}
-                        onChange={(e) => setNewAgentLastName(e.target.value)}
-                        placeholder="Maradona"
-                        style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '8px 10px', borderRadius: '6px', fontSize: '12px' }}
-                      />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px' }}>E-mail</label>
-                      <input 
-                        type="email" 
-                        required
-                        value={newAgentEmail}
-                        onChange={(e) => setNewAgentEmail(e.target.value)}
-                        placeholder="diego@volt.com"
-                        style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '8px 10px', borderRadius: '6px', fontSize: '12px' }}
-                      />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px' }}>Senha</label>
-                      <input 
-                        type="password" 
-                        required
-                        value={newAgentPassword}
-                        onChange={(e) => setNewAgentPassword(e.target.value)}
-                        placeholder="••••••••"
-                        style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '8px 10px', borderRadius: '6px', fontSize: '12px' }}
-                      />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px' }}>Função</label>
-                      <select 
-                        value={newAgentRole} 
-                        onChange={(e) => setNewAgentRole(e.target.value)}
-                        style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '8px 10px', borderRadius: '6px', fontSize: '12px' }}
-                      >
-                        <option value="AGENT">Agent (Vendas/Suporte)</option>
-                        <option value="ADMIN">Admin (Seat Administrativo)</option>
-                      </select>
-                    </div>
-                    <button type="submit" disabled={agentLoading} className="btn-primary" style={{ width: '100%', padding: '8px', fontSize: '12px', fontWeight: '700' }}>
-                      {agentLoading ? "Registrando..." : "Registrar Operador"}
-                    </button>
-                  </form>
-                </div>
-              </div>
-            </div>
+            <OperatorsView
+              isMobile={isMobile}
+              agents={agents}
+              handleCreateAgent={handleCreateAgent}
+              newAgentFirstName={newAgentFirstName}
+              setNewAgentFirstName={setNewAgentFirstName}
+              newAgentLastName={newAgentLastName}
+              setNewAgentLastName={setNewAgentLastName}
+              newAgentEmail={newAgentEmail}
+              setNewAgentEmail={setNewAgentEmail}
+              newAgentPassword={newAgentPassword}
+              setNewAgentPassword={setNewAgentPassword}
+              newAgentRole={newAgentRole}
+              setNewAgentRole={setNewAgentRole}
+              agentLoading={agentLoading}
+            />
           )}
 
           {/* TAB 5: BASES DE CONHECIMENTO */}
           {activeTab === 'CONHECIMENTO' && (
-            <div style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '30px', maxWidth: '1000px', margin: '0 auto' }}>
-              <div>
-                <h3 style={{ fontSize: '20px', fontWeight: '800' }}>Bases de Conhecimento RAG</h3>
-                <p style={{ color: 'hsl(var(--text-muted))', fontSize: '12px', marginTop: '2px' }}>
-                  Alimente o robô de inteligência artificial com catálogos, regras e FAQs. O sistema converterá as informações em vetores de alta dimensão.
-                </p>
-              </div>
-
-              <div className="glass" style={{ padding: '24px' }}>
-                <h3 style={{ fontSize: '16px', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px', borderBottom: '1px solid hsl(var(--border))', paddingBottom: '12px' }}>
-                  <Database size={18} style={{ color: 'hsl(var(--secondary))' }} /> Indexação de Documento
-                </h3>
-                
-                <form onSubmit={handleUploadKnowledge} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  <div>
-                    <label style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '6px', fontWeight: '600' }}>
-                      Nome do Documento / FAQ
-                    </label>
-                    <input 
-                      type="text" 
-                      required
-                      placeholder="Ex: Tabela de Preços e Prazos"
-                      value={knowledgeSource}
-                      onChange={(e) => setKnowledgeSource(e.target.value)}
-                      style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '10px 12px', borderRadius: '6px', fontSize: '13px' }}
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '6px', fontWeight: '600' }}>
-                      Conteúdo de Texto Sincronizável
-                    </label>
-                    <textarea 
-                      required
-                      rows={6}
-                      placeholder="Escreva ou cole as especificações de produtos, políticas de trocas ou respostas prontas aqui."
-                      value={knowledgeText}
-                      onChange={(e) => setKnowledgeText(e.target.value)}
-                      style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '12px', borderRadius: '6px', fontSize: '13px', outline: 'none', resize: 'vertical' }}
-                    />
-                  </div>
-
-                  <button type="submit" disabled={uploadingKnowledge || !knowledgeText || !knowledgeSource} className="btn-primary" style={{ alignSelf: 'flex-start', padding: '10px 20px', fontSize: '13px' }}>
-                    {uploadingKnowledge ? "Processando Vetores..." : "Indexar Documento na Base"}
-                  </button>
-                </form>
-              </div>
-            </div>
+            <KnowledgeBaseView
+              knowledgeSource={knowledgeSource}
+              setKnowledgeSource={setKnowledgeSource}
+              knowledgeText={knowledgeText}
+              setKnowledgeText={setKnowledgeText}
+              uploadingKnowledge={uploadingKnowledge}
+              handleUploadKnowledge={handleUploadKnowledge}
+            />
           )}
 
           {/* TAB 6: ARTEFATOS */}
@@ -2606,1034 +2263,73 @@ export default function App() {
 
           {/* TAB 7: DISPAROS */}
           {activeTab === 'DISPAROS' && (
-            <div style={{ padding: '40px', display: 'flex', flexDirection: 'column', gap: '32px', maxWidth: '1200px', margin: '0 auto' }}>
-              
-              {/* Premium Megaphone Header (ChatFlow Style) */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                  <div className="pulse-glowing" style={{
-                    width: '66px',
-                    height: '66px',
-                    borderRadius: '50%',
-                    background: 'linear-gradient(135deg, hsl(var(--primary) / 0.3), hsl(var(--primary) / 0.1))',
-                    border: '1px solid hsl(var(--primary) / 0.4)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: '0 0 20px hsl(var(--primary) / 0.25)'
-                  }}>
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'hsl(var(--primary))' }}>
-                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                      <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-                      <path d="M2 8c0-3.3 2.7-6 6-6"></path>
-                      <path d="M22 8c0-3.3-2.7-6-6-6"></path>
-                    </svg>
-                  </div>
-                  <div>
-                    <h2 style={{ fontSize: '34px', fontWeight: 900, fontFamily: 'var(--font-display)', letterSpacing: '-0.03em', color: '#ffffff' }}>Disparos</h2>
-                    <p style={{ color: 'hsl(var(--text-muted))', fontSize: '14px', marginTop: '4px', opacity: 0.9 }}>
-                      Gerencie seus disparos em massa e campanhas omnichannel de marketing.
-                    </p>
-                  </div>
-                </div>
-                
-                {/* ChatFlow Sized Header Action Buttons */}
-                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                  <button onClick={() => alert('Para adquirir créditos de disparos adicionais para WhatsApp Oficial da Meta, entre em contato com comercial@noviapp.ai')} style={{
-                    background: 'transparent',
-                    border: '1px solid #25d366',
-                    color: '#25d366',
-                    padding: '12px 22px',
-                    fontSize: '14px',
-                    fontWeight: '700',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                  }} onMouseEnter={(e) => e.target.style.background = '#25d36615'} onMouseLeave={(e) => e.target.style.background = 'transparent'}>
-                    💬 Comprar disparos
-                  </button>
-                  <button onClick={() => setIsManageListsOpen(true)} className="btn-secondary" style={{ padding: '12px 22px', fontSize: '14px', fontWeight: '700', borderRadius: '8px' }}>
-                    📁 Criar Lista de Contatos
-                  </button>
-                  <button onClick={() => alert('A sincronização de Templates Oficiais do WhatsApp está disponível através do console da Meta Cloud.')} className="btn-secondary" style={{ padding: '12px 22px', fontSize: '14px', fontWeight: '700', borderRadius: '8px' }}>
-                    ⚙️ Gerenciar Templates
-                  </button>
-                  <button onClick={() => setIsCreateCampaignOpen(true)} className="btn-primary" style={{ padding: '12px 24px', fontSize: '14px', fontWeight: '800', borderRadius: '8px', boxShadow: '0 0 16px hsl(var(--primary) / 0.45)' }}>
-                    📢 Novo Disparo
-                  </button>
-                </div>
-              </div>
-
-              {/* Sub-tab selection bar - Larger, Premium Pills */}
-              <div style={{ display: 'flex', gap: '12px', borderBottom: '1px solid hsl(var(--border) / 0.4)', paddingBottom: '14px', marginTop: '14px', overflowX: 'auto', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
-                {[
-                  { key: 'ativos', label: '⚡ Ativos', count: campaigns.filter(c => c.status === 'PROCESSING' || c.status === 'PAUSED').length },
-                  { key: 'agendados', label: '📅 Agendados', count: campaigns.filter(c => c.status === 'PENDING').length },
-                  { key: 'concluidos', label: '✅ Concluídos', count: campaigns.filter(c => c.status === 'COMPLETED').length },
-                  { key: 'listas', label: '📁 Listas Salvas', count: contactLists.length }
-                ].map(tab => (
-                  <button
-                    key={tab.key}
-                    onClick={() => setActiveBroadcastTab(tab.key)}
-                    style={{
-                      padding: '12px 24px',
-                      fontSize: '14px',
-                      fontWeight: '700',
-                      borderRadius: '8px',
-                      border: 'none',
-                      background: activeBroadcastTab === tab.key ? 'hsl(var(--primary) / 0.2)' : 'transparent',
-                      color: activeBroadcastTab === tab.key ? 'hsl(var(--primary))' : 'hsl(var(--text-muted))',
-                      boxShadow: activeBroadcastTab === tab.key ? '0 0 12px hsl(var(--primary-glow))' : 'none',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '10px',
-                      transition: 'all 0.2s',
-                      whiteSpace: 'nowrap'
-                    }}
-                  >
-                    <span>{tab.label}</span>
-                    <span style={{
-                      fontSize: '11px',
-                      background: activeBroadcastTab === tab.key ? 'hsl(var(--primary) / 0.25)' : 'hsl(var(--border) / 0.5)',
-                      color: activeBroadcastTab === tab.key ? 'hsl(var(--primary))' : 'hsl(var(--text-muted))',
-                      padding: '2px 8px',
-                      borderRadius: '10px',
-                      fontWeight: '700'
-                    }}>
-                      {tab.count}
-                    </span>
-                  </button>
-                ))}
-              </div>
-
-              {/* Sub-view: Active Campaigns */}
-              {activeBroadcastTab === 'ativos' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                  {campaigns.filter(c => c.status === 'PROCESSING' || c.status === 'PAUSED').map(c => {
-                    const pct = c.totalCount > 0 ? Math.round((c.sentCount + c.errorCount) / c.totalCount * 100) : 0;
-                    return (
-                      <div key={c.id} className="glass glowing-card" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '18px', borderRadius: '12px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-                          <div>
-                            <h4 style={{ fontSize: '18px', fontWeight: '800', color: '#ffffff' }}>{c.name}</h4>
-                            <span style={{ fontSize: '13px', color: 'hsl(var(--text-muted))', marginTop: '6px', display: 'block' }}>
-                              Segmentação: {c.contactList ? `Lista "${c.contactList.name}"` : `Rótulo "${c.label === 'Lead' ? 'Novos Leads / Vendas Varejo' : c.label === 'Billing' ? 'Carrinho Abandonado / Faturamento' : c.label === 'Support' ? 'Suporte Técnico / Pós-Venda' : 'Todos'}"`}
-                            </span>
-                          </div>
-                          <span className="badge" style={{
-                            background: c.status === 'PROCESSING' ? '#006aff20' : '#ff980020',
-                            color: c.status === 'PROCESSING' ? '#006aff' : '#ff9800',
-                            borderColor: c.status === 'PROCESSING' ? '#006aff' : '#ff9800',
-                            borderWidth: '1px',
-                            borderStyle: 'solid',
-                            padding: '4px 10px',
-                            fontSize: '11px'
-                          }}>
-                            {c.status === 'PROCESSING' ? 'Enviando...' : 'Pausado'}
-                          </span>
-                        </div>
-                        <p style={{ fontSize: '13px', color: 'hsl(var(--text-muted))', fontStyle: 'italic', background: 'hsl(var(--border) / 0.15)', padding: '10px 14px', borderRadius: '6px', borderLeft: '3px solid hsl(var(--primary))' }}>
-                          "{c.content}"
-                        </p>
-                        <div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'hsl(var(--text-muted))', marginBottom: '6px', fontWeight: '600' }}>
-                            <span>Progresso: {c.sentCount + c.errorCount} de {c.totalCount} contatos</span>
-                            <span>{pct}%</span>
-                          </div>
-                          <div style={{ width: '100%', height: '8px', background: 'hsl(var(--border) / 0.4)', borderRadius: '4px', overflow: 'hidden' }}>
-                            <div style={{ width: `${pct}%`, height: '100%', background: 'hsl(var(--primary))', transition: 'width 0.4s ease' }} />
-                          </div>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
-                          <div style={{ display: 'flex', gap: '16px', fontSize: '12px' }}>
-                            <span style={{ color: '#00c853', fontWeight: '700' }}>✓ {c.sentCount} Entregues</span>
-                            <span style={{ color: '#ff1744', fontWeight: '700' }}>✗ {c.errorCount} Falhas</span>
-                          </div>
-                          {c.status === 'PROCESSING' ? (
-                            <button onClick={() => handleStopCampaign(c.id)} className="btn-secondary" style={{ padding: '6px 14px', fontSize: '12px', borderColor: '#ff1744', color: '#ff1744', fontWeight: '700' }}>
-                              ⏸ Pausar Disparos
-                            </button>
-                          ) : (
-                            <button onClick={() => handleRetryFailedCampaign(c.id)} className="btn-primary" style={{ padding: '6px 14px', fontSize: '12px', fontWeight: '700' }}>
-                              ▶ Retomar Disparos
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                  
-                  {/* ChatFlow Welcome Empty State if no Active Campaigns */}
-                  {campaigns.filter(c => c.status === 'PROCESSING' || c.status === 'PAUSED').length === 0 && campaigns.length === 0 ? (
-                    <div className="glass" style={{ padding: '60px 40px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '28px', borderRadius: '16px', border: '1px solid hsl(var(--border))', background: 'hsl(var(--bg-card) / 0.3)', width: '100%' }}>
-                      <div className="pulse-glowing" style={{
-                        width: '80px',
-                        height: '80px',
-                        borderRadius: '50%',
-                        background: 'linear-gradient(135deg, hsl(var(--primary) / 0.25), hsl(var(--primary) / 0.05))',
-                        border: '2px solid hsl(var(--primary) / 0.5)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        boxShadow: '0 0 25px hsl(var(--primary) / 0.3)'
-                      }}>
-                        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'hsl(var(--primary))' }}>
-                          <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
-                          <path d="M19 10v1a7 7 0 0 1-14 0v-1"></path>
-                          <line x1="12" x2="12" y1="19" y2="22"></line>
-                        </svg>
-                      </div>
-                      <div style={{ textAlign: 'center', maxWidth: '640px' }}>
-                        <h3 style={{ fontSize: '26px', fontWeight: '800', fontFamily: 'var(--font-display)', letterSpacing: '-0.02em', color: '#fff' }}>
-                          Bem-vindo aos Disparos
-                        </h3>
-                        <h5 style={{ fontSize: '15px', fontWeight: '500', color: 'hsl(var(--text-muted))', marginTop: '8px', lineHeight: '1.4' }}>
-                          Envie mensagens em massa do WhatsApp para suas listas de contatos.
-                        </h5>
-                        <p style={{ fontSize: '13px', color: 'hsl(var(--text-muted))', marginTop: '12px', lineHeight: '1.6', opacity: 0.8 }}>
-                          Disparos permitem que você envie mensagens em lote para suas listas de contatos usando templates do WhatsApp. Crie campanhas, agende mensagens e acompanhe o status de entrega tudo em um só lugar.
-                        </p>
-                      </div>
-
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', width: '100%', maxWidth: '640px', borderTop: '1px solid hsl(var(--border) / 0.3)', paddingTop: '28px', marginTop: '10px' }}>
-                        <div style={{ display: 'flex', gap: '12px' }}>
-                          <div style={{ color: 'hsl(var(--primary))', marginTop: '2px' }}>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="m5 12 5 5L20 7"></path>
-                            </svg>
-                          </div>
-                          <div>
-                            <h4 style={{ fontSize: '14px', fontWeight: '700', color: '#fff' }}>Mensagens em Massa</h4>
-                            <p style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', marginTop: '4px', lineHeight: '1.4' }}>
-                              Envie mensagens para milhares de contatos simultaneamente com templates do WhatsApp.
-                            </p>
-                          </div>
-                        </div>
-                        <div style={{ display: 'flex', gap: '12px' }}>
-                          <div style={{ color: 'hsl(var(--primary))', marginTop: '2px' }}>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="m5 12 5 5L20 7"></path>
-                            </svg>
-                          </div>
-                          <div>
-                            <h4 style={{ fontSize: '14px', fontWeight: '700', color: '#fff' }}>Acompanhamento de Campanhas</h4>
-                            <p style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', marginTop: '4px', lineHeight: '1.4' }}>
-                              Monitore o status de entrega e acompanhe o desempenho da campanha em tempo real.
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <button onClick={() => setIsCreateCampaignOpen(true)} className="btn-primary" style={{ padding: '12px 28px', fontSize: '13px', fontWeight: '800', borderRadius: '8px', marginTop: '10px' }}>
-                        Criar Primeira Campanha
-                      </button>
-                    </div>
-                  ) : (
-                    campaigns.filter(c => c.status === 'PROCESSING' || c.status === 'PAUSED').length === 0 && (
-                      <div style={{ textAlign: 'center', padding: '50px 20px', color: 'hsl(var(--text-muted))' }}>
-                        <p style={{ fontSize: '14px' }}>Nenhum disparo em andamento ou pausado no momento.</p>
-                      </div>
-                    )
-                  )}
-                </div>
-              )}
-
-              {/* Sub-view: Scheduled Campaigns */}
-              {activeBroadcastTab === 'agendados' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                  {campaigns.filter(c => c.status === 'PENDING').map(c => (
-                    <div key={c.id} className="glass glowing-card" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '18px', borderRadius: '12px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-                        <div>
-                          <h4 style={{ fontSize: '18px', fontWeight: '800', color: '#ffffff' }}>{c.name}</h4>
-                          <span style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', marginTop: '4px', display: 'block' }}>
-                            📅 Agendado para: <strong style={{ color: 'hsl(var(--primary))' }}>{new Date(c.scheduledFor).toLocaleString('pt-BR')}</strong>
-                          </span>
-                        </div>
-                        <span className="badge" style={{ background: 'hsl(var(--border) / 0.5)', color: 'hsl(var(--text-muted))', padding: '4px 10px' }}>
-                          Agendado
-                        </span>
-                      </div>
-                      <p style={{ fontSize: '13px', color: 'hsl(var(--text-muted))', fontStyle: 'italic', background: 'hsl(var(--border) / 0.15)', padding: '10px 14px', borderRadius: '6px', borderLeft: '3px solid hsl(var(--primary))' }}>
-                        "{c.content}"
-                      </p>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '12px', color: 'hsl(var(--text-muted))' }}>
-                          Público Alvo: {c.contactList ? `Lista "${c.contactList.name}"` : `Rótulo "${c.label === 'Lead' ? 'Novos Leads / Vendas Varejo' : c.label === 'Billing' ? 'Carrinho Abandonado / Faturamento' : c.label === 'Support' ? 'Suporte Técnico / Pós-Venda' : 'Todos'}"`} ({c.totalCount} contatos)
-                        </span>
-                        <button onClick={() => handleStopCampaign(c.id)} className="btn-secondary" style={{ padding: '6px 14px', fontSize: '12px', color: '#ff1744', borderColor: '#ff1744', fontWeight: '700' }}>
-                          Excluir Agendamento
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                  {campaigns.filter(c => c.status === 'PENDING').length === 0 && (
-                    <div style={{ textAlign: 'center', padding: '60px 20px', color: 'hsl(var(--text-muted))' }}>
-                      <p style={{ fontSize: '14px' }}>Nenhum disparo agendado.</p>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Sub-view: Completed Campaigns */}
-              {activeBroadcastTab === 'concluidos' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                  {campaigns.filter(c => c.status === 'COMPLETED').map(c => (
-                    <div key={c.id} className="glass glowing-card" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '18px', borderRadius: '12px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-                        <div>
-                          <h4 style={{ fontSize: '18px', fontWeight: '800', color: '#ffffff' }}>{c.name}</h4>
-                          <span style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', marginTop: '4px', display: 'block' }}>
-                            Concluído em: <strong>{c.completedAt ? new Date(c.completedAt).toLocaleString('pt-BR') : 'Recente'}</strong>
-                          </span>
-                        </div>
-                        <span className="badge" style={{ background: '#00c85320', color: '#00c853', borderColor: '#00c853', borderStyle: 'solid', borderWidth: '1px', padding: '4px 10px' }}>
-                          Concluído
-                        </span>
-                      </div>
-                      <p style={{ fontSize: '13px', color: 'hsl(var(--text-muted))', fontStyle: 'italic', background: 'hsl(var(--border) / 0.15)', padding: '10px 14px', borderRadius: '6px', borderLeft: '3px solid hsl(var(--primary))' }}>
-                        "{c.content}"
-                      </p>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ display: 'flex', gap: '16px', fontSize: '12px' }}>
-                          <span style={{ color: '#00c853', fontWeight: '700' }}>✓ {c.sentCount} Enviados com Sucesso</span>
-                          <span style={{ color: '#ff1744', fontWeight: '700' }}>✗ {c.errorCount} Falhas</span>
-                        </div>
-                        <div style={{ display: 'flex', gap: '10px' }}>
-                          <button onClick={() => handleViewCampaignLogs(c.id)} className="btn-secondary" style={{ padding: '6px 14px', fontSize: '12px', fontWeight: '700' }}>
-                            🔍 Ver Logs
-                          </button>
-                          {c.errorCount > 0 && (
-                            <button onClick={() => handleRetryFailedCampaign(c.id)} className="btn-primary" style={{ padding: '6px 14px', fontSize: '12px', background: '#e6683c', fontWeight: '700' }}>
-                              🔄 Reenviar Falhas
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  {campaigns.filter(c => c.status === 'COMPLETED').length === 0 && (
-                    <div style={{ textAlign: 'center', padding: '60px 20px', color: 'hsl(var(--text-muted))' }}>
-                      <p style={{ fontSize: '14px' }}>Nenhum disparo concluído ainda.</p>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Sub-view: Contact Lists */}
-              {activeBroadcastTab === 'listas' && (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
-                  {contactLists.map(list => (
-                    <div key={list.id} className="glass glowing-card" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '16px', borderRadius: '12px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <h4 style={{ fontSize: '18px', fontWeight: '800', color: '#ffffff' }}>📁 {list.name}</h4>
-                        <button onClick={() => handleDeleteContactList(list.id)} className="btn-secondary" style={{ padding: '4px 10px', fontSize: '11px', color: '#ff1744', borderColor: '#ff1744', fontWeight: '700' }}>
-                          Excluir
-                        </button>
-                      </div>
-                      <div style={{ fontSize: '12px', color: 'hsl(var(--text-muted))' }}>
-                        Membros sincronizados: <strong>{list.contacts.length} contatos</strong>
-                      </div>
-                      <div style={{ maxHeight: '110px', overflowY: 'auto', background: 'hsl(var(--border) / 0.15)', padding: '8px', borderRadius: '6px', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                        {list.contacts.slice(0, 12).map(contact => (
-                          <span key={contact.id} style={{ fontSize: '10px', background: 'hsl(var(--border) / 0.3)', padding: '3px 6px', borderRadius: '4px', fontWeight: '600' }}>
-                            {contact.name}
-                          </span>
-                        ))}
-                        {list.contacts.length > 12 && (
-                          <span style={{ fontSize: '10px', color: 'hsl(var(--text-muted))', padding: '3px', fontWeight: '600' }}>+{list.contacts.length - 12} mais</span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                  {contactLists.length === 0 && (
-                    <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '60px 20px', color: 'hsl(var(--text-muted))' }}>
-                      <p style={{ fontSize: '14px' }}>Nenhuma lista de contatos criada ainda.</p>
-                      <button onClick={() => setIsManageListsOpen(true)} className="btn-primary" style={{ marginTop: '14px', fontSize: '12px', padding: '8px 18px', fontWeight: '700' }}>
-                        Criar Primeira Lista
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* MODAL 1: Create Broadcast Campaign */}
-              {isCreateCampaignOpen && (
-                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-                  <div className="glass" style={{ width: '90%', maxWidth: '520px', padding: '30px', display: 'flex', flexDirection: 'column', gap: '22px', borderRadius: '12px' }}>
-                    <div>
-                      <h4 style={{ fontSize: '20px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '8px' }}>📢 Nova Campanha de Disparo</h4>
-                      <p style={{ color: 'hsl(var(--text-muted))', fontSize: '12px', marginTop: '3px' }}>Envie mensagens ativas em lote.</p>
-                    </div>
-                    <form onSubmit={handleCreateCampaign} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                      <div>
-                        <label style={{ fontSize: '11px', textTransform: 'uppercase', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '6px', fontWeight: '700', letterSpacing: '0.05em' }}>Nome da Campanha</label>
-                        <input
-                          type="text"
-                          required
-                          value={newCampaignName}
-                          onChange={(e) => setNewCampaignName(e.target.value)}
-                          placeholder="Campanha Promoção Black Friday"
-                          style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '12px 14px', borderRadius: '6px', fontSize: '14px', color: '#fff' }}
-                        />
-                      </div>
-                      
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                        <div>
-                          <label style={{ fontSize: '11px', textTransform: 'uppercase', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '6px', fontWeight: '700', letterSpacing: '0.05em' }}>Segmentar Por</label>
-                          <select
-                            value={newCampaignTargetType}
-                            onChange={(e) => setNewCampaignTargetType(e.target.value)}
-                            style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '12px 14px', borderRadius: '6px', fontSize: '14px', color: '#fff' }}
-                          >
-                            <option value="LABEL">Rótulo CRM</option>
-                            <option value="LIST">Lista Personalizada</option>
-                          </select>
-                        </div>
-                        <div>
-                          {newCampaignTargetType === 'LABEL' ? (
-                            <>
-                              <label style={{ fontSize: '11px', textTransform: 'uppercase', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '6px', fontWeight: '700', letterSpacing: '0.05em' }}>Rótulo Alvo</label>
-                              <select
-                                value={newCampaignLabel}
-                                onChange={(e) => setNewCampaignLabel(e.target.value)}
-                                style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '12px 14px', borderRadius: '6px', fontSize: '14px', color: '#fff' }}
-                              >
-                                <option value="Lead">Novos Leads / Vendas Varejo</option>
-                                <option value="Billing">Carrinho Abandonado / Faturamento</option>
-                                <option value="Support">Suporte Técnico / Pós-Venda</option>
-                              </select>
-                            </>
-                          ) : (
-                            <>
-                              <label style={{ fontSize: '11px', textTransform: 'uppercase', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '6px', fontWeight: '700', letterSpacing: '0.05em' }}>Escolher Lista</label>
-                              <select
-                                required
-                                value={newCampaignListId}
-                                onChange={(e) => setNewCampaignListId(e.target.value)}
-                                style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '12px 14px', borderRadius: '6px', fontSize: '14px', color: '#fff' }}
-                              >
-                                <option value="">Selecione uma lista...</option>
-                                {contactLists.map(list => (
-                                  <option key={list.id} value={list.id}>{list.name} ({list.contacts.length} contatos)</option>
-                                ))}
-                              </select>
-                            </>
-                          )}
-                        </div>
-                      </div>
-
-                      <div>
-                        <label style={{ fontSize: '11px', textTransform: 'uppercase', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '6px', fontWeight: '700', letterSpacing: '0.05em' }}>Mensagem do Disparo</label>
-                        <textarea
-                          required
-                          rows={4}
-                          value={newCampaignContent}
-                          onChange={(e) => setNewCampaignContent(e.target.value)}
-                          placeholder="Olá! Separamos uma promoção incrível para você..."
-                          style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '12px', borderRadius: '6px', fontSize: '13px', color: '#fff', resize: 'vertical' }}
-                        />
-                      </div>
-
-                      <div>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer' }}>
-                          <input
-                            type="checkbox"
-                            checked={newCampaignScheduleEnabled}
-                            onChange={(e) => setNewCampaignScheduleEnabled(e.target.checked)}
-                          />
-                          <span>📅 Agendar envio para depois?</span>
-                        </label>
-                      </div>
-
-                      {newCampaignScheduleEnabled && (
-                        <div>
-                          <label style={{ fontSize: '11px', textTransform: 'uppercase', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '6px', fontWeight: '700', letterSpacing: '0.05em' }}>Data & Hora de Disparo</label>
-                          <input
-                            type="datetime-local"
-                            required
-                            value={newCampaignScheduledFor}
-                            onChange={(e) => setNewCampaignScheduledFor(e.target.value)}
-                            style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '10px 12px', borderRadius: '6px', fontSize: '13px', color: '#fff' }}
-                          />
-                        </div>
-                      )}
-
-                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '12px' }}>
-                        <button type="button" onClick={() => setIsCreateCampaignOpen(false)} className="btn-secondary" style={{ padding: '10px 20px', fontSize: '12px', fontWeight: '700' }}>
-                          Cancelar
-                        </button>
-                        <button type="submit" disabled={campaignCreationLoading} className="btn-primary" style={{ padding: '10px 20px', fontSize: '12px', fontWeight: '800' }}>
-                          {campaignCreationLoading ? "Carregando..." : newCampaignScheduleEnabled ? "Agendar Disparo" : "Iniciar Disparos"}
-                        </button>
-                      </div>
-                    </form>
-                  </div>
-                </div>
-              )}
-
-              {/* MODAL 2: Create/Manage Contact Lists */}
-              {isManageListsOpen && (
-                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-                  <div className="glass" style={{ width: '90%', maxWidth: '570px', padding: '30px', display: 'flex', flexDirection: 'column', gap: '22px', borderRadius: '12px' }}>
-                    <div>
-                      <h4 style={{ fontSize: '20px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '8px' }}>📁 Criar Lista de Contatos</h4>
-                      <p style={{ color: 'hsl(var(--text-muted))', fontSize: '12px', marginTop: '3px' }}>Segmentação de contatos para disparos.</p>
-                    </div>
-                    <form onSubmit={handleCreateContactList} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                      <div>
-                        <label style={{ fontSize: '11px', textTransform: 'uppercase', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '6px', fontWeight: '700', letterSpacing: '0.05em' }}>Nome da Lista</label>
-                        <input
-                          type="text"
-                          required
-                          value={newListName}
-                          onChange={(e) => setNewListName(e.target.value)}
-                          placeholder="Lista Clientes VIPs"
-                          style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '10px 12px', borderRadius: '6px', fontSize: '13px', color: '#fff' }}
-                        />
-                      </div>
-
-                      <div>
-                        <label style={{ fontSize: '11px', textTransform: 'uppercase', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '6px', fontWeight: '700', letterSpacing: '0.05em' }}>
-                          Selecionar Contatos ({newListContactIds.length} selecionados)
-                        </label>
-                        <div style={{
-                          maxHeight: '220px',
-                          overflowY: 'auto',
-                          background: 'hsl(var(--border) / 0.25)',
-                          border: '1px solid hsl(var(--border))',
-                          borderRadius: '6px',
-                          padding: '12px',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '10px'
-                        }}>
-                          {Array.from(new Map(conversations.map(c => [c.contact?.id, c.contact])).values()).filter(Boolean).map(contact => {
-                            const isChecked = newListContactIds.includes(contact.id);
-                            return (
-                              <label key={contact.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '13px', cursor: 'pointer', padding: '6px 8px', borderRadius: '6px', background: isChecked ? 'hsl(var(--primary) / 0.15)' : 'transparent', transition: 'background 0.2s' }}>
-                                <input
-                                  type="checkbox"
-                                  checked={isChecked}
-                                  onChange={(e) => {
-                                    if (e.target.checked) {
-                                      setNewListContactIds(prev => [...prev, contact.id]);
-                                    } else {
-                                      setNewListContactIds(prev => prev.filter(id => id !== contact.id));
-                                    }
-                                  }}
-                                />
-                                <div style={{ display: 'flex', justifyContent: 'space-between', flex: 1, alignItems: 'center' }}>
-                                  <strong style={{ color: '#fff' }}>{contact.name}</strong>
-                                  <span style={{ fontSize: '10px', opacity: 0.7, color: 'hsl(var(--text-muted))' }}>{contact.platformType} ({contact.platformId})</span>
-                                </div>
-                              </label>
-                            );
-                          })}
-                          {Array.from(new Map(conversations.map(c => [c.contact?.id, c.contact])).values()).filter(Boolean).length === 0 && (
-                            <p style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', textAlign: 'center', padding: '20px' }}>
-                              Nenhum contato encontrado no histórico recente.
-                            </p>
-                          )}
-                        </div>
-                      </div>
-
-                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '12px' }}>
-                        <button type="button" onClick={() => setIsManageListsOpen(false)} className="btn-secondary" style={{ padding: '10px 20px', fontSize: '12px', fontWeight: '700' }}>
-                          Cancelar
-                        </button>
-                        <button type="submit" disabled={listCreationLoading} className="btn-primary" style={{ padding: '10px 20px', fontSize: '12px', fontWeight: '800' }}>
-                          {listCreationLoading ? "Criando..." : "Criar Lista"}
-                        </button>
-                      </div>
-                    </form>
-                  </div>
-                </div>
-              )}
-
-              {/* MODAL 3: Detailed Campaign Delivery Logs */}
-              {isLogsModalOpen && (
-                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-                  <div className="glass" style={{ width: '95%', maxWidth: '680px', padding: '30px', display: 'flex', flexDirection: 'column', gap: '22px', maxHeight: '85vh', overflowY: 'auto', borderRadius: '12px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div>
-                        <h4 style={{ fontSize: '20px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '8px' }}>📋 Auditoria de Envios</h4>
-                        <p style={{ color: 'hsl(var(--text-muted))', fontSize: '12px', marginTop: '3px' }}>Lista detalhada de status de entrega da campanha.</p>
-                      </div>
-                      <button onClick={() => setIsLogsModalOpen(false)} className="btn-secondary" style={{ padding: '6px 16px', fontSize: '12px', fontWeight: '700' }}>
-                        Fechar
-                      </button>
-                    </div>
-
-                    <div style={{ overflowX: 'auto', background: 'hsl(var(--border) / 0.1)', borderRadius: '8px', border: '1px solid hsl(var(--border) / 0.3)' }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12.5px' }}>
-                        <thead>
-                          <tr style={{ borderBottom: '1px solid hsl(var(--border) / 0.5)', color: 'hsl(var(--text-muted))', background: 'hsl(var(--border) / 0.2)' }}>
-                            <th style={{ padding: '12px 10px', textAlign: 'left' }}>Contato</th>
-                            <th style={{ padding: '12px 10px', textAlign: 'left' }}>Identificador (Canal)</th>
-                            <th style={{ padding: '12px 10px', textAlign: 'center' }}>Status</th>
-                            <th style={{ padding: '12px 10px', textAlign: 'left' }}>Observações</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {selectedCampaignLogs.map(log => (
-                            <tr key={log.id} style={{ borderBottom: '1px solid hsl(var(--border) / 0.3)' }}>
-                              <td style={{ padding: '12px 10px', fontWeight: '700', color: '#fff' }}>{log.contact?.name || 'N/D'}</td>
-                              <td style={{ padding: '12px 10px' }}>{log.contact?.platformId || 'N/D'} ({log.contact?.platformType || 'N/D'})</td>
-                              <td style={{ padding: '12px 10px', textAlign: 'center' }}>
-                                <span className="badge" style={{
-                                  background: log.status === 'SUCCESS' ? '#00c85320' : '#ff174420',
-                                  color: log.status === 'SUCCESS' ? '#00c853' : '#ff1744',
-                                  borderColor: log.status === 'SUCCESS' ? '#00c853' : '#ff1744',
-                                  borderWidth: '1px',
-                                  borderStyle: 'solid',
-                                  padding: '3px 8px'
-                                }}>
-                                  {log.status === 'SUCCESS' ? 'Sucesso' : 'Falha'}
-                                </span>
-                              </td>
-                              <td style={{ padding: '12px 10px', color: 'hsl(var(--text-muted))', fontSize: '11px', fontStyle: log.status === 'FAILED' ? 'normal' : 'italic' }}>
-                                {log.status === 'FAILED' ? log.errorMessage || 'Erro indeterminado' : 'Entregue com sucesso'}
-                              </td>
-                            </tr>
-                          ))}
-                          {selectedCampaignLogs.length === 0 && (
-                            <tr>
-                              <td colSpan="4" style={{ textAlign: 'center', padding: '30px', color: 'hsl(var(--text-muted))' }}>
-                                Nenhum log registrado para este disparo.
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+            <DisparosView
+              campaigns={campaigns}
+              contactLists={contactLists}
+              activeBroadcastTab={activeBroadcastTab}
+              setActiveBroadcastTab={setActiveBroadcastTab}
+              handleStopCampaign={handleStopCampaign}
+              handleRetryFailedCampaign={handleRetryFailedCampaign}
+              handleViewCampaignLogs={handleViewCampaignLogs}
+              handleDeleteContactList={handleDeleteContactList}
+              isCreateCampaignOpen={isCreateCampaignOpen}
+              setIsCreateCampaignOpen={setIsCreateCampaignOpen}
+              isManageListsOpen={isManageListsOpen}
+              setIsManageListsOpen={setIsManageListsOpen}
+              isLogsModalOpen={isLogsModalOpen}
+              setIsLogsModalOpen={setIsLogsModalOpen}
+              selectedCampaignLogs={selectedCampaignLogs}
+              newCampaignName={newCampaignName}
+              setNewCampaignName={setNewCampaignName}
+              newCampaignTargetType={newCampaignTargetType}
+              setNewCampaignTargetType={setNewCampaignTargetType}
+              newCampaignLabel={newCampaignLabel}
+              setNewCampaignLabel={setNewCampaignLabel}
+              newCampaignListId={newCampaignListId}
+              setNewCampaignListId={setNewCampaignListId}
+              newCampaignContent={newCampaignContent}
+              setNewCampaignContent={setNewCampaignContent}
+              newCampaignScheduleEnabled={newCampaignScheduleEnabled}
+              setNewCampaignScheduleEnabled={setNewCampaignScheduleEnabled}
+              newCampaignScheduledFor={newCampaignScheduledFor}
+              setNewCampaignScheduledFor={setNewCampaignScheduledFor}
+              campaignCreationLoading={campaignCreationLoading}
+              handleCreateCampaign={handleCreateCampaign}
+              newListName={newListName}
+              setNewListName={setNewListName}
+              newListContactIds={newListContactIds}
+              setNewListContactIds={setNewListContactIds}
+              listCreationLoading={listCreationLoading}
+              handleCreateContactList={handleCreateContactList}
+              conversations={conversations}
+            />
           )}
 
           {/* TAB 8: NOVIAPI */}
           {activeTab === 'NOVIAPI' && (
-            <div style={{ padding: '35px', display: 'flex', flexDirection: 'column', gap: '28px', maxWidth: '1200px', margin: '0 auto' }}>
-              
-              {/* Premium Header */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  <div className="pulse-glowing" style={{
-                    width: '56px',
-                    height: '56px',
-                    borderRadius: '50%',
-                    background: 'linear-gradient(135deg, hsl(var(--primary) / 0.3), hsl(var(--primary) / 0.1))',
-                    border: '1px solid hsl(var(--primary) / 0.4)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: '0 0 15px hsl(var(--primary) / 0.2)'
-                  }}>
-                    <FlaskConical size={24} style={{ color: 'hsl(var(--primary))' }} />
-                  </div>
-                  <div>
-                    <h2 style={{ fontSize: '30px', fontWeight: 800, fontFamily: 'var(--font-display)', letterSpacing: '-0.03em', color: '#fff' }}>NoviAPI</h2>
-                    <p style={{ color: 'hsl(var(--text-muted))', fontSize: '13px', marginTop: '3px' }}>
-                      Crie middlewares dinâmicos e funções Javascript customizadas que rodam em sandbox Node VM.
-                    </p>
-                  </div>
-                </div>
-                
-                <div style={{
-                  background: 'hsl(var(--warning) / 0.15)',
-                  border: '1px solid hsl(var(--warning) / 0.4)',
-                  color: 'hsl(var(--warning))',
-                  padding: '6px 14px',
-                  fontSize: '11px',
-                  fontWeight: '700',
-                  borderRadius: '20px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em'
-                }}>
-                  🧪 Funcionalidades Experimentais
-                </div>
-              </div>
-
-              {/* Main split dashboard panel */}
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '290px 1fr', gap: '24px', alignItems: 'start' }}>
-                
-                {/* Left Panel: Seus Códigos */}
-                <div className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', borderRadius: '12px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h4 style={{ fontSize: '16px', fontWeight: '800', color: '#fff' }}>Seus Códigos</h4>
-                    <button 
-                      onClick={handleCreateScript} 
-                      disabled={scriptSaving}
-                      className="btn-primary" 
-                      style={{ 
-                        padding: '6px 12px', 
-                        fontSize: '11px', 
-                        borderRadius: '6px', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: '4px' 
-                      }}
-                    >
-                      <Plus size={12} /> Novo
-                    </button>
-                  </div>
-
-                  <div style={{ 
-                    maxHeight: '520px', 
-                    overflowY: 'auto', 
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    gap: '8px',
-                    paddingRight: '2px' 
-                  }}>
-                    {customScripts.map(script => {
-                      const isSelected = selectedScript?.id === script.id;
-                      return (
-                        <div 
-                          key={script.id}
-                          onClick={() => handleSelectScript(script)}
-                          style={{
-                            padding: '12px 14px',
-                            borderRadius: '8px',
-                            background: isSelected ? 'hsl(var(--primary) / 0.18)' : 'hsl(var(--border) / 0.2)',
-                            border: '1px solid',
-                            borderColor: isSelected ? 'hsl(var(--primary))' : 'hsl(var(--border) / 0.5)',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '4px',
-                            position: 'relative'
-                          }}
-                          onMouseEnter={(e) => {
-                            if (!isSelected) e.currentTarget.style.borderColor = 'hsl(var(--primary) / 0.5)';
-                          }}
-                          onMouseLeave={(e) => {
-                            if (!isSelected) e.currentTarget.style.borderColor = 'hsl(var(--border) / 0.5)';
-                          }}
-                        >
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: '13px', fontWeight: '700', color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '180px' }}>
-                              {script.name}
-                            </span>
-                            <span style={{
-                              width: '8px',
-                              height: '8px',
-                              borderRadius: '50%',
-                              background: script.isActive ? '#00c853' : 'hsl(var(--border) / 0.9)',
-                              boxShadow: script.isActive ? '0 0 8px #00c853' : 'none'
-                            }} title={script.isActive ? 'Ativo' : 'Inativo'} />
-                          </div>
-                          <span style={{ fontSize: '9px', color: 'hsl(var(--text-muted))', fontFamily: 'monospace' }}>
-                            {script.id.substring(0, 18)}...
-                          </span>
-                        </div>
-                      );
-                    })}
-
-                    {customScripts.length === 0 && !scriptLoading && (
-                      <div style={{ textAlign: 'center', padding: '30px 10px', color: 'hsl(var(--text-muted))', fontSize: '12px' }}>
-                        Nenhum código criado. Clique em "Novo" para iniciar.
-                      </div>
-                    )}
-
-                    {scriptLoading && (
-                      <div style={{ textAlign: 'center', padding: '20px', color: 'hsl(var(--text-muted))', fontSize: '12px' }}>
-                        Carregando códigos...
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Right Panel: Code Workspace & Terminal Console */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                  
-                  {selectedScript ? (
-                    <>
-                      {/* Workspace glass panel */}
-                      <div className="glass" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '20px', borderRadius: '12px' }}>
-                        
-                        {/* Upper Editor Action Bar */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                            <input 
-                              type="text" 
-                              value={scriptName} 
-                              onChange={(e) => setScriptName(e.target.value)} 
-                              placeholder="nome-do-codigo"
-                              style={{ 
-                                background: 'transparent', 
-                                border: 'none', 
-                                borderBottom: '1px dashed hsl(var(--border))', 
-                                fontSize: '18px', 
-                                fontWeight: '800', 
-                                color: '#fff', 
-                                width: '280px', 
-                                padding: '4px 0',
-                                outline: 'none'
-                              }} 
-                            />
-                            
-                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', userSelect: 'none' }}>
-                              <input 
-                                type="checkbox" 
-                                checked={scriptIsActive} 
-                                onChange={(e) => setScriptIsActive(e.target.checked)}
-                                style={{ display: 'none' }}
-                              />
-                              {scriptIsActive ? (
-                                <ToggleRight size={26} style={{ color: '#00c853' }} />
-                              ) : (
-                                <ToggleLeft size={26} style={{ color: 'hsl(var(--text-muted))' }} />
-                              )}
-                              <span style={{ fontWeight: '600', color: scriptIsActive ? '#00c853' : 'hsl(var(--text-muted))' }}>
-                                {scriptIsActive ? 'Ativado' : 'Desativado'}
-                              </span>
-                            </label>
-                          </div>
-
-                          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                            <button 
-                              onClick={() => {
-                                navigator.clipboard.writeText(scriptCode);
-                                alert("Script copiado para a área de transferência!");
-                              }}
-                              className="btn-secondary" 
-                              style={{ padding: '10px', borderRadius: '8px', display: 'flex', cursor: 'pointer' }}
-                              title="Copiar Código"
-                            >
-                              <Copy size={16} />
-                            </button>
-                            <button 
-                              onClick={handleDeleteScript}
-                              disabled={scriptSaving}
-                              className="btn-secondary" 
-                              style={{ padding: '10px', borderRadius: '8px', display: 'flex', color: 'hsl(var(--danger))', borderColor: 'hsl(var(--danger) / 0.3)', cursor: 'pointer' }}
-                              title="Excluir Código"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                            <button 
-                              onClick={handleExecuteScript} 
-                              disabled={scriptExecuting}
-                              className="btn-primary" 
-                              style={{ 
-                                background: '#00c853', 
-                                border: 'none',
-                                color: '#000',
-                                boxShadow: '0 0 12px rgba(0, 200, 83, 0.45)', 
-                                padding: '10px 18px', 
-                                fontSize: '13px', 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                gap: '6px',
-                                fontWeight: '800'
-                              }}
-                            >
-                              <Play size={14} fill="#000" /> {scriptExecuting ? 'Executando...' : 'Executar'}
-                            </button>
-                            <button 
-                              onClick={handleSaveScript} 
-                              disabled={scriptSaving}
-                              className="btn-primary" 
-                              style={{ padding: '10px 18px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
-                            >
-                              <Save size={14} /> Salvar
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Interactive Monospace Code Editor */}
-                        <div style={{ 
-                          display: 'flex', 
-                          border: '1px solid hsl(var(--border))', 
-                          borderRadius: '8px', 
-                          background: '#040406', 
-                          overflow: 'hidden', 
-                          minHeight: '380px', 
-                          fontFamily: '"Fira Code", Consolas, Monaco, monospace', 
-                          fontSize: '13px', 
-                          lineHeight: '20px' 
-                        }}>
-                          {/* Line numbers column */}
-                          <div style={{ 
-                            background: '#070709', 
-                            borderRight: '1px solid hsl(var(--border) / 0.5)', 
-                            padding: '16px 8px', 
-                            color: 'hsl(var(--text-muted) / 0.4)', 
-                            textAlign: 'right', 
-                            userSelect: 'none', 
-                            minWidth: '42px' 
-                          }}>
-                            {(scriptCode || "").split('\n').map((_, i) => (
-                              <div key={i}>{i + 1}</div>
-                            ))}
-                          </div>
-                          {/* Code Textarea field */}
-                          <textarea
-                            value={scriptCode}
-                            onChange={(e) => setScriptCode(e.target.value)}
-                            placeholder="async (input) => { ... }"
-                            spellCheck="false"
-                            style={{ 
-                              flex: 1, 
-                              background: 'transparent', 
-                              border: 'none', 
-                              color: '#00e5ff', 
-                              padding: '16px', 
-                              outline: 'none', 
-                              resize: 'vertical', 
-                              minHeight: '380px', 
-                              fontFamily: 'inherit', 
-                              fontSize: 'inherit', 
-                              lineHeight: 'inherit', 
-                              tabSize: '2' 
-                            }}
-                          />
-                        </div>
-                      </div>
-
-                      {/* Interactive Execution terminal drawer */}
-                      <div className="glass" style={{ padding: '24px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                        <h4 style={{ fontSize: '14px', fontWeight: '800', color: '#fff', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <Terminal size={18} style={{ color: 'hsl(var(--secondary))' }} /> Testbed & Sandbox Console
-                        </h4>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: '20px' }}>
-                          
-                          {/* Column 1: JSON Input */}
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            <span style={{ fontSize: '11px', textTransform: 'uppercase', color: 'hsl(var(--text-muted))', fontWeight: '700' }}>Payload JSON de Entrada</span>
-                            <textarea 
-                              value={testInput} 
-                              onChange={(e) => setTestInput(e.target.value)} 
-                              style={{ 
-                                width: '100%', 
-                                background: '#050508', 
-                                border: '1px solid hsl(var(--border))', 
-                                borderRadius: '6px', 
-                                padding: '10px', 
-                                color: 'hsl(var(--secondary))', 
-                                fontFamily: 'monospace', 
-                                fontSize: '12px', 
-                                resize: 'vertical',
-                                outline: 'none'
-                              }} 
-                              rows={6} 
-                            />
-                          </div>
-
-                          {/* Column 2: captured console logs */}
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            <span style={{ fontSize: '11px', textTransform: 'uppercase', color: 'hsl(var(--text-muted))', fontWeight: '700' }}>Stdout Logs</span>
-                            <div style={{ 
-                              flex: 1,
-                              width: '100%', 
-                              background: '#020204', 
-                              border: '1px solid hsl(var(--border))', 
-                              borderRadius: '6px', 
-                              padding: '10px', 
-                              color: '#00ff66', 
-                              fontFamily: 'monospace', 
-                              fontSize: '11px', 
-                              maxHeight: '140px',
-                              overflowY: 'auto',
-                              whiteSpace: 'pre-wrap',
-                              lineHeight: '1.4'
-                            }}>
-                              {testLogs.length === 0 ? (
-                                <span style={{ color: 'hsl(var(--text-muted) / 0.5)' }}>[TERMINAL] Aguardando execução do código...</span>
-                              ) : (
-                                testLogs.map((log, index) => (
-                                  <div key={index} style={{
-                                    color: log.startsWith('[ERRO]') || log.startsWith('CRITICAL') ? '#ff1744' : log.startsWith('[INFO]') ? '#00e5ff' : '#00ff66'
-                                  }}>{log}</div>
-                                ))
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Column 3: execution output json */}
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            <span style={{ fontSize: '11px', textTransform: 'uppercase', color: 'hsl(var(--text-muted))', fontWeight: '700' }}>Resultado Retornado</span>
-                            <div style={{ flex: 1, maxHeight: '140px', overflowY: 'auto' }}>
-                              {testOutput ? (
-                                <pre style={{ 
-                                  margin: 0,
-                                  background: '#050508', 
-                                  border: '1px solid hsl(var(--border))', 
-                                  padding: '10px', 
-                                  borderRadius: '6px', 
-                                  color: testOutput.error ? '#ff1744' : '#00e5ff', 
-                                  fontSize: '11px', 
-                                  overflowX: 'auto',
-                                  lineHeight: '1.4'
-                                }}>
-                                  {JSON.stringify(testOutput, null, 2)}
-                                </pre>
-                              ) : (
-                                <div style={{ 
-                                  height: '100%',
-                                  background: '#050508', 
-                                  border: '1px solid hsl(var(--border))', 
-                                  borderRadius: '6px', 
-                                  display: 'flex', 
-                                  alignItems: 'center', 
-                                  justifyContent: 'center',
-                                  color: 'hsl(var(--text-muted) / 0.5)',
-                                  fontSize: '11px'
-                                }}>
-                                  Aguardando retorno...
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </>
-                  ) : (
-                    /* Developer welcome empty state page */
-                    <div className="glass" style={{ padding: '60px 40px', display: 'flex', flexDirection: 'column', gap: '28px', borderRadius: '12px', alignItems: 'center' }}>
-                      <div className="pulse-glowing" style={{
-                        width: '80px',
-                        height: '80px',
-                        borderRadius: '50%',
-                        background: 'linear-gradient(135deg, hsl(var(--primary) / 0.25), hsl(var(--primary) / 0.05))',
-                        border: '2px solid hsl(var(--primary) / 0.5)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        boxShadow: '0 0 25px hsl(var(--primary) / 0.3)'
-                      }}>
-                        <FlaskConical size={36} style={{ color: 'hsl(var(--primary))' }} />
-                      </div>
-                      
-                      <div style={{ textAlign: 'center', maxWidth: '580px' }}>
-                        <h3 style={{ fontSize: '24px', fontWeight: '800', color: '#fff' }}>Crie Códigos Dinâmicos para a IA</h3>
-                        <p style={{ color: 'hsl(var(--text-muted))', fontSize: '13px', marginTop: '8px', lineHeight: '1.6' }}>
-                          Personalize o fluxo de atendimento integrando códigos Javascript customizados. Rode consultas a APIs externas, formate dados de clientes e execute lógicas complexas direto nos servidores.
-                        </p>
-                      </div>
-
-                      <button 
-                        onClick={handleCreateScript} 
-                        disabled={scriptSaving}
-                        className="btn-primary" 
-                        style={{ padding: '12px 28px', fontSize: '13px', fontWeight: '800', borderRadius: '8px' }}
-                      >
-                        {scriptSaving ? 'Criando...' : 'Criar Primeiro Código'}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+            <NoviApiView
+              isMobile={isMobile}
+              customScripts={customScripts}
+              selectedScript={selectedScript}
+              handleSelectScript={handleSelectScript}
+              handleCreateScript={handleCreateScript}
+              scriptName={scriptName}
+              setScriptName={setScriptName}
+              scriptCode={scriptCode}
+              setScriptCode={setScriptCode}
+              scriptIsActive={scriptIsActive}
+              setScriptIsActive={setScriptIsActive}
+              scriptLoading={scriptLoading}
+              scriptSaving={scriptSaving}
+              scriptExecuting={scriptExecuting}
+              handleSaveScript={handleSaveScript}
+              handleDeleteScript={handleDeleteScript}
+              handleExecuteScript={handleExecuteScript}
+              testInput={testInput}
+              setTestInput={setTestInput}
+              testOutput={testOutput}
+              testLogs={testLogs}
+            />
           )}
 
           {/* TAB 9: METRICAS */}
@@ -4216,395 +2912,48 @@ export default function App() {
 
           {/* TAB 11: CONFIGURACOES */}
           {activeTab === 'CONFIGURACOES' && (
-            <div style={{ padding: '25px', display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '1000px', margin: '0 auto' }}>
-              
-              <div>
-                <h3 style={{ fontSize: '20px', fontWeight: '800' }}>Configurações da Organização</h3>
-                <p style={{ color: 'hsl(var(--text-muted))', fontSize: '12px', marginTop: '2px' }}>
-                  Ajuste os metadados do seu tenant, credenciais criptografadas de inteligência artificial e resumo de negócios.
-                </p>
-              </div>
-
-              <div style={{ display: 'flex', gap: '30px', borderBottom: '1px solid hsl(var(--border))', paddingBottom: '10px', fontSize: '13px', fontWeight: '600' }}>
-                <span style={{ color: 'hsl(var(--primary))', borderBottom: '2px solid hsl(var(--primary))', paddingBottom: '10px', cursor: 'pointer' }}>Organização</span>
-                <span style={{ color: 'hsl(var(--text-muted))', cursor: 'pointer' }}>Assinatura</span>
-                <span style={{ color: 'hsl(var(--text-muted))', cursor: 'pointer' }}>Minhas Chaves</span>
-                <span style={{ color: 'hsl(var(--text-muted))', cursor: 'pointer' }}>Chaves API</span>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 2fr', gap: '20px', alignItems: 'start', marginTop: '10px' }}>
-                
-                {/* Left logo card */}
-                <div className="glass" style={{ padding: '30px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
-                  <div style={{ position: 'relative', width: '120px', height: '120px' }}>
-                    <div onClick={handleLogoUpload} style={{ width: '120px', height: '120px', borderRadius: '50%', border: '2px dashed hsl(var(--border))', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.01)', overflow: 'hidden', cursor: 'pointer' }}>
-                      {orgLogo ? (
-                        <img src={orgLogo} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', color: 'hsl(var(--text-muted))' }}>
-                          <Upload size={24} />
-                          <span style={{ fontSize: '10px' }}>Logo</span>
-                        </div>
-                      )}
-                    </div>
-                    <button onClick={handleLogoUpload} style={{ position: 'absolute', bottom: '-2px', right: '-2px', background: '#8a2be2', color: '#fff', border: '3px solid #0e0e12', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, boxShadow: '0 3px 12px rgba(138, 43, 226, 0.5)' }}>
-                      <Edit size={15} />
-                    </button>
-                  </div>
-                  <div style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', textAlign: 'center' }}>
-                    UUID: <code style={{ color: 'hsl(var(--secondary))' }}>{organization?.id || "default"}</code>
-                  </div>
-                  {orgLogo && (
-                    <button onClick={() => { localStorage.removeItem('chatflow_org_logo'); setOrgLogo(null); }} style={{ background: 'transparent', border: 'none', color: 'hsl(var(--destructive))', fontSize: '11px', cursor: 'pointer', textDecoration: 'underline' }}>
-                      Remover Logo
-                    </button>
-                  )}
-                </div>
-
-                {/* Form fields */}
-                <div className="glass" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  
-                  <div>
-                    <label style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '6px', fontWeight: '600' }}>Nome da Organização</label>
-                    <input 
-                      type="text" 
-                      value={orgName} 
-                      onChange={(e) => setOrgName(e.target.value)}
-                      style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '10px', borderRadius: '6px', fontSize: '13px' }}
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '6px', fontWeight: '600' }}>Website da Empresa</label>
-                    <input 
-                      type="text" 
-                      value={companyWebsite} 
-                      onChange={(e) => setCompanyWebsite(e.target.value)}
-                      style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '10px', borderRadius: '6px', fontSize: '13px' }}
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '6px', fontWeight: '600' }}>URL do Dashboard Customizado</label>
-                    <input 
-                      type="text" 
-                      value={customDashboardUrl} 
-                      onChange={(e) => setCustomDashboardUrl(e.target.value)}
-                      style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '10px', borderRadius: '6px', fontSize: '13px' }}
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '6px', fontWeight: '600' }}>
-                      Resumo da Empresa - Usado como contexto pelos agentes (RAG Prompts)
-                    </label>
-                    <textarea 
-                      rows={5}
-                      value={companySummary} 
-                      onChange={(e) => setCompanySummary(e.target.value)}
-                      style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '10px 12px', borderRadius: '6px', fontSize: '13px', resize: 'none', lineHeight: '1.4' }}
-                    />
-                  </div>
-
-                  <hr style={{ border: 'none', borderTop: '1px solid hsl(var(--border))', margin: '10px 0' }} />
-
-                  <div>
-                    <label style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '6px', fontWeight: '600' }}>
-                      Google Gemini Key (Criptografada e Sólida por Tenant)
-                    </label>
-                    <input 
-                      type="password" 
-                      placeholder="Nova Chave API (deixe em branco para manter a atual)" 
-                      value={geminiKey}
-                      onChange={(e) => setGeminiKey(e.target.value)}
-                      style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '10px', borderRadius: '6px', fontSize: '13px', fontFamily: 'monospace' }}
-                    />
-                  </div>
-
-                  <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-                    <button onClick={handleSaveSettings} className="btn-primary" style={{ padding: '10px 20px', fontSize: '13px', fontWeight: '700' }}>
-                      Salvar Configurações
-                    </button>
-                  </div>
-
-                </div>
-
-              </div>
-
-            </div>
+            <SettingsView
+              isMobile={isMobile}
+              organization={organization}
+              orgLogo={orgLogo}
+              setOrgLogo={setOrgLogo}
+              handleLogoUpload={handleLogoUpload}
+              orgName={orgName}
+              setOrgName={setOrgName}
+              companyWebsite={companyWebsite}
+              setCompanyWebsite={setCompanyWebsite}
+              customDashboardUrl={customDashboardUrl}
+              setCustomDashboardUrl={setCustomDashboardUrl}
+              companySummary={companySummary}
+              setCompanySummary={setCompanySummary}
+              geminiKey={geminiKey}
+              setGeminiKey={setGeminiKey}
+              handleSaveSettings={handleSaveSettings}
+            />
           )}
 
           {/* TAB: MASTER (SUPER ADMIN CONTROL PANEL) */}
           {activeTab === 'MASTER' && (
-            <div style={{ padding: '25px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
-              
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <h3 style={{ fontSize: '24px', fontWeight: '800', fontFamily: 'var(--font-display)', color: '#fff', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <ShieldAlert style={{ color: 'hsl(var(--primary))' }} /> Painel de Controle Master Admin
-                  </h3>
-                  <p style={{ color: 'hsl(var(--text-muted))', fontSize: '13px', marginTop: '4px' }}>
-                    Gerenciamento global de inquilinos (SaaS tenants), alteração de limites operacionais e impersonificação de contas de clientes.
-                  </p>
-                </div>
-                <button 
-                  onClick={fetchSubscribersList} 
-                  className="btn-primary" 
-                  style={{ padding: '10px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
-                >
-                  ↻ Atualizar Dados
-                </button>
-              </div>
-
-              {/* System Health Metrics Card Row */}
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '16px' }}>
-                <div className="glass glowing-card" style={{ padding: '20px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  <div style={{ background: 'hsl(var(--primary) / 0.15)', color: 'hsl(var(--primary))', padding: '12px', borderRadius: '8px' }}>
-                    <Layers size={24} />
-                  </div>
-                  <div>
-                    <span style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', fontWeight: '600' }}>EMPRESAS REGISTRADAS</span>
-                    <h4 style={{ fontSize: '24px', fontWeight: '800', color: '#fff', marginTop: '2px' }}>{subscribers.length}</h4>
-                  </div>
-                </div>
-
-                <div className="glass glowing-card" style={{ padding: '20px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  <div style={{ background: 'hsl(var(--secondary) / 0.15)', color: 'hsl(var(--secondary))', padding: '12px', borderRadius: '8px' }}>
-                    <Cpu size={24} />
-                  </div>
-                  <div>
-                    <span style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', fontWeight: '600' }}>AGENTES AI ATIVOS</span>
-                    <h4 style={{ fontSize: '24px', fontWeight: '800', color: '#fff', marginTop: '2px' }}>
-                      {subscribers.reduce((acc, sub) => acc + (sub.botCount || 0), 0)}
-                    </h4>
-                  </div>
-                </div>
-
-                <div className="glass glowing-card" style={{ padding: '20px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  <div style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6', padding: '12px', borderRadius: '8px' }}>
-                    <MessageSquare size={24} />
-                  </div>
-                  <div>
-                    <span style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', fontWeight: '600' }}>TRÁFEGO GLOBAL MENSAL</span>
-                    <h4 style={{ fontSize: '24px', fontWeight: '800', color: '#fff', marginTop: '2px' }}>
-                      {subscribers.reduce((acc, sub) => acc + (sub.apiUsageThisMonth || 0), 0)} <span style={{ fontSize: '12px', color: 'hsl(var(--text-muted))' }}>mensagens</span>
-                    </h4>
-                  </div>
-                </div>
-              </div>
-
-              {/* Company Control Deck Table */}
-              <div className="glass" style={{ padding: '20px', borderRadius: '8px', overflowX: 'auto' }}>
-                <h4 style={{ fontSize: '16px', fontWeight: '700', color: '#fff', marginBottom: '16px' }}>Deck de Inquilinos Ativos</h4>
-                
-                {subscribersLoading ? (
-                  <div style={{ padding: '40px', textAlign: 'center', color: 'hsl(var(--text-muted))' }}>
-                    Carregando dados dos assinantes...
-                  </div>
-                ) : subscribers.length === 0 ? (
-                  <div style={{ padding: '40px', textAlign: 'center', color: 'hsl(var(--text-muted))' }}>
-                    Nenhuma empresa registrada no sistema.
-                  </div>
-                ) : (
-                  <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', minWidth: '750px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
-                      <thead>
-                        <tr style={{ borderBottom: '1px solid hsl(var(--border))', color: 'hsl(var(--text-muted))', fontWeight: '600' }}>
-                          <th style={{ padding: '12px 8px' }}>Empresa</th>
-                          <th style={{ padding: '12px 8px' }}>Plano</th>
-                          <th style={{ padding: '12px 8px' }}>Consumo de Mensagens</th>
-                          <th style={{ padding: '12px 8px' }}>Bots Cadastrados</th>
-                          <th style={{ padding: '12px 8px', textAlign: 'right' }}>Ações</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {subscribers.map((subscriber) => {
-                          const usagePercent = Math.min(100, Math.round(((subscriber.apiUsageThisMonth || 0) / (subscriber.maxMessagesPerMonth || 1)) * 100));
-                          return (
-                            <tr key={subscriber.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', color: '#fff' }} className="table-row-hover">
-                              <td style={{ padding: '16px 8px' }}>
-                                <div style={{ fontWeight: '700', color: '#fff' }}>{subscriber.name}</div>
-                                <div style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', marginTop: '2px' }}>UUID: {subscriber.id}</div>
-                              </td>
-                              <td style={{ padding: '16px 8px' }}>
-                                <span style={{
-                                  padding: '4px 8px',
-                                  borderRadius: '4px',
-                                  fontSize: '11px',
-                                  fontWeight: '700',
-                                  background: subscriber.plan === 'ENTERPRISE' ? 'rgba(138, 43, 226, 0.15)' : subscriber.plan === 'PRO' ? 'rgba(0, 106, 255, 0.15)' : 'rgba(255,255,255,0.05)',
-                                  color: subscriber.plan === 'ENTERPRISE' ? 'hsl(var(--secondary))' : subscriber.plan === 'PRO' ? 'hsl(var(--primary))' : 'hsl(var(--text-muted))',
-                                  border: '1px solid ' + (subscriber.plan === 'ENTERPRISE' ? 'hsl(var(--secondary) / 0.3)' : subscriber.plan === 'PRO' ? 'hsl(var(--primary) / 0.3)' : 'hsl(var(--border))')
-                                }}>
-                                  {subscriber.plan}
-                                </span>
-                              </td>
-                              <td style={{ padding: '16px 8px', width: '220px' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'hsl(var(--text-muted))', marginBottom: '4px' }}>
-                                  <span>{subscriber.apiUsageThisMonth || 0} / {subscriber.maxMessagesPerMonth}</span>
-                                  <span>{usagePercent}%</span>
-                                </div>
-                                <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '3px', overflow: 'hidden' }}>
-                                  <div style={{ 
-                                    width: `${usagePercent}%`, 
-                                    height: '100%', 
-                                    background: usagePercent > 90 ? 'hsl(var(--danger))' : usagePercent > 70 ? 'hsl(var(--warning))' : 'linear-gradient(90deg, hsl(var(--primary)), hsl(var(--secondary)))' 
-                                  }} />
-                                </div>
-                              </td>
-                              <td style={{ padding: '16px 8px' }}>
-                                <div style={{ fontWeight: '600' }}>{subscriber.botCount || 0} / {subscriber.maxBots} bots</div>
-                              </td>
-                              <td style={{ padding: '16px 8px', textAlign: 'right' }}>
-                                <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                                  <button 
-                                    onClick={() => {
-                                      setEditingSubscriber(subscriber);
-                                      setNewPlan(subscriber.plan || 'FREE');
-                                      setNewMaxBots(subscriber.maxBots || 2);
-                                      setNewMaxMessages(subscriber.maxMessagesPerMonth || 1000);
-                                      setIsEditLimitsOpen(true);
-                                    }}
-                                    className="btn-primary" 
-                                    style={{ padding: '6px 10px', fontSize: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid hsl(var(--border))', color: '#fff' }}
-                                    title="Editar Limites"
-                                  >
-                                    <Edit size={13} />
-                                  </button>
-                                  <button 
-                                    onClick={() => handleImpersonate(subscriber.id)}
-                                    className="btn-primary" 
-                                    style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}
-                                    title="Acessar Dashboard"
-                                  >
-                                    <Sliders size={13} />
-                                    <span>Acessar</span>
-                                  </button>
-                                  <button 
-                                    onClick={() => handleDeleteSubscriber(subscriber.id, subscriber.name)}
-                                    className="btn-primary" 
-                                    style={{ padding: '6px 10px', fontSize: '12px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', color: 'rgb(239, 68, 68)' }}
-                                    title="Excluir"
-                                  >
-                                    <Trash2 size={13} />
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-
-              {/* Maintenance Reset Deck */}
-              <div className="glass" style={{ padding: '24px', borderRadius: '8px', border: '1px solid hsl(var(--danger) / 0.2)', background: 'hsl(var(--danger) / 0.02)' }}>
-                <h4 style={{ fontSize: '15px', fontWeight: '800', color: 'hsl(var(--danger))', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <AlertCircle size={18} /> Ações Críticas de Manutenção
-                </h4>
-                <p style={{ color: 'hsl(var(--text-muted))', fontSize: '12.5px', marginTop: '6px', lineHeight: '1.5' }}>
-                  Esta operação destrutiva limpará completamente o banco de dados do ChatFlow, apagando todos os registros de usuários, atendentes, conexões e bots do sistema, preservando apenas sua conta master atual. Utilize com extrema cautela.
-                </p>
-                <button 
-                  onClick={handleSystemReset} 
-                  className="btn-primary" 
-                  style={{ marginTop: '14px', background: 'hsl(var(--danger))', border: '1px solid hsl(var(--danger))', color: '#fff', fontWeight: '700', padding: '10px 18px', fontSize: '13px' }}
-                >
-                  🚨 Limpar Banco de Dados (System Reset)
-                </button>
-              </div>
-
-              {/* Edit Limits Modal */}
-              {isEditLimitsOpen && editingSubscriber && (
-                <div style={{
-                  position: 'fixed',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  background: 'rgba(0,0,0,0.8)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  zIndex: 10000,
-                  padding: '20px'
-                }}>
-                  <div className="glass glowing-card" style={{ width: '450px', padding: '30px', position: 'relative', display: 'flex', flexDirection: 'column', gap: '20px', border: '1px solid rgba(255,255,255,0.1)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <h4 style={{ fontSize: '18px', fontWeight: '800', color: '#fff', margin: 0 }}>Editar Limites Operacionais</h4>
-                      <button 
-                        onClick={() => { setIsEditLimitsOpen(false); setEditingSubscriber(null); }}
-                        style={{ background: 'transparent', border: 'none', color: 'hsl(var(--text-muted))', fontSize: '18px', cursor: 'pointer', fontWeight: '600' }}
-                      >
-                        ✕
-                      </button>
-                    </div>
-                    
-                    <div style={{ fontSize: '12px', color: 'hsl(var(--text-muted))' }}>
-                      Empresa: <strong style={{ color: '#fff' }}>{editingSubscriber.name}</strong>
-                    </div>
-
-                    <form onSubmit={handleUpdateSubscriberLimits} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                      <div>
-                        <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '6px', fontWeight: '600' }}>Plano da Empresa</label>
-                        <select 
-                          value={newPlan} 
-                          onChange={(e) => setNewPlan(e.target.value)}
-                          style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '10px', borderRadius: '6px', fontSize: '13px', color: '#fff', outline: 'none' }}
-                        >
-                          <option value="FREE">FREE</option>
-                          <option value="PRO">PRO</option>
-                          <option value="ENTERPRISE">ENTERPRISE</option>
-                        </select>
-                      </div>
-
-                      <div>
-                        <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '6px', fontWeight: '600' }}>Máximo de Agentes AI</label>
-                        <input 
-                          type="number" 
-                          required 
-                          value={newMaxBots} 
-                          onChange={(e) => setNewMaxBots(e.target.value)}
-                          style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '10px 12px', borderRadius: '6px', fontSize: '13px', color: '#fff' }}
-                        />
-                      </div>
-
-                      <div>
-                        <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '6px', fontWeight: '600' }}>Limite de Mensagens Mensais</label>
-                        <input 
-                          type="number" 
-                          required 
-                          value={newMaxMessages} 
-                          onChange={(e) => setNewMaxMessages(e.target.value)}
-                          style={{ width: '100%', background: 'hsl(var(--border) / 0.5)', border: '1px solid hsl(var(--border))', padding: '10px 12px', borderRadius: '6px', fontSize: '13px', color: '#fff' }}
-                        />
-                      </div>
-
-                      <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '10px' }}>
-                        <button 
-                          type="button" 
-                          onClick={() => { setIsEditLimitsOpen(false); setEditingSubscriber(null); }}
-                          className="btn-primary" 
-                          style={{ background: 'transparent', border: '1px solid hsl(var(--border))', color: 'hsl(var(--text-muted))', padding: '10px 18px', fontSize: '12px' }}
-                        >
-                          Cancelar
-                        </button>
-                        <button 
-                          type="submit" 
-                          className="btn-primary" 
-                          style={{ padding: '10px 18px', fontSize: '12px', fontWeight: '700' }}
-                        >
-                          Salvar Alterações
-                        </button>
-                      </div>
-                    </form>
-                  </div>
-                </div>
-              )}
-
-            </div>
+            <MasterAdminView
+              isMobile={isMobile}
+              subscribers={subscribers}
+              subscribersLoading={subscribersLoading}
+              fetchSubscribersList={fetchSubscribersList}
+              editingSubscriber={editingSubscriber}
+              setEditingSubscriber={setEditingSubscriber}
+              isEditLimitsOpen={isEditLimitsOpen}
+              setIsEditLimitsOpen={setIsEditLimitsOpen}
+              newPlan={newPlan}
+              setNewPlan={setNewPlan}
+              newMaxBots={newMaxBots}
+              setNewMaxBots={setNewMaxBots}
+              newMaxMessages={newMaxMessages}
+              setNewMaxMessages={setNewMaxMessages}
+              handleUpdateSubscriberLimits={handleUpdateSubscriberLimits}
+              handleImpersonate={handleImpersonate}
+              handleDeleteSubscriber={handleDeleteSubscriber}
+              handleSystemReset={handleSystemReset}
+            />
           )}
 
         </div>
