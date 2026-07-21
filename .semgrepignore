@@ -1,0 +1,8 @@
+# Semgrep Ignore Patterns
+client/dist/
+client/node_modules/
+server/node_modules/
+server/prisma/seed.js
+server/prisma/apply-concurrent-indexes.js
+server/src/scripts/
+client/src/components/views/NoviApiView.jsx

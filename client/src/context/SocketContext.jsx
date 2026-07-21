@@ -21,10 +21,10 @@ export function SocketProvider({ children }) {
       return;
     }
 
-    // Initialize socket connection
+    // Initialize socket connection with polling fallback for NGINX/Cloudflare proxy support
     const newSocket = io(window.location.origin, {
       auth: { token },
-      transports: ['websocket', 'polling'],
+      transports: ['polling', 'websocket'],
       reconnectionAttempts: Infinity,
       reconnectionDelay: 1000,
     });
