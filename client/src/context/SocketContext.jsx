@@ -21,9 +21,12 @@ export function SocketProvider({ children }) {
       return;
     }
 
+    const cleanToken = typeof token === 'string' && token.startsWith('Bearer ') ? token.slice(7).trim() : token;
+
     // Initialize socket connection with polling fallback for NGINX/Cloudflare proxy support
     const newSocket = io(window.location.origin, {
-      auth: { token },
+      auth: { token: cleanToken },
+      query: { token: cleanToken },
       transports: ['polling', 'websocket'],
       reconnectionAttempts: Infinity,
       reconnectionDelay: 1000,

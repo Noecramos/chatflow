@@ -286,14 +286,19 @@ broadcastWorker.start();
 
 const JWT_SECRET = require('./utils/jwt-secret');
 io.use((socket, next) => {
-  const token = socket.handshake.auth?.token;
+  let token = socket.handshake.auth?.token || socket.handshake.query?.token || socket.handshake.headers?.authorization;
   if (!token) return next(new Error("Token required."));
+
+  if (typeof token === 'string' && token.startsWith('Bearer ')) {
+    token = token.slice(7).trim();
+  }
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
     socket.user = decoded; // inject organizationId & userId
     next();
   } catch (err) {
+    console.warn('[Socket Auth Error]:', err.message);
     return next(new Error("Session expired."));
   }
 });
