@@ -287,45 +287,59 @@ broadcastWorker.start();
 const JWT_SECRET = require('./utils/jwt-secret');
 io.use((socket, next) => {
   let token = socket.handshake.auth?.token || socket.handshake.query?.token || socket.handshake.headers?.authorization;
-  if (!token) return next(new Error("Token required."));
-
-  if (typeof token === 'string' && token.startsWith('Bearer ')) {
-    token = token.slice(7).trim();
+  
+  if (token) {
+    if (typeof token === 'string' && token.startsWith('Bearer ')) {
+      token = token.slice(7).trim();
+    }
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET);
+      socket.user = decoded; // inject organizationId & userId
+      return next();
+    } catch (err) {
+      console.warn('[Socket Auth Warning]: Token invalid or expired:', err.message);
+    }
   }
 
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    socket.user = decoded; // inject organizationId & userId
-    next();
-  } catch (err) {
-    console.warn('[Socket Auth Error]:', err.message);
-    return next(new Error("Session expired."));
-  }
+  // Allow socket handshake as unauthenticated guest to prevent engine connection error loops
+  socket.user = null;
+  next();
 });
 
 io.on('connection', (socket) => {
+  if (!socket.user) {
+    console.log(`[Socket Connected] Guest socket connected (${socket.id}). Waiting for valid auth session.`);
+    return;
+  }
+
   const { organizationId, userId } = socket.user;
   console.log(`[Socket Connected] User ${userId} joined organization channel ${organizationId}`);
   
   // Join Organization Room by default (both raw ID and standardized org:ID)
-  socket.join(organizationId);
-  socket.join(`org:${organizationId}`);
+  if (organizationId) {
+    socket.join(organizationId);
+    socket.join(`org:${organizationId}`);
+  }
 
   // Focus real-time updates inside a single active conversation
   socket.on('join_conversation', (conversationId) => {
-    socket.join(conversationId);
-    socket.join(`conversation:${conversationId}`);
-    console.log(`[Socket] User ${userId} joined conversation room: conversation:${conversationId}`);
+    if (conversationId && organizationId) {
+      socket.join(conversationId);
+      socket.join(`conversation:${conversationId}`);
+      console.log(`[Socket] User ${userId} joined conversation room: conversation:${conversationId}`);
+    }
   });
 
   socket.on('leave_conversation', (conversationId) => {
-    socket.leave(conversationId);
-    socket.leave(`conversation:${conversationId}`);
-    console.log(`[Socket] User ${userId} left conversation room: conversation:${conversationId}`);
+    if (conversationId) {
+      socket.leave(conversationId);
+      socket.leave(`conversation:${conversationId}`);
+      console.log(`[Socket] User ${userId} left conversation room: conversation:${conversationId}`);
+    }
   });
 
   socket.on('disconnect', () => {
-    console.log(`[Socket Disconnected] User ${userId} left organization channel ${organizationId}`);
+    console.log(`[Socket Disconnected] User ${userId || 'guest'} left channel`);
   });
 });
 
