@@ -268,12 +268,18 @@ Você deve guiar o cliente passo a passo nesta ordem exata, sem pular etapas:
 
   console.log('[Seed] Database seed completed successfully.');
 }
+// Only auto-execute when run directly (e.g. `node prisma/seed.js`)
+// When require()'d from server.js, export the function without running it
+if (require.main === module) {
+  main()
+    .catch((e) => {
+      console.error('[Seed Error]:', e);
+      process.exit(1);
+    })
+    .finally(async () => {
+      await db.$disconnect();
+    });
+}
 
-main()
-  .catch((e) => {
-    console.error('[Seed Error]:', e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await db.$disconnect();
-  });
+module.exports = main;
+

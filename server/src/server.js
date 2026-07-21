@@ -351,11 +351,12 @@ async function bootstrap() {
     await db.$connect();
     console.log('[Prisma Client] DB Connection Verified.');
 
-    // Execute isolated seed script on boot
+    // Execute seed function on boot (non-fatal)
     try {
-      const seedScript = require('../prisma/seed');
+      const seed = require('../prisma/seed');
+      await seed();
     } catch (seedErr) {
-      console.warn('[Seed] Seed script loaded:', seedErr.message);
+      console.warn('[Seed] Warning during boot seed:', seedErr.message);
     }
 
     server.listen(PORT, () => {
